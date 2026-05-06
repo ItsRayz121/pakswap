@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create P2P Ad — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.ad-section { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:24px; margin-bottom:16px; }
+.ad-section-title { font-size:16px; font-weight:800; margin-bottom:4px; }
+.ad-section-sub { font-size:13px; color:#64748b; margin-bottom:20px; }
+.price-type-btn { padding:12px 20px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.15s; border:2px solid #e2e8f0; background:white; color:#374151; text-align:center; }
+.price-type-btn.active { border-color:#2563eb; background:#eff6ff; color:#1d4ed8; }
+.pm-toggle { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer; transition:all 0.15s; }
+.pm-toggle.selected { border-color:#2563eb; background:#eff6ff; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="create-ad.html" class="active">+ Create Ad</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+      <span class="badge badge-gold" style="font-size:10px">👑 Merchant</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:800px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:26px;font-weight:800">Create P2P Advertisement</h1>
+      <p style="color:#64748b;font-size:14px;margin-top:4px">Set up your offer for the marketplace</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="alert('Draft saved')">Save Draft</button>
+      <a href="marketplace.html"><button class="btn btn-ghost">View My Ads</button></a>
+    </div>
+  </div>
+
+  <!-- STEP 1: Basic -->
+  <div class="ad-section">
+    <div class="ad-section-title">1. Trade Direction</div>
+    <div class="ad-section-sub">Are you buying or selling crypto?</div>
+    <div style="display:flex;gap:12px;margin-bottom:20px">
+      <button id="side-sell-btn" class="price-type-btn active" style="flex:1" onclick="setSide('sell',this)">
+        <div style="font-size:24px;margin-bottom:6px">💰</div>
+        <div>SELL Crypto</div>
+        <div style="font-size:12px;color:#64748b;font-weight:400;margin-top:2px">Receive PKR from buyers</div>
+      </button>
+      <button id="side-buy-btn" class="price-type-btn" style="flex:1" onclick="setSide('buy',this)">
+        <div style="font-size:24px;margin-bottom:6px">🛒</div>
+        <div>BUY Crypto</div>
+        <div style="font-size:12px;color:#64748b;font-weight:400;margin-top:2px">Send PKR to sellers</div>
+      </button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cryptocurrency</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button onclick="selectCoin(this,'USDT')" class="coin-sel active" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:2px solid #26a17b;background:#f0fdf4;font-weight:700;cursor:pointer;font-size:14px;color:#065f46"><div class="coin-dot coin-usdt" style="width:24px;height:24px;font-size:10px">₮</div>USDT</button>
+        <button onclick="selectCoin(this,'BTC')" class="coin-sel" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:2px solid #e2e8f0;background:white;font-weight:700;cursor:pointer;font-size:14px;color:#374151"><div class="coin-dot coin-btc" style="width:24px;height:24px;font-size:10px">₿</div>BTC</button>
+        <button onclick="selectCoin(this,'ETH')" class="coin-sel" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:2px solid #e2e8f0;background:white;font-weight:700;cursor:pointer;font-size:14px;color:#374151"><div class="coin-dot coin-eth" style="width:24px;height:24px;font-size:10px">Ξ</div>ETH</button>
+        <button onclick="selectCoin(this,'USDC')" class="coin-sel" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:2px solid #e2e8f0;background:white;font-weight:700;cursor:pointer;font-size:14px;color:#374151"><div class="coin-dot coin-usdc" style="width:24px;height:24px;font-size:10px">$</div>USDC</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Pricing -->
+  <div class="ad-section">
+    <div class="ad-section-title">2. Price Setting</div>
+    <div class="ad-section-sub">Set your exchange rate — fixed or floating with market</div>
+    <div style="display:flex;gap:12px;margin-bottom:20px">
+      <button id="fixed-btn" class="price-type-btn active" style="flex:1" onclick="setPriceType('fixed')">
+        <strong>Fixed Price</strong>
+        <div style="font-size:12px;color:#64748b;font-weight:400;margin-top:4px">Set exact PKR/USDT rate manually</div>
+      </button>
+      <button id="float-btn" class="price-type-btn" style="flex:1" onclick="setPriceType('float')">
+        <strong>Floating Price</strong>
+        <div style="font-size:12px;color:#64748b;font-weight:400;margin-top:4px">Auto-adjust with market ± margin</div>
+      </button>
+    </div>
+
+    <div id="fixed-panel">
+      <div class="form-group">
+        <label class="form-label">Your Rate (PKR per USDT)</label>
+        <div style="position:relative;margin-top:6px">
+          <input class="form-input" type="number" id="fixed-rate" value="280.50" oninput="calcPreview()" style="font-size:20px;font-weight:800;padding:14px;padding-right:60px">
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-weight:700;color:#64748b">PKR</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <span style="font-size:13px;color:#64748b">Market rate: <strong>280.05 PKR</strong></span>
+          <span id="rate-diff" style="font-size:12px;font-weight:600;color:#10b981">▲ +0.16% above market</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="float-panel" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Floating Margin (%)</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+          <button onclick="adjustMargin(-0.5)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:white;font-size:20px;cursor:pointer">−</button>
+          <input class="form-input" type="number" id="margin-val" value="1.5" step="0.1" style="text-align:center;font-size:20px;font-weight:800;width:100px">
+          <button onclick="adjustMargin(0.5)" style="width:36px;height:36px;border-radius:8px;border:1.5px solid #e2e8f0;background:white;font-size:20px;cursor:pointer">+</button>
+          <span style="font-size:16px;font-weight:700;color:#64748b">%</span>
+        </div>
+        <div style="font-size:13px;color:#10b981;margin-top:8px">Your effective rate: ≈ 284.25 PKR/USDT (+1.5%)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Limits -->
+  <div class="ad-section">
+    <div class="ad-section-title">3. Trade Limits</div>
+    <div class="ad-section-sub">How much USDT do you want to trade?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Total USDT to Sell</label>
+        <div style="position:relative;margin-top:6px">
+          <input class="form-input" type="number" value="500" style="padding-right:56px">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#64748b">USDT</span>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">Wallet: 35.50 USDT</div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Min per Trade</label>
+        <div style="position:relative;margin-top:6px">
+          <input class="form-input" type="number" value="1000" style="padding-right:40px">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#64748b">PKR</span>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Max per Trade</label>
+        <div style="position:relative;margin-top:6px">
+          <input class="form-input" type="number" value="200000" style="padding-right:40px">
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#64748b">PKR</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Payment Methods -->
+  <div class="ad-section">
+    <div class="ad-section-title">4. Payment Methods</div>
+    <div class="ad-section-sub">Which payment methods will you accept?</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="pm-toggle selected" onclick="togglePM(this)">
+        <span class="pay-pill jcash">⚡ JazzCash</span>
+        <span style="font-size:13px;color:#065f46;flex:1">0312-XXXXXXX (Verified ✓)</span>
+        <div style="width:20px;height:20px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:12px">✓</div>
+      </div>
+      <div class="pm-toggle selected" onclick="togglePM(this)">
+        <span class="pay-pill bank">🏦 HBL Bank Transfer</span>
+        <span style="font-size:13px;color:#065f46;flex:1">IBAN: PK36HABB... (Verified ✓)</span>
+        <div style="width:20px;height:20px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:12px">✓</div>
+      </div>
+      <div class="pm-toggle" onclick="togglePM(this)">
+        <span class="pay-pill epay">💚 Easypaisa</span>
+        <span style="font-size:13px;color:#94a3b8;flex:1">Not added yet</span>
+        <a href="payment-methods.html" style="font-size:12px;color:#2563eb">+ Add</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Trade Settings -->
+  <div class="ad-section">
+    <div class="ad-section-title">5. Trade Settings</div>
+    <div class="ad-section-sub">Configure trade window and counterparty requirements</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="form-group">
+        <label class="form-label">Trade Window</label>
+        <select class="form-input form-select" style="margin-top:6px">
+          <option>10 minutes</option>
+          <option selected>15 minutes</option>
+          <option>20 minutes</option>
+          <option>30 minutes</option>
+        </select>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">Time buyer has to complete payment</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Counterparty Requirements</label>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked style="accent-color:#2563eb"> KYC verified (min)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" style="accent-color:#2563eb"> Full KYC only</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" style="accent-color:#2563eb"> Min. 1 completed trade</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ad Terms <span style="color:#94a3b8;font-weight:400">(shown to buyers)</span></label>
+      <textarea class="form-input" rows="3" placeholder="e.g. Send from your own registered account only. No third-party payments. I release within 5 minutes of confirmation." style="margin-top:6px;resize:none"></textarea>
+      <div style="text-align:right;font-size:12px;color:#94a3b8;margin-top:4px">0/500 characters</div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="ad-section" style="border-color:#2563eb;background:#f8faff">
+    <div class="ad-section-title" style="color:#1d4ed8">6. Preview Your Ad</div>
+    <div class="ad-section-sub">This is how your ad will appear in the marketplace</div>
+    <div style="background:white;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="merchant-avatar">U</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:16px;font-weight:800">Muhammad U.</span>
+              <span class="badge badge-gold">👑 Merchant</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+              <span class="stars">★★★★★</span><span style="font-size:13px">4.9</span>
+              <span style="font-size:13px;color:#64748b">87 trades · 97.2%</span>
+              <span><span class="dot dot-green"></span><span style="font-size:12px;color:#64748b;margin-left:4px">Online</span></span>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:900" id="preview-rate">280.50 <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span></div>
+          <div style="font-size:12px;color:#10b981">▲ +0.16% above market</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin-top:14px;font-size:13px;color:#64748b">
+        <span>Limits: <strong style="color:#1e293b">1,000–200,000 PKR</strong></span>
+        <span>Available: <strong style="color:#1e293b">500 USDT</strong></span>
+        <span>⚡ ~4 min</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px">
+          <span class="pay-pill jcash">⚡ JazzCash</span>
+          <span class="pay-pill bank">🏦 HBL Bank</span>
+        </div>
+        <button class="btn btn-primary btn-sm" style="opacity:0.5;cursor:default">Buy USDT →</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;padding-bottom:32px">
+    <button class="btn btn-secondary btn-lg" onclick="alert('Saved as draft')">Save as Draft</button>
+    <button class="btn btn-success btn-lg" style="flex:1;border-radius:12px" onclick="publishAd()">🚀 Publish Ad to Marketplace</button>
+  </div>
+</div>
+
+<script>
+function setSide(side, btn) {
+  document.getElementById('side-sell-btn').classList.toggle('active', side==='sell');
+  document.getElementById('side-buy-btn').classList.toggle('active', side==='buy');
+}
+function setPriceType(type) {
+  document.getElementById('fixed-btn').classList.toggle('active', type==='fixed');
+  document.getElementById('float-btn').classList.toggle('active', type==='float');
+  document.getElementById('fixed-panel').style.display = type==='fixed'?'block':'none';
+  document.getElementById('float-panel').style.display = type==='float'?'block':'none';
+}
+function selectCoin(btn, coin) {
+  document.querySelectorAll('.coin-sel').forEach(b=>{
+    b.style.border='2px solid #e2e8f0'; b.style.background='white'; b.style.color='#374151';
+  });
+  const colors={USDT:'#26a17b',BTC:'#f7931a',ETH:'#627eea',USDC:'#2775ca'};
+  const bg={USDT:'#f0fdf4',BTC:'#fff7ed',ETH:'#f0f4ff',USDC:'#eff6ff'};
+  const tc={USDT:'#065f46',BTC:'#9a3412',ETH:'#3730a3',USDC:'#1e40af'};
+  btn.style.border='2px solid '+colors[coin]; btn.style.background=bg[coin]; btn.style.color=tc[coin];
+}
+function togglePM(el) { el.classList.toggle('selected'); }
+function adjustMargin(delta) {
+  const inp = document.getElementById('margin-val');
+  inp.value = Math.max(0, (parseFloat(inp.value)||0)+delta).toFixed(1);
+}
+function calcPreview() {
+  const rate = parseFloat(document.getElementById('fixed-rate').value)||280.50;
+  const market = 280.05;
+  const diff = ((rate-market)/market*100).toFixed(2);
+  document.getElementById('rate-diff').textContent = (diff>0?'▲ +':'▼ ')+diff+'% vs market';
+  document.getElementById('rate-diff').style.color = diff>=0?'#10b981':'#f59e0b';
+  document.getElementById('preview-rate').innerHTML = rate.toFixed(2)+' <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span>';
+}
+function publishAd() {
+  alert('✅ Ad published successfully!\nYour SELL USDT offer is now live in the marketplace.\n\nRedirecting to marketplace...');
+  setTimeout(()=>window.location.href='marketplace.html', 500);
+}
+</script>
+</body>
+</html>

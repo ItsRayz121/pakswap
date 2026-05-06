@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P2P Marketplace — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.market-layout { display:grid; grid-template-columns:260px 1fr; gap:24px; align-items:start; }
+.filter-card { background:white; border-radius:16px; border:1px solid #e2e8f0; padding:20px; position:sticky; top:80px; }
+.filter-section { margin-bottom:20px; }
+.filter-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; margin-bottom:10px; }
+.listing-card { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:20px; transition:all 0.2s; margin-bottom:12px; }
+.listing-card:hover { border-color:#93c5fd; box-shadow:0 4px 20px rgba(37,99,235,0.08); transform:translateY(-1px); }
+.coin-tab { padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.sort-btn { padding:7px 12px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; background:white; color:#374151; transition:all 0.15s; }
+.sort-btn:hover, .sort-btn.active { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
+.amount-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:999; padding:24px; }
+.amount-modal-card { background:white; border-radius:20px; padding:32px; width:100%; max-width:460px; box-shadow:0 32px 80px rgba(0,0,0,0.3); }
+input[type=range] { width:100%; accent-color:#2563eb; }
+.checkbox-label { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; color:#374151; padding:4px 0; }
+.checkbox-label input { accent-color:#2563eb; width:16px; height:16px; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html" class="active">Marketplace</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="orders.html">Orders</a>
+    <a href="create-ad.html">+ Create Ad</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+      <span class="badge badge-green" style="font-size:10px">✓ KYC</span>
+    </div>
+  </div>
+</nav>
+
+<!-- COIN/SIDE BAR -->
+<div style="background:white;border-bottom:1px solid #e2e8f0;padding:12px 24px">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px">
+      <button id="side-buy" class="coin-tab" style="background:#dcfce7;color:#166534" onclick="setSide('buy')">🟢 BUY</button>
+      <button id="side-sell" class="coin-tab" style="background:#f1f5f9;color:#64748b" onclick="setSide('sell')">🔴 SELL</button>
+    </div>
+    <div style="width:1px;height:28px;background:#e2e8f0"></div>
+    <div style="display:flex;gap:6px">
+      <button onclick="setCoin(this,'USDT')" class="coin-btn active" style="padding:7px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;background:#26a17b;color:white;cursor:pointer">₮ USDT</button>
+      <button onclick="setCoin(this,'BTC')" class="coin-btn" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:13px;font-weight:700;background:white;color:#374151;cursor:pointer">₿ BTC</button>
+      <button onclick="setCoin(this,'ETH')" class="coin-btn" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:13px;font-weight:700;background:white;color:#374151;cursor:pointer">Ξ ETH</button>
+      <button onclick="setCoin(this,'USDC')" class="coin-btn" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;font-size:13px;font-weight:700;background:white;color:#374151;cursor:pointer">$ USDC</button>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <span style="font-size:13px;color:#64748b">Market Rate:</span>
+      <span style="font-size:15px;font-weight:800;color:#1e293b">280.05 PKR</span>
+      <span style="font-size:12px;color:#10b981;font-weight:600">▲ +0.3%</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="market-layout">
+    <!-- FILTERS -->
+    <div class="filter-card">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px">Filters</div>
+
+      <div class="filter-section">
+        <div class="filter-title">Payment Method</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label class="checkbox-label"><input type="checkbox" checked> <span class="pay-pill jcash">⚡ JazzCash</span></label>
+          <label class="checkbox-label"><input type="checkbox" checked> <span class="pay-pill epay">💚 Easypaisa</span></label>
+          <label class="checkbox-label"><input type="checkbox" checked> <span class="pay-pill bank">🏦 Bank Transfer</span></label>
+          <label class="checkbox-label"><input type="checkbox"> <span class="pay-pill" style="background:#fce7f3;border-color:#f9a8d4;color:#9d174d">Nayapay</span></label>
+          <label class="checkbox-label"><input type="checkbox"> <span class="pay-pill" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534">SadaPay</span></label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-title">Amount Range (PKR)</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="form-input" type="number" placeholder="Min" style="padding:8px;font-size:13px" value="1000">
+          <input class="form-input" type="number" placeholder="Max" style="padding:8px;font-size:13px" value="500000">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-title">Merchant Type</div>
+        <label class="checkbox-label" style="margin-bottom:6px"><input type="checkbox" checked> 👑 Verified Merchants Only</label>
+        <label class="checkbox-label"><input type="checkbox"> 🟢 Online Now Only</label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-title">Minimum Rating</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="sort-btn active" onclick="setRating(this)">Any</button>
+          <button class="sort-btn" onclick="setRating(this)">★4.0+</button>
+          <button class="sort-btn" onclick="setRating(this)">★4.5+</button>
+          <button class="sort-btn" onclick="setRating(this)">★4.8+</button>
+        </div>
+      </div>
+
+      <button class="btn btn-outline btn-full btn-sm" style="margin-top:8px">Clear Filters</button>
+    </div>
+
+    <!-- LISTINGS -->
+    <div>
+      <!-- Top bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <div style="font-size:16px;font-weight:700;color:#1e293b">
+          <span id="listing-title">Buy USDT</span>
+          <span style="color:#64748b;font-weight:400;margin-left:8px">48 offers available</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:13px;color:#64748b">Sort by:</span>
+          <button class="sort-btn active" onclick="setSort(this)">Best Rate</button>
+          <button class="sort-btn" onclick="setSort(this)">Fastest Release</button>
+          <button class="sort-btn" onclick="setSort(this)">Highest Rating</button>
+        </div>
+      </div>
+
+      <!-- Listing Cards -->
+      <div id="listings">
+
+        <!-- Card 1 -->
+        <div class="listing-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div class="merchant-avatar">C</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:16px;font-weight:800">CryptoKing</span>
+                  <span class="badge badge-gold" style="font-size:11px">👑 Merchant</span>
+                  <span class="kyc-badge full">✓ Full KYC</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap">
+                  <span class="stars">★★★★★</span><span style="font-size:13px;font-weight:600">4.9</span>
+                  <span style="font-size:13px;color:#64748b">1,240 trades</span>
+                  <span style="font-size:13px;color:#10b981;font-weight:600">99.2% completion</span>
+                  <span><span class="dot dot-green"></span><span style="font-size:12px;color:#64748b;margin-left:4px">Online</span></span>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:26px;font-weight:900;color:#1e293b">280.50 <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span></div>
+              <div style="font-size:12px;color:#10b981;font-weight:600">▲ +0.16% vs market</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap">
+            <div style="font-size:13px;color:#64748b">Limits: <strong style="color:#1e293b">1,000 — 200,000 PKR</strong></div>
+            <div style="font-size:13px;color:#64748b">Avail: <strong style="color:#1e293b">5,000 USDT</strong></div>
+            <div style="font-size:13px;color:#64748b">⚡ Avg release: <strong style="color:#1e293b">4 min</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="pay-pill jcash">⚡ JazzCash</span>
+              <span class="pay-pill bank">🏦 HBL Bank</span>
+            </div>
+            <button class="btn btn-primary" onclick="openTradeModal('CryptoKing','280.50','buy')" style="border-radius:10px">Buy USDT →</button>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:10px">📋 Terms: "Send from your own registered account only. No third-party payments."</div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="listing-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div class="merchant-avatar" style="background:linear-gradient(135deg,#059669,#34d399)">P</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:16px;font-weight:800">PKR_Pro</span>
+                  <span class="badge badge-blue" style="font-size:11px">✓ Verified</span>
+                  <span class="kyc-badge full">✓ Full KYC</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap">
+                  <span class="stars">★★★★½</span><span style="font-size:13px;font-weight:600">4.7</span>
+                  <span style="font-size:13px;color:#64748b">890 trades</span>
+                  <span style="font-size:13px;color:#10b981;font-weight:600">98.5% completion</span>
+                  <span><span class="dot dot-green"></span><span style="font-size:12px;color:#64748b;margin-left:4px">Online</span></span>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:26px;font-weight:900;color:#1e293b">280.20 <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span></div>
+              <div style="font-size:12px;color:#10b981;font-weight:600">▲ +0.05% vs market</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap">
+            <div style="font-size:13px;color:#64748b">Limits: <strong style="color:#1e293b">5,000 — 500,000 PKR</strong></div>
+            <div style="font-size:13px;color:#64748b">Avail: <strong style="color:#1e293b">12,000 USDT</strong></div>
+            <div style="font-size:13px;color:#64748b">⚡ Avg release: <strong style="color:#1e293b">7 min</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="pay-pill bank">🏦 HBL Bank</span>
+              <span class="pay-pill bank">🏦 MCB Bank</span>
+              <span class="pay-pill bank">🏦 UBL Bank</span>
+            </div>
+            <button class="btn btn-primary" onclick="openTradeModal('PKR_Pro','280.20','buy')" style="border-radius:10px">Buy USDT →</button>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:10px">📋 Terms: "Bank transfer only. Include your full name in remarks."</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="listing-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div class="merchant-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">F</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:16px;font-weight:800">FastTrade</span>
+                  <span class="badge badge-gold" style="font-size:11px">👑 Merchant</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap">
+                  <span class="stars">★★★★★</span><span style="font-size:13px;font-weight:600">4.8</span>
+                  <span style="font-size:13px;color:#64748b">654 trades</span>
+                  <span style="font-size:13px;color:#10b981;font-weight:600">99.0% completion</span>
+                  <span><span class="dot dot-green"></span><span style="font-size:12px;color:#64748b;margin-left:4px">Online</span></span>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:26px;font-weight:900;color:#1e293b">279.90 <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span></div>
+              <div style="font-size:12px;color:#f59e0b;font-weight:600">▼ -0.05% vs market</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap">
+            <div style="font-size:13px;color:#64748b">Limits: <strong style="color:#1e293b">2,000 — 100,000 PKR</strong></div>
+            <div style="font-size:13px;color:#64748b">Avail: <strong style="color:#1e293b">2,200 USDT</strong></div>
+            <div style="font-size:13px;color:#64748b">⚡ Avg release: <strong style="color:#1e293b">3 min</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:6px">
+              <span class="pay-pill epay">💚 Easypaisa</span>
+              <span class="pay-pill jcash">⚡ JazzCash</span>
+            </div>
+            <button class="btn btn-primary" onclick="openTradeModal('FastTrade','279.90','buy')" style="border-radius:10px">Buy USDT →</button>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:10px">📋 Terms: "Very fast — usually release within 3 minutes. 24/7 availability."</div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="listing-card" style="opacity:0.7">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div class="merchant-avatar" style="background:linear-gradient(135deg,#dc2626,#f87171)">K</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:16px;font-weight:800">KHI_Exchange</span>
+                  <span class="badge badge-blue" style="font-size:11px">✓ Verified</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap">
+                  <span class="stars">★★★★</span><span style="font-size:13px;font-weight:600">4.4</span>
+                  <span style="font-size:13px;color:#64748b">312 trades</span>
+                  <span style="font-size:13px;color:#f59e0b;font-weight:600">96.8% completion</span>
+                  <span><span class="dot dot-gray"></span><span style="font-size:12px;color:#64748b;margin-left:4px">Away 2h ago</span></span>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:26px;font-weight:900;color:#1e293b">279.50 <span style="font-size:14px;color:#64748b;font-weight:600">PKR</span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:6px">
+              <span class="pay-pill bank">🏦 Bank Alfalah</span>
+              <span class="pay-pill jcash">⚡ JazzCash</span>
+            </div>
+            <button class="btn btn-primary" onclick="openTradeModal('KHI_Exchange','279.50','buy')" style="border-radius:10px">Buy USDT →</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:24px;color:#64748b;font-size:14px">
+          Showing 4 of 48 offers · <a href="#" style="color:#2563eb;font-weight:600">Load More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRADE AMOUNT MODAL -->
+<div class="amount-modal" id="trade-modal">
+  <div class="amount-modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <div style="font-size:20px;font-weight:800" id="modal-title">Buy USDT from CryptoKing</div>
+        <div style="font-size:14px;color:#64748b;margin-top:4px">Rate: <strong id="modal-rate">280.50</strong> PKR / USDT</div>
+      </div>
+      <button onclick="closeModal()" style="background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px">×</button>
+    </div>
+
+    <div class="escrow-banner" style="margin-bottom:20px">
+      <span class="icon">🔒</span>
+      <div><div class="text">Protected by PakSwap Escrow</div><div class="sub">USDT will be locked until payment confirmed</div></div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="form-label">I want to pay (PKR)</label>
+      <div style="position:relative;margin-top:6px">
+        <input class="form-input" type="number" id="pkr-amount" value="5000" oninput="calcModal()" style="font-size:22px;font-weight:800;padding:14px;padding-right:60px">
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-weight:700;color:#64748b">PKR</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:#94a3b8">
+        <span>Min: 1,000 PKR</span><span>Max: 200,000 PKR</span>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;color:#64748b">You will receive:</span>
+        <span style="font-size:24px;font-weight:900;color:#26a17b" id="usdt-out">17.82 USDT</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span style="font-size:13px;color:#94a3b8">Platform fee (0%):</span>
+        <span style="font-size:13px;font-weight:600;color:#10b981">FREE 🎉</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="form-label">Payment Method</label>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+        <label style="flex:1;min-width:120px;cursor:pointer">
+          <input type="radio" name="pm" checked style="display:none" id="pm1">
+          <div onclick="document.getElementById('pm1').checked=true;highlightPM(this)" class="pm-option" style="border:2px solid #2563eb;background:#eff6ff;border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#1d4ed8">⚡ JazzCash</div>
+        </label>
+        <label style="flex:1;min-width:120px;cursor:pointer">
+          <input type="radio" name="pm" style="display:none" id="pm2">
+          <div onclick="document.getElementById('pm2').checked=true;highlightPM(this)" class="pm-option" style="border:2px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#374151">🏦 HBL Bank</div>
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancel</button>
+      <a href="trade.html" style="flex:2"><button class="btn btn-success btn-full btn-lg" style="border-radius:12px">Confirm & Start Trade →</button></a>
+    </div>
+  </div>
+</div>
+
+<script>
+function setSide(side) {
+  const buyBtn = document.getElementById('side-buy');
+  const sellBtn = document.getElementById('side-sell');
+  const title = document.getElementById('listing-title');
+  if(side==='buy') {
+    buyBtn.style.background='#dcfce7'; buyBtn.style.color='#166534';
+    sellBtn.style.background='#f1f5f9'; sellBtn.style.color='#64748b';
+    title.textContent='Buy USDT';
+    document.querySelectorAll('.listing-card .btn-primary').forEach(b=>b.textContent='Buy USDT →');
+  } else {
+    sellBtn.style.background='#fee2e2'; sellBtn.style.color='#991b1b';
+    buyBtn.style.background='#f1f5f9'; buyBtn.style.color='#64748b';
+    title.textContent='Sell USDT';
+    document.querySelectorAll('.listing-card .btn-primary').forEach(b=>b.textContent='Sell USDT →');
+  }
+}
+function setCoin(btn, coin) {
+  document.querySelectorAll('.coin-btn').forEach(b=>{
+    b.style.background='white'; b.style.color='#374151'; b.style.border='1.5px solid #e2e8f0';
+  });
+  const colors={USDT:'#26a17b',BTC:'#f7931a',ETH:'#627eea',USDC:'#2775ca'};
+  btn.style.background=colors[coin]; btn.style.color='white'; btn.style.border='none';
+}
+function setSort(btn) { document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function setRating(btn) { document.querySelectorAll('.filter-card .sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function openTradeModal(name, rate, side) {
+  document.getElementById('modal-title').textContent=(side==='buy'?'Buy':'Sell')+' USDT from '+name;
+  document.getElementById('modal-rate').textContent=rate;
+  document.getElementById('trade-modal').style.display='flex';
+  calcModal();
+}
+function closeModal() { document.getElementById('trade-modal').style.display='none'; }
+function calcModal() {
+  const pkr = parseFloat(document.getElementById('pkr-amount').value)||0;
+  const rate = parseFloat(document.getElementById('modal-rate').textContent)||280.50;
+  document.getElementById('usdt-out').textContent=(pkr/rate).toFixed(2)+' USDT';
+}
+function highlightPM(el) {
+  document.querySelectorAll('.pm-option').forEach(e=>{e.style.border='2px solid #e2e8f0';e.style.background='white';e.style.color='#374151'});
+  el.style.border='2px solid #2563eb'; el.style.background='#eff6ff'; el.style.color='#1d4ed8';
+}
+document.getElementById('trade-modal').addEventListener('click', function(e){if(e.target===this)closeModal()});
+</script>
+</body>
+</html>

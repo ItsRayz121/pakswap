@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Payment — Order #IBO-2026-004521 — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.pay-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+.pay-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 28px; position: sticky; top: 80px; }
+.order-summary-bar { background: linear-gradient(135deg,#eff6ff,#dbeafe); border: 1.5px solid #93c5fd; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.summary-token { display: flex; align-items: center; gap: 10px; }
+.summary-token .logo { width: 40px; height: 40px; border-radius: 50%; background: #f0fdf4; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.pay-detail-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.pay-detail-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.pay-detail-row:last-child { margin-bottom: 0; }
+.pay-detail-label { font-size: 13px; color: #64748b; }
+.pay-detail-value { font-size: 15px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+.copy-btn { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #2563eb; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.copy-btn:hover { background: #dbeafe; }
+.big-amount { font-size: 40px; font-weight: 900; color: #1e293b; letter-spacing: -1px; }
+.important-note { background: #fff7ed; border: 1.5px solid #fdba74; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+.important-note h4 { font-size: 14px; font-weight: 700; color: #c2410c; margin-bottom: 8px; }
+.important-note ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.important-note li { font-size: 13px; color: #9a3412; display: flex; gap: 8px; }
+.upload-zone { border: 2px dashed #cbd5e1; border-radius: 14px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; margin-bottom: 16px; }
+.upload-zone:hover, .upload-zone.dragover { border-color: #2563eb; background: #eff6ff; }
+.upload-zone .upload-icon { font-size: 40px; margin-bottom: 12px; }
+.upload-zone h4 { font-size:15px;font-weight:700;margin-bottom:6px; }
+.upload-zone p { font-size:13px;color:#64748b; }
+.uploaded-preview { border: 1.5px solid #86efac; background: #f0fdf4; border-radius: 12px; padding: 12px 16px; display: none; align-items: center; gap: 12px; margin-bottom: 16px; }
+.timer-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 20px; text-align: center; }
+.big-timer { font-size: 48px; font-weight: 900; letter-spacing: -2px; margin: 8px 0; }
+.usdt-tab-content { display: none; }
+.pay-tabs { display: flex; gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+.pay-tab { flex: 1; text-align: center; padding: 10px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; color: #64748b; border: none; background: transparent; transition: all 0.15s; }
+.pay-tab.active { background: white; color: #1d4ed8; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+@media(max-width:768px){ .pay-layout{grid-template-columns:1fr} .pay-card{position:static} }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="instant-buy-order.html" class="navbar-logo" style="font-size:16px;color:#64748b;font-weight:500">← Edit Order</a>
+  <div style="font-size:14px;font-weight:600;color:#1e293b;margin-left:auto">Order #IBO-2026-004521</div>
+  <div class="navbar-right" style="margin-left:16px">
+    <span class="badge badge-yellow">⏳ Awaiting Payment</span>
+  </div>
+</nav>
+
+<div class="pay-layout">
+
+  <!-- LEFT: Payment Instructions -->
+  <div>
+
+    <!-- Order Summary Bar -->
+    <div class="order-summary-bar">
+      <div class="summary-token">
+        <div class="logo">🟣</div>
+        <div>
+          <div style="font-weight:800;font-size:15px">Buying 0.2348 SOL</div>
+          <div style="font-size:13px;color:#3b82f6">Solana Network</div>
+        </div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:13px;color:#64748b">Total to pay</div>
+        <div style="font-size:20px;font-weight:800;color:#1d4ed8">10,135 PKR</div>
+      </div>
+    </div>
+
+    <!-- Pay Tabs: PKR vs USDT -->
+    <div class="pay-tabs">
+      <button class="pay-tab active" onclick="switchTab('pkr',this)">💳 Pay with PKR</button>
+      <button class="pay-tab" onclick="switchTab('usdt',this)">💵 Pay with USDT</button>
+    </div>
+
+    <!-- PKR Tab -->
+    <div id="pkr-tab">
+      <div class="important-note">
+        <h4>⚠️ Important — Read before paying</h4>
+        <ul>
+          <li>✅ Pay the <strong>exact amount</strong> shown — not more, not less</li>
+          <li>✅ Your payment account name must match your KYC name: <strong>Muhammad Usman</strong></li>
+          <li>✅ Include the order reference in payment note if your app supports it</li>
+          <li>❌ Do NOT pay from a third-party account — your name must match</li>
+          <li>❌ Do NOT send via Raast — use JazzCash wallet-to-wallet or bank IBAN</li>
+        </ul>
+      </div>
+
+      <!-- Payment Details Box -->
+      <div class="pay-detail-box">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:16px">Payment Details</div>
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:6px">Pay exactly this amount</div>
+          <div class="big-amount">10,135 <span style="font-size:22px">PKR</span></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
+            <span style="font-size:13px;color:#64748b">Do not round up or down</span>
+          </div>
+        </div>
+        <div class="pay-detail-row">
+          <span class="pay-detail-label">📱 Send to (JazzCash)</span>
+          <span class="pay-detail-value">0300-1234567 <button class="copy-btn" onclick="copyText('0300-1234567')">Copy</button></span>
+        </div>
+        <div class="pay-detail-row">
+          <span class="pay-detail-label">👤 Account Name</span>
+          <span class="pay-detail-value">PakSwap (Pvt) Ltd</span>
+        </div>
+        <div class="pay-detail-row">
+          <span class="pay-detail-label">🔖 Reference / Note</span>
+          <span class="pay-detail-value">IBO-004521 <button class="copy-btn" onclick="copyText('IBO-004521')">Copy</button></span>
+        </div>
+        <div style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px">
+          <div style="font-size:12px;color:#64748b">Also accepted:</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <span class="pay-pill epay">Easypaisa: 0300-1234567</span>
+            <span class="pay-pill bank">IBAN: PK36ALFH0110012345678901</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:12px">Upload Payment Screenshot</h3>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondrop="handleDrop(event)">
+        <div class="upload-icon">📷</div>
+        <h4>Click to upload or drag &amp; drop</h4>
+        <p>JPG, PNG, PDF — max 10MB</p>
+        <p style="margin-top:8px;font-size:12px;color:#94a3b8">Your JazzCash / Easypaisa / Bank screenshot</p>
+        <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="previewFile(this)">
+      </div>
+
+      <div class="uploaded-preview" id="preview-bar">
+        <span style="font-size:24px">📎</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600" id="file-name">screenshot.jpg</div>
+          <div style="font-size:12px;color:#64748b">Ready for verification</div>
+        </div>
+        <span style="font-size:20px">✅</span>
+      </div>
+
+      <button class="btn btn-primary btn-full btn-lg" id="paid-btn" onclick="markPaid()" style="margin-bottom:12px">
+        ✅ I Have Made the Payment
+      </button>
+      <button class="btn btn-ghost btn-full" onclick="if(confirm('Cancel this order?'))location.href='instant-buy.html'">
+        Cancel Order
+      </button>
+    </div>
+
+    <!-- USDT Tab -->
+    <div id="usdt-tab" class="usdt-tab-content">
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px;margin-bottom:20px">
+        <h4 style="font-size:15px;font-weight:700;color:#166534;margin-bottom:12px">⚡ USDT Payment — Fully Automatic</h4>
+        <p style="font-size:13px;color:#15803d;line-height:1.6">Send USDT to the address below. We monitor the blockchain automatically — no screenshot needed. Token is released as soon as your transaction is confirmed.</p>
+      </div>
+
+      <div class="pay-detail-box">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:6px">Send exactly</div>
+          <div class="big-amount">36.12 <span style="font-size:22px">USDT</span></div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">SELECT NETWORK</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="selectNetwork(this,'trc20')">TRC-20 (TRON)</button>
+            <button class="btn btn-secondary btn-sm" onclick="selectNetwork(this,'bep20')">BEP-20 (BSC)</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border-radius:10px;padding:14px;margin-bottom:12px">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;font-weight:600">DEPOSIT ADDRESS (TRC-20)</div>
+          <div style="font-family:monospace;font-size:13px;color:#e2e8f0;word-break:break-all;line-height:1.6">TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7</div>
+          <button class="copy-btn" style="margin-top:10px;background:#334155;border-color:#475569;color:#e2e8f0" onclick="copyText('TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7')">📋 Copy Address</button>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:12px;color:#92400e">
+          ⚠️ Send ONLY on the <strong>TRC-20 network</strong>. Sending on a different network will result in permanent loss of funds.
+        </div>
+      </div>
+      <div style="text-align:center;font-size:13px;color:#64748b;margin-top:12px">
+        ⏳ We will detect your transaction automatically. Usually 1–3 minutes after sending.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Timer + Order Info -->
+  <div class="pay-card">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;text-align:center">Order Expires In</h3>
+    <div class="timer-card" style="margin-bottom:20px;padding:24px">
+      <div style="font-size:13px;color:#64748b">Quote locked — pay before time runs out</div>
+      <div class="big-timer timer-warning" id="countdown">08:43</div>
+      <div style="font-size:12px;color:#94a3b8">Order will be cancelled if not paid</div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">Order Summary</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span style="color:#64748b">Order ID</span>
+        <span style="font-weight:600;font-family:monospace">IBO-004521</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span style="color:#64748b">Token</span>
+        <span style="font-weight:600">SOL (Solana)</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span style="color:#64748b">You receive</span>
+        <span style="font-weight:700;color:#059669">0.2348 SOL</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span style="color:#64748b">Rate</span>
+        <span style="font-weight:600">PKR 43,150 / SOL</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span style="color:#64748b">To wallet</span>
+        <span style="font-weight:600;font-family:monospace;font-size:12px">7EcDh...LtV</span>
+      </div>
+      <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:4px;display:flex;justify-content:space-between;font-size:15px;font-weight:800">
+        <span>Total</span>
+        <span style="color:#1d4ed8">10,135 PKR</span>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:12px;color:#64748b;line-height:1.7">
+      <strong style="color:#374151">Need help?</strong><br>
+      WhatsApp: <a href="#" style="color:#2563eb">+92-300-PAKSWAP</a><br>
+      Telegram: <a href="#" style="color:#2563eb">@PakSwapSupport</a><br>
+      Available 9AM–11PM PKT
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(tab, btn) {
+  document.querySelectorAll('.pay-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pkr-tab').style.display = tab==='pkr' ? 'block' : 'none';
+  document.getElementById('usdt-tab').style.display = tab==='usdt' ? 'block' : 'none';
+}
+function selectNetwork(btn, net) {
+  document.querySelectorAll('#usdt-tab .btn-sm').forEach(b=>{b.className='btn btn-secondary btn-sm'});
+  btn.className='btn btn-primary btn-sm';
+}
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(()=>{
+    const el = event.target; el.textContent='Copied!';
+    setTimeout(()=>el.textContent='Copy',1500);
+  });
+}
+function previewFile(input) {
+  if(input.files.length>0){
+    document.getElementById('file-name').textContent = input.files[0].name;
+    document.getElementById('preview-bar').style.display = 'flex';
+  }
+}
+function handleDrop(e) {
+  e.preventDefault();
+  const zone = document.getElementById('upload-zone');
+  zone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if(file){
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('preview-bar').style.display = 'flex';
+  }
+}
+function markPaid() {
+  const preview = document.getElementById('preview-bar');
+  if(preview.style.display !== 'flex') {
+    alert('Please upload your payment screenshot first.');
+    return;
+  }
+  location.href = 'instant-buy-status.html';
+}
+let secs = 523;
+setInterval(()=>{
+  secs = Math.max(0,secs-1);
+  const m = String(Math.floor(secs/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  const el = document.getElementById('countdown');
+  el.textContent = m+':'+s;
+  el.className = 'big-timer ' + (secs>120?'timer-warning':'timer-danger');
+},1000);
+</script>
+</body>
+</html>

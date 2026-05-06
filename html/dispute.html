@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dispute Center — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="orders.html">Orders</a>
+    <a href="dispute.html" class="active">Disputes</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:900px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:26px;font-weight:800">Dispute Center</h1>
+      <p style="color:#64748b;font-size:14px;margin-top:4px">Track and manage your trade disputes</p>
+    </div>
+  </div>
+
+  <!-- ACTIVE DISPUTE -->
+  <div class="card" style="border-color:#ef4444;margin-bottom:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:32px">⚖️</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:18px;font-weight:800">Dispute #DIS-2026-00088</span>
+            <span class="badge badge-red">🔴 Under Review</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Trade #PKS-2026-00472 · Opened 05 May 2026 · Agent: Ali K.</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;color:#64748b">SLA Response:</div>
+        <div style="font-size:16px;font-weight:800;color:#f59e0b" id="dispute-timer">3:22 remaining</div>
+      </div>
+    </div>
+
+    <div class="escrow-banner" style="margin-bottom:20px">
+      <span class="icon">🔒</span>
+      <div><div class="text">17.82 USDT Safely Locked in Escrow</div><div class="sub">Funds are protected and cannot be moved until dispute is resolved</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:#f8fafc;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Trade Summary</div>
+        <div style="font-size:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Type</span><span class="badge badge-blue">BUY USDT</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Amount</span><strong>17.82 USDT</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Paid</span><strong>5,000 PKR</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Method</span><span class="pay-pill jcash">JazzCash</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Seller</span><strong>CryptoKing</strong></div>
+        </div>
+      </div>
+      <div style="background:#f8fafc;border-radius:12px;padding:16px">
+        <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Dispute Details</div>
+        <div style="font-size:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Opened by</span><strong>You (Buyer)</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Reason</span><strong>Not released</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Agent</span><strong>Ali K.</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Status</span><span class="badge badge-yellow">Reviewing</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">Your Evidence</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer" onclick="alert('Viewing payment_proof.jpg')">
+          <span>📸</span><span>payment_proof.jpg</span>
+        </div>
+        <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <span>💬</span><span>chat_screenshot.jpg</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="alert('File picker would open')">+ Add More</button>
+      </div>
+    </div>
+
+    <!-- Dispute Chat -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">Communication with Support</div>
+      <div style="background:#f8fafc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:160px">
+        <div><div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Support Agent · 3:45 PM</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:14px;display:inline-block;max-width:80%">Thank you for opening this dispute. We're reviewing your evidence. Could you please provide the JazzCash transaction ID?</div></div>
+        <div style="text-align:right"><div style="font-size:12px;color:#94a3b8;margin-bottom:4px">You · 3:47 PM</div>
+        <div style="background:#2563eb;color:white;border-radius:10px;padding:10px 14px;font-size:14px;display:inline-block;max-width:80%">Transaction ID: JZ2026050500834</div></div>
+        <div><div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Support Agent · 3:52 PM</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:14px;display:inline-block;max-width:80%">Thank you! We've noted the transaction ID and are verifying with JazzCash records. Please allow up to 2 hours for verification.</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input class="form-input" id="dispute-msg" type="text" placeholder="Type a message to support..." style="flex:1" onkeydown="if(event.key==='Enter')sendDisputeMsg()">
+        <button class="btn btn-primary btn-sm" onclick="sendDisputeMsg()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESOLVED DISPUTE -->
+  <div style="font-size:16px;font-weight:800;margin-bottom:14px;color:#64748b">Past Disputes</div>
+  <div class="card" style="border-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#ffffff)">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:16px;font-weight:800">Dispute #DIS-2026-00044</span>
+            <span class="badge badge-green">✅ Resolved — In Your Favor</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Trade #PKS-2026-00310 · 10 Apr 2026 · Resolved in 2h 14min</div>
+          <div style="font-size:13px;color:#10b981;margin-top:4px;font-weight:600">Decision: 22.50 USDT released to your wallet</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="alert('Viewing archived dispute')">View Details</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let dt = 3*60+22;
+setInterval(()=>{
+  if(dt>0){dt--;const m=Math.floor(dt/60);const s=dt%60;document.getElementById('dispute-timer').textContent=m+':'+(s<10?'0':'')+s+' remaining';}
+},1000);
+function sendDisputeMsg(){
+  const inp=document.getElementById('dispute-msg');
+  if(!inp.value.trim())return;
+  alert('Message sent to support: "'+inp.value+'"');
+  inp.value='';
+}
+</script>
+</body>
+</html>

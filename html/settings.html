@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.settings-nav { display:flex; flex-direction:column; gap:2px; }
+.settings-nav a { padding:10px 14px; border-radius:10px; font-size:14px; font-weight:500; color:#374151; cursor:pointer; display:flex; align-items:center; gap:10px; text-decoration:none; }
+.settings-nav a:hover { background:#f1f5f9; }
+.settings-nav a.active { background:#eff6ff; color:#1d4ed8; font-weight:600; }
+.session-row { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1.5px solid #e2e8f0; border-radius:12px; margin-bottom:8px; flex-wrap:wrap; gap:10px; }
+.session-row.current { border-color:#10b981; background:#f0fdf4; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="settings.html" class="active">Settings</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <h1 style="font-size:26px;font-weight:800;margin-bottom:24px">Account Settings</h1>
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start">
+    <!-- SIDEBAR NAV -->
+    <div class="card" style="padding:12px">
+      <div class="settings-nav">
+        <a href="#" class="active" onclick="showTab('security',this)"><span>🔒</span> Security</a>
+        <a href="#" onclick="showTab('profile',this)"><span>👤</span> Profile</a>
+        <a href="#" onclick="showTab('notifications',this)"><span>🔔</span> Notifications</a>
+        <a href="#" onclick="showTab('sessions',this)"><span>💻</span> Sessions</a>
+        <a href="#" onclick="showTab('kyc-limits',this)"><span>📊</span> KYC & Limits</a>
+        <div class="divider"></div>
+        <a href="payment-methods.html"><span>💳</span> Payment Methods</a>
+        <a href="referral.html"><span>🎁</span> Referral</a>
+        <div class="divider"></div>
+        <a href="#" style="color:#ef4444" onclick="if(confirm('Log out?'))window.location.href='login.html'"><span>🚪</span> Log Out</a>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div>
+      <!-- SECURITY TAB -->
+      <div id="tab-security">
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <div><div style="font-size:17px;font-weight:800">Password</div><div style="font-size:13px;color:#64748b;margin-top:2px">Last changed: 01 April 2026</div></div>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('change-pwd').style.display=document.getElementById('change-pwd').style.display==='none'?'block':'none'">Change Password</button>
+          </div>
+          <div id="change-pwd" style="display:none;border-top:1px solid #f1f5f9;padding-top:16px">
+            <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" placeholder="Enter current password" style="margin-top:6px"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" placeholder="Min 8 characters" style="margin-top:6px"></div>
+            <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" placeholder="Re-enter new password" style="margin-top:6px"></div>
+            <button class="btn btn-primary" onclick="alert('Password changed successfully!')">Update Password</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px"><div style="font-size:17px;font-weight:800">Two-Factor Authentication</div><span class="badge badge-green">🟢 Enabled</span></div>
+              <div style="font-size:13px;color:#64748b;margin-top:4px">Google Authenticator · Enabled 15 March 2026</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="alert('Showing backup codes:\n1. 8x4k-2p9m\n2. 7j3n-5q1r\n3. 9z2w-4s8t\n(Keep these safe!)')">View Backup Codes</button>
+            <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="if(confirm('Disable 2FA? This reduces your account security.'))alert('2FA disabled. Re-enable immediately!')">Disable 2FA</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:17px;font-weight:800;margin-bottom:4px">Anti-Phishing Code</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:14px">This code appears in all genuine PakSwap emails. If it's missing, the email is fake.</div>
+          <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #93c5fd;border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Your Code</div>
+              <div style="font-size:24px;font-weight:900;letter-spacing:3px;color:#1d4ed8;font-family:monospace">PAKSWAP-4721</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="alert('Anti-phishing code updated!')">Change Code</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:17px;font-weight:800;margin-bottom:4px">Login Notifications</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px">Get alerted when someone accesses your account</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Email on new device login</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">SMS on new device login</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Email on password change</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Email on withdrawal</span><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:#ef4444">
+          <div style="font-size:17px;font-weight:800;color:#dc2626;margin-bottom:4px">🔴 Danger Zone</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px">These actions are irreversible. Proceed with caution.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" style="color:#f59e0b" onclick="if(confirm('Deactivate your account? You can reactivate later.'))alert('Account deactivated.')">Deactivate Account</button>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('DELETE your account permanently? ALL data will be lost.'))alert('Please contact support to delete your account.')">Delete Account</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div id="tab-profile" style="display:none">
+        <div class="card">
+          <div style="font-size:17px;font-weight:800;margin-bottom:20px">Profile Information</div>
+          <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px">
+            <div style="position:relative">
+              <div class="merchant-avatar" style="width:72px;height:72px;font-size:28px">U</div>
+              <button style="position:absolute;bottom:-4px;right:-4px;background:#2563eb;border:2px solid white;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px;color:white" onclick="alert('Photo upload opens')">+</button>
+            </div>
+            <div><div style="font-size:18px;font-weight:800">Muhammad Usman</div><div class="badge badge-green" style="margin-top:4px">✓ Full KYC Verified</div></div>
+          </div>
+          <div class="form-group"><label class="form-label">Display Name</label><input class="form-input" value="Muhammad Usman" style="margin-top:6px"></div>
+          <div class="form-group"><label class="form-label">Username</label><input class="form-input" value="@m.usman" style="margin-top:6px"></div>
+          <div class="form-group"><label class="form-label">Email Address <span class="badge badge-green" style="font-size:10px">Verified</span></label><input class="form-input" value="m.usman@gmail.com" style="margin-top:6px"></div>
+          <div class="form-group"><label class="form-label">Phone Number <span class="badge badge-green" style="font-size:10px">Verified</span></label><input class="form-input" value="0312-4567890" style="margin-top:6px" readonly style="background:#f8fafc"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group"><label class="form-label">Language</label><select class="form-input form-select" style="margin-top:6px"><option>English</option><option>اردو</option></select></div>
+            <div class="form-group"><label class="form-label">Timezone</label><select class="form-input form-select" style="margin-top:6px"><option>PKT (UTC+5)</option><option>UTC+0</option></select></div>
+          </div>
+          <button class="btn btn-primary" onclick="alert('Profile updated successfully!')">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS TAB -->
+      <div id="tab-notifications" style="display:none">
+        <div class="card">
+          <div style="font-size:17px;font-weight:800;margin-bottom:20px">Notification Preferences</div>
+          <div style="font-size:14px;font-weight:700;color:#64748b;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;font-size:12px">Email Notifications</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9"><div><div style="font-size:14px;font-weight:600">Trade Started / Completed</div><div style="font-size:12px;color:#64748b">Get notified when a trade begins or ends</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9"><div><div style="font-size:14px;font-weight:600">Dispute Updates</div><div style="font-size:12px;color:#64748b">Dispute opened, agent response, resolved</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9"><div><div style="font-size:14px;font-weight:600">KYC Approved / Rejected</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0"><div><div style="font-size:14px;font-weight:600">Marketing & Promotions</div><div style="font-size:12px;color:#64748b">Tips, offers, market updates</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">SMS Notifications</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9"><div><div style="font-size:14px;font-weight:600">New Incoming Trade</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0"><div><div style="font-size:14px;font-weight:600">Buyer Confirmed Payment (as seller)</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-primary" onclick="alert('Preferences saved!')">Save Preferences</button>
+        </div>
+      </div>
+
+      <!-- SESSIONS TAB -->
+      <div id="tab-sessions" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+            <div style="font-size:17px;font-weight:800">Active Sessions</div>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Terminate all other sessions?'))alert('All other sessions terminated.')">Terminate All Others</button>
+          </div>
+          <div class="session-row current">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:28px">💻</div>
+              <div><div style="font-weight:700;font-size:14px">Chrome on Windows — Current Session</div><div style="font-size:12px;color:#64748b">Lahore, Pakistan · 05 May 2026, 2:30 PM</div><div style="font-size:12px;color:#10b981;margin-top:2px">✓ Your current session</div></div>
+            </div>
+          </div>
+          <div class="session-row">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:28px">📱</div>
+              <div><div style="font-weight:700;font-size:14px">iPhone 14 — Safari</div><div style="font-size:12px;color:#64748b">Karachi, Pakistan · 03 May 2026, 11:20 AM</div><div style="font-size:12px;color:#f59e0b;margin-top:2px">⚠️ Last active 2 days ago</div></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="alert('Session terminated')">Terminate</button>
+          </div>
+          <div class="session-row">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:28px">📱</div>
+              <div><div style="font-weight:700;font-size:14px">Android App</div><div style="font-size:12px;color:#64748b">Islamabad, Pakistan · 01 May 2026, 9:15 AM</div></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="alert('Session terminated')">Terminate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KYC & LIMITS TAB -->
+      <div id="tab-kyc-limits" style="display:none">
+        <div class="card">
+          <div style="font-size:17px;font-weight:800;margin-bottom:20px">KYC Level & Trading Limits</div>
+          <div style="background:linear-gradient(135deg,#d1fae5,#ecfdf5);border:1.5px solid #6ee7b7;border-radius:14px;padding:20px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="font-size:32px">🏆</div>
+              <div><div style="font-size:20px;font-weight:900;color:#065f46">Full KYC Verified</div><div style="font-size:13px;color:#10b981">Highest trading limits unlocked</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:white;border-radius:10px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:900;color:#1d4ed8">500,000 PKR</div><div style="font-size:12px;color:#64748b">Daily Buy Limit</div></div>
+              <div style="background:white;border-radius:10px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:900;color:#10b981">500,000 PKR</div><div style="font-size:12px;color:#64748b">Daily Sell Limit</div></div>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:12px">Today's Usage</div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Buy Used: 17,820 PKR</span><span style="color:#64748b">of 500,000 PKR</span></div>
+            <div style="background:#e2e8f0;border-radius:4px;height:8px"><div style="width:3.6%;background:#2563eb;height:100%;border-radius:4px"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Sell Used: 0 PKR</span><span style="color:#64748b">of 500,000 PKR</span></div>
+            <div style="background:#e2e8f0;border-radius:4px;height:8px"><div style="width:0%;background:#10b981;height:100%;border-radius:4px"></div></div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:8px">Limits reset daily at 12:00 AM PKT</div>
+          <div class="divider"></div>
+          <a href="kyc.html"><button class="btn btn-secondary btn-sm">View KYC Status →</button></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name, link) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.style.display='none');
+  document.getElementById('tab-'+name).style.display='block';
+  document.querySelectorAll('.settings-nav a').forEach(a=>a.classList.remove('active'));
+  if(link) link.classList.add('active');
+}
+</script>
+</body>
+</html>

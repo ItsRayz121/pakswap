@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Referral Program — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.ref-hero { background:linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6); border-radius:20px; padding:40px; color:white; text-align:center; margin-bottom:28px; }
+.ref-step { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:20px; text-align:center; }
+.earn-row { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #f1f5f9; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="referral.html" class="active">Referral</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:900px">
+  <!-- HERO -->
+  <div class="ref-hero">
+    <div style="font-size:56px;margin-bottom:16px">🎁</div>
+    <h1 style="font-size:36px;font-weight:900;margin-bottom:8px">Refer Friends & Earn PKR</h1>
+    <p style="font-size:16px;color:#93c5fd;margin-bottom:28px">Share your link. Both you and your friend earn <strong style="color:white">500 PKR bonus</strong> after their first trade!</p>
+    <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,0.2);border-radius:14px;padding:20px;max-width:500px;margin:0 auto">
+      <div style="font-size:12px;color:#93c5fd;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Your Referral Code</div>
+      <div style="font-size:28px;font-weight:900;letter-spacing:3px;margin-bottom:16px" id="ref-code">PAKSWAP-USM42</div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 14px;font-size:13px;color:#bfdbfe;margin-bottom:14px;word-break:break-all;font-family:monospace">pakswap.pk/r/USM42</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <button class="btn btn-sm" style="background:white;color:#1d4ed8;border-radius:8px" onclick="copyRef()">📋 Copy Link</button>
+        <button class="btn btn-sm" style="background:#25d366;color:white;border-radius:8px" onclick="shareWA()">💬 WhatsApp</button>
+        <button class="btn btn-sm" style="background:#0088cc;color:white;border-radius:8px" onclick="shareTG()">✈️ Telegram</button>
+        <button class="btn btn-sm" style="background:#1877f2;color:white;border-radius:8px" onclick="shareFB()">📘 Facebook</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div style="margin-bottom:28px">
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:16px">How It Works</h2>
+    <div class="three-col">
+      <div class="ref-step">
+        <div style="font-size:40px;margin-bottom:10px">🔗</div>
+        <div style="font-weight:800;font-size:15px;margin-bottom:6px">1. Share Your Link</div>
+        <div style="font-size:13px;color:#64748b;line-height:1.6">Share your unique referral link or code with friends, family, or social media.</div>
+      </div>
+      <div class="ref-step" style="border-color:#bfdbfe;background:#f0f9ff">
+        <div style="font-size:40px;margin-bottom:10px">👤</div>
+        <div style="font-weight:800;font-size:15px;margin-bottom:6px">2. Friend Registers</div>
+        <div style="font-size:13px;color:#64748b;line-height:1.6">Your friend signs up using your code and completes KYC verification.</div>
+      </div>
+      <div class="ref-step">
+        <div style="font-size:40px;margin-bottom:10px">💰</div>
+        <div style="font-weight:800;font-size:15px;margin-bottom:6px">3. Both Earn Bonus</div>
+        <div style="font-size:13px;color:#64748b;line-height:1.6">After their first completed trade, you both earn 500 PKR credited to your wallet!</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start">
+    <div>
+      <!-- EARNINGS SUMMARY -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">Your Earnings Summary</div>
+        <div class="four-col" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+          <div style="background:#f0f9ff;border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:900;color:#1d4ed8">12</div>
+            <div style="font-size:12px;color:#64748b">Total Referred</div>
+          </div>
+          <div style="background:#f0fdf4;border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:900;color:#10b981">8</div>
+            <div style="font-size:12px;color:#64748b">Traded</div>
+          </div>
+          <div style="background:#fffbeb;border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:900;color:#d97706">4,000</div>
+            <div style="font-size:12px;color:#64748b">PKR Earned</div>
+          </div>
+          <div style="background:#fef2f2;border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:900;color:#ef4444">2,000</div>
+            <div style="font-size:12px;color:#64748b">PKR Pending</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-success" onclick="alert('Withdrawal initiated: 4,000 PKR → Wallet')">💰 Withdraw 4,000 PKR to Wallet</button>
+          <button class="btn btn-secondary">📊 View History</button>
+        </div>
+      </div>
+
+      <!-- REFERRED USERS -->
+      <div class="card">
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px">Referred Users</div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>User</th><th>Joined</th><th>Status</th><th>Reward</th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="merchant-avatar" style="width:28px;height:28px;font-size:11px">A</div>Asim K***</div></td><td>01 May 2026</td><td><span class="badge badge-green">✅ Traded</span></td><td style="font-weight:700;color:#10b981">+500 PKR</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="merchant-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#059669,#34d399)">R</div>Raza M***</div></td><td>03 May 2026</td><td><span class="badge badge-yellow">⏳ Pending Trade</span></td><td style="color:#94a3b8">Pending</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="merchant-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#7c3aed,#a78bfa)">F</div>Fatima K***</div></td><td>29 Apr 2026</td><td><span class="badge badge-green">✅ Traded</span></td><td style="font-weight:700;color:#10b981">+500 PKR</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="merchant-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#dc2626,#f87171)">H</div>Hassan T***</div></td><td>25 Apr 2026</td><td><span class="badge badge-green">✅ Traded</span></td><td style="font-weight:700;color:#10b981">+500 PKR</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="merchant-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#0284c7,#38bdf8)">Z</div>Zara N***</div></td><td>20 Apr 2026</td><td><span class="badge badge-green">✅ Traded</span></td><td style="font-weight:700;color:#10b981">+500 PKR</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:13px;color:#64748b">Showing 5 of 12 referrals</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:white;border:none">
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px">Reward Structure</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:12px">
+            <div style="font-size:12px;color:#93c5fd;font-weight:600;margin-bottom:4px">YOU EARN</div>
+            <div style="font-size:22px;font-weight:900">500 PKR</div>
+            <div style="font-size:12px;color:#bfdbfe">Per referral who completes first trade</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:12px">
+            <div style="font-size:12px;color:#93c5fd;font-weight:600;margin-bottom:4px">FRIEND EARNS</div>
+            <div style="font-size:22px;font-weight:900">500 PKR</div>
+            <div style="font-size:12px;color:#bfdbfe">Bonus on their first trade</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px;font-size:13px;color:#93c5fd">
+            💡 Paid as USDT to your wallet after 7-day holding period
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px">Leaderboard 🏆</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:12px">Top referrers this month</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#fef3c7;border-radius:8px">
+            <span style="font-size:18px">🥇</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">CryptoGuru</div><div style="font-size:11px;color:#64748b">34 referrals</div></div>
+            <strong style="color:#d97706">17,000 PKR</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f1f5f9;border-radius:8px">
+            <span style="font-size:18px">🥈</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">TradeMaster</div><div style="font-size:11px;color:#64748b">28 referrals</div></div>
+            <strong style="color:#64748b">14,000 PKR</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#fef9f0;border-radius:8px">
+            <span style="font-size:18px">🥉</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">PKR_King</div><div style="font-size:11px;color:#64748b">19 referrals</div></div>
+            <strong style="color:#9a3412">9,500 PKR</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1.5px solid #2563eb;background:#eff6ff">
+            <span style="font-size:18px">4️⃣</span>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">Muhammad U. (You)</div><div style="font-size:11px;color:#64748b">12 referrals</div></div>
+            <strong style="color:#2563eb">6,000 PKR</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info" style="font-size:13px">
+        📅 Rewards paid 7 days after referral completes first trade. Minimum 1 completed trade required.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyRef(){
+  navigator.clipboard.writeText('https://pakswap.pk/r/USM42').catch(()=>{});
+  alert('✅ Referral link copied!\npakswap.pk/r/USM42');
+}
+function shareWA(){ alert('Opening WhatsApp share...\nMessage: "Join PakSwap and earn 500 PKR bonus on your first crypto trade! Use my link: pakswap.pk/r/USM42"'); }
+function shareTG(){ alert('Opening Telegram share...'); }
+function shareFB(){ alert('Opening Facebook share...'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Status — IBO-2026-004521 — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.status-layout { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
+.status-hero { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 32px; margin-bottom: 24px; text-align: center; }
+.status-icon { font-size: 64px; margin-bottom: 16px; }
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-item { display: flex; gap: 16px; }
+.timeline-left { display: flex; flex-direction: column; align-items: center; }
+.timeline-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border: 2px solid #e2e8f0; }
+.timeline-dot.done { background: #059669; border-color: #059669; color: white; }
+.timeline-dot.active { background: #2563eb; border-color: #2563eb; color: white; animation: pulse-dot 1.5s infinite; }
+.timeline-dot.pending { background: #f1f5f9; color: #94a3b8; }
+@keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0.4)} 50%{box-shadow:0 0 0 8px rgba(37,99,235,0)} }
+.timeline-line { width: 2px; flex: 1; min-height: 32px; margin: 4px 0; }
+.timeline-line.done { background: #059669; }
+.timeline-line.pending { background: #e2e8f0; }
+.timeline-content { padding-bottom: 28px; flex: 1; }
+.timeline-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.timeline-sub { font-size: 13px; color: #64748b; }
+.timeline-time { font-size: 12px; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+.order-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.od-item { background: #f8fafc; border-radius: 12px; padding: 14px; }
+.od-label { font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.od-value { font-size: 14px; font-weight: 700; color: #1e293b; }
+.ai-check-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 20px; }
+.ai-check-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+.ai-check-row:last-child { border-bottom: none; }
+.ai-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ai-icon.pass { background: #d1fae5; }
+.ai-icon.fail { background: #fee2e2; }
+.ai-icon.check { background: #eff6ff; }
+.confidence-bar { height: 6px; background: #e2e8f0; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+.confidence-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #059669); border-radius: 3px; transition: width 1s; }
+.completed-banner { background: linear-gradient(135deg, #059669, #10b981); border-radius: 16px; padding: 24px; color: white; margin-bottom: 20px; text-align: center; }
+.tx-hash { background: #1e293b; border-radius: 10px; padding: 12px 16px; font-family: monospace; font-size: 13px; color: #e2e8f0; word-break: break-all; margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="instant-buy.html" class="navbar-logo" style="font-size:16px;color:#64748b;font-weight:500">← Instant Buy</a>
+  <div style="margin:0 auto;font-size:14px;font-weight:700;color:#1e293b">Order #IBO-2026-004521</div>
+  <div class="navbar-right">
+    <a href="instant-buy-history.html" class="btn btn-secondary btn-sm">View History</a>
+  </div>
+</nav>
+
+<div class="status-layout">
+
+  <!-- STATE 1: Verifying — uncomment the state you want to show -->
+
+  <!-- === STATE: VERIFYING === -->
+  <div class="status-hero" id="state-verifying">
+    <div class="status-icon">🤖</div>
+    <h2 style="font-size:24px;font-weight:800;margin-bottom:8px">Verifying Your Payment</h2>
+    <p style="color:#64748b;font-size:15px;max-width:400px;margin:0 auto 20px">Our AI is checking your payment screenshot. This usually takes 2–5 minutes.</p>
+    <div style="display:inline-flex;align-items:center;gap:10px;background:#eff6ff;border-radius:10px;padding:12px 20px">
+      <div style="width:12px;height:12px;border-radius:50%;background:#2563eb;animation:pulse-dot 1s infinite"></div>
+      <span style="font-size:14px;font-weight:600;color:#1d4ed8">AI Verification in Progress...</span>
+    </div>
+  </div>
+
+  <!-- === STATE: COMPLETED (hidden by default — toggle via JS) === -->
+  <div id="state-completed" style="display:none">
+    <div class="completed-banner">
+      <div style="font-size:56px;margin-bottom:12px">🎉</div>
+      <h2 style="font-size:26px;font-weight:900;margin-bottom:8px">0.2348 SOL Sent!</h2>
+      <p style="opacity:0.9;font-size:15px">Your Solana has been sent to your wallet successfully</p>
+      <div class="tx-hash">
+        <span style="color:#94a3b8;font-size:11px;white-space:nowrap">TX HASH</span>
+        <span style="flex:1">4xKpZHjR2mN8vQwL9sT3uF5bYcDeXaGkPo7WiEs83Hs</span>
+        <button class="copy-btn" style="background:#334155;border-color:#475569;color:#e2e8f0;flex-shrink:0">Copy</button>
+        <a href="#" style="color:#60a5fa;font-size:12px;flex-shrink:0">Explorer →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card" style="margin-bottom:20px;padding:24px">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:20px">Order Timeline</h3>
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot done">✓</div>
+          <div class="timeline-line done"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Order Created</div>
+          <div class="timeline-sub">Quote locked • 0.2348 SOL for 10,135 PKR</div>
+          <div class="timeline-time">Today, 14:23:08</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot done">✓</div>
+          <div class="timeline-line done"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Payment Uploaded</div>
+          <div class="timeline-sub">JazzCash screenshot submitted</div>
+          <div class="timeline-time">Today, 14:31:45</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot active">🤖</div>
+          <div class="timeline-line pending"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">AI Verifying Payment</div>
+          <div class="timeline-sub">Checking amount, sender name, timestamp...</div>
+          <div class="timeline-time">In progress...</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot pending">4</div>
+          <div class="timeline-line pending"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Admin Human Review <span style="font-size:11px;background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:700">Layer 2</span></div>
+          <div class="timeline-sub">Mandatory admin verification before release</div>
+          <div class="timeline-time">Pending (SLA: 30 min)</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot pending">5</div>
+          <div class="timeline-line pending"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Token Release</div>
+          <div class="timeline-sub">SOL will be sent to your wallet</div>
+          <div class="timeline-time">Pending</div>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-left">
+          <div class="timeline-dot pending">6</div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">Completed</div>
+          <div class="timeline-sub">SOL confirmed in your wallet</div>
+          <div class="timeline-time">Pending</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Two-Layer Verification Panel -->
+  <div class="two-layer-box" style="margin-bottom:20px">
+    <div class="two-layer-header">
+      🔐 Mandatory Two-Layer Payment Verification
+      <span class="mandatory-tag" style="margin-left:auto">BOTH LAYERS REQUIRED</span>
+    </div>
+
+    <!-- Layer 1: AI -->
+    <div class="layer-ai">
+      <div class="layer-ai-header">
+        <div class="layer-num" style="background:#2563eb;color:white">1</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a5f">Layer 1 — AI Payment Scan</div>
+          <div style="font-size:12px;color:#3b82f6">Automated OCR + manipulation analysis</div>
+        </div>
+        <span class="ls-running" style="margin-left:auto">⚙️ Running</span>
+      </div>
+      <div style="padding:14px 18px">
+        <div class="layer-ai-check">
+          <span class="chk-pass">✓</span>
+          <span style="flex:1;font-weight:600">Amount Match</span>
+          <span style="color:#64748b;font-size:12px">PKR 10,135 detected → matches order</span>
+          <span class="badge badge-green" style="margin-left:8px">PASS</span>
+        </div>
+        <div class="layer-ai-check">
+          <span class="chk-pass">✓</span>
+          <span style="flex:1;font-weight:600">Recipient Name</span>
+          <span style="color:#64748b;font-size:12px">"PakSwap Pvt Ltd" → verified</span>
+          <span class="badge badge-green" style="margin-left:8px">PASS</span>
+        </div>
+        <div class="layer-ai-check">
+          <span class="chk-pass">✓</span>
+          <span style="flex:1;font-weight:600">Sender Name</span>
+          <span style="color:#64748b;font-size:12px">"Muhammad Usman" → matches KYC</span>
+          <span class="badge badge-green" style="margin-left:8px">PASS</span>
+        </div>
+        <div class="layer-ai-check">
+          <span class="chk-pass">✓</span>
+          <span style="flex:1;font-weight:600">Timestamp Valid</span>
+          <span style="color:#64748b;font-size:12px">14:29 within 10-min order window</span>
+          <span class="badge badge-green" style="margin-left:8px">PASS</span>
+        </div>
+        <div class="layer-ai-check" style="border-bottom:none">
+          <span class="chk-run">↻</span>
+          <span style="flex:1;font-weight:600">Manipulation Detection</span>
+          <span style="color:#64748b;font-size:12px">Analyzing pixel metadata...</span>
+          <span class="badge badge-yellow" style="margin-left:8px">CHECKING</span>
+        </div>
+        <div class="layer-confidence">
+          <span style="font-size:13px;color:#64748b;white-space:nowrap">AI Confidence</span>
+          <div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+            <div class="fill-high" style="width:87%;height:100%;border-radius:4px"></div>
+          </div>
+          <span style="font-size:14px;font-weight:800;color:#2563eb;white-space:nowrap">87%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layer 2: Human Admin Review -->
+    <div>
+      <div class="layer-ai-header layer-human-header">
+        <div class="layer-num" style="background:#d97706;color:white">2</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#78350f">Layer 2 — Admin Human Review</div>
+          <div style="font-size:12px;color:#d97706">Mandatory final check before SOL release</div>
+        </div>
+        <span class="ls-pending" style="margin-left:auto">⏳ Awaiting Layer 1</span>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fffbeb;border-radius:10px;margin-bottom:12px;font-size:13px;color:#92400e">
+          <span style="font-size:18px">⚠️</span>
+          <span>Token release is <strong>blocked</strong> until a PakSwap admin completes Layer 2 review — regardless of AI confidence score.</span>
+        </div>
+        <div style="font-size:13px;color:#78350f;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px"><span>👤</span> Assigned to next available admin (SLA: 30 min)</div>
+          <div style="display:flex;align-items:center;gap:8px"><span>🔍</span> Admin manually verifies payment before releasing token — applies to all orders, all payment methods</div>
+          <div style="display:flex;align-items:center;gap:8px"><span>📲</span> You will be notified via SMS + app when admin approves</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Details -->
+  <div class="card" style="margin-bottom:20px;padding:20px">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:14px">Order Details</h3>
+    <div class="order-detail-grid">
+      <div class="od-item">
+        <div class="od-label">Order ID</div>
+        <div class="od-value" style="font-family:monospace;font-size:13px">IBO-2026-004521</div>
+      </div>
+      <div class="od-item">
+        <div class="od-label">Token</div>
+        <div class="od-value">🟣 SOL (Solana)</div>
+      </div>
+      <div class="od-item">
+        <div class="od-label">You Receive</div>
+        <div class="od-value" style="color:#059669">0.2348 SOL</div>
+      </div>
+      <div class="od-item">
+        <div class="od-label">You Paid</div>
+        <div class="od-value">10,135 PKR</div>
+      </div>
+      <div class="od-item">
+        <div class="od-label">Rate</div>
+        <div class="od-value" style="font-size:13px">PKR 43,150 / SOL</div>
+      </div>
+      <div class="od-item">
+        <div class="od-label">Provider</div>
+        <div class="od-value">PakSwap Official</div>
+      </div>
+      <div class="od-item" style="grid-column:span 2">
+        <div class="od-label">Destination Wallet</div>
+        <div class="od-value" style="font-family:monospace;font-size:12px;word-break:break-all">7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="instant-buy-history.html" class="btn btn-secondary">View Order History</a>
+    <a href="instant-buy.html" class="btn btn-primary">Buy More Crypto</a>
+  </div>
+
+</div>
+
+<script>
+// Demo: simulate completion after 4 seconds
+setTimeout(() => {
+  document.getElementById('state-verifying').style.display = 'none';
+  document.getElementById('state-completed').style.display = 'block';
+  // Update timeline dots
+  const dots = document.querySelectorAll('.timeline-dot');
+  dots.forEach((d,i)=>{ if(i<=3){ d.classList.remove('pending','active'); d.classList.add('done'); d.textContent='✓'; } });
+  const lines = document.querySelectorAll('.timeline-line');
+  lines.forEach(l=>{ l.classList.remove('pending'); l.classList.add('done'); });
+}, 4000);
+</script>
+</body>
+</html>

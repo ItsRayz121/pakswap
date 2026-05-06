@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buy SOL — Instant Buy — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.ib-layout { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+.order-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 28px; position: sticky; top: 80px; }
+.token-header { display: flex; align-items: center; gap: 16px; padding: 20px 24px; background: white; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+.token-header .logo { width: 56px; height: 56px; border-radius: 50%; background: #f0fdf4; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.amount-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-bottom: 16px; }
+.amount-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 16px; }
+.amount-box.active { border-color: #2563eb; background: #eff6ff; }
+.amount-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 8px; }
+.amount-input { width: 100%; border: none; background: transparent; font-size: 22px; font-weight: 800; color: #1e293b; outline: none; }
+.amount-currency { font-size: 13px; font-weight: 600; color: #64748b; margin-top: 4px; }
+.swap-icon { width: 36px; height: 36px; background: white; border: 1.5px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 16px; transition: all 0.2s; }
+.swap-icon:hover { border-color: #2563eb; color: #2563eb; }
+.quote-box { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.quote-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 5px 0; }
+.quote-row .label { color: #64748b; }
+.quote-row .value { font-weight: 600; color: #1e293b; }
+.quote-total { font-size: 15px; font-weight: 700; color: #1e293b; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-top: 8px; }
+.quote-timer { display: flex; align-items: center; gap: 8px; background: #fef3c7; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 16px; }
+.address-input-wrap { position: relative; }
+.address-input-wrap input { padding-right: 44px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.addr-valid { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+.addr-hint { font-size: 12px; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.addr-warning { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px; font-size: 13px; color: #dc2626; margin-top: 10px; display: flex; gap: 8px; }
+.network-tag { display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: #1d4ed8; margin-bottom: 10px; }
+.pay-method-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.pay-method-btn { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.15s; }
+.pay-method-btn:hover, .pay-method-btn.active { border-color: #2563eb; background: #eff6ff; }
+.pay-method-btn .icon { font-size: 22px; margin-bottom: 6px; }
+.pay-method-btn .name { font-size: 12px; font-weight: 600; color: #374151; }
+.provider-select { border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+.provider-select:hover { border-color: #2563eb; }
+.provider-select .rating { color: #f59e0b; font-size: 13px; }
+.info-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 16px; }
+@media(max-width:768px){ .ib-layout { grid-template-columns: 1fr; } .order-card { position: static; } .amount-row { grid-template-columns: 1fr; } .swap-icon { transform: rotate(90deg); margin: 0 auto; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="instant-buy.html" class="navbar-logo" style="font-size:16px;color:#64748b;font-weight:500">← Back to Instant Buy</a>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="ib-layout">
+
+  <!-- LEFT: Token Info + Details -->
+  <div>
+
+    <!-- Token Header -->
+    <div class="token-header">
+      <div class="logo">🟣</div>
+      <div style="flex:1">
+        <div style="font-size:22px;font-weight:800">Solana <span style="color:#64748b;font-size:16px;font-weight:500">SOL</span></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+          <span style="font-size:15px;font-weight:600">PKR 41,850</span>
+          <span class="badge badge-red" style="font-size:12px">↓ 0.6% today</span>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:#64748b">Oracle price</div>
+        <div style="font-size:13px;font-weight:600;color:#1e293b;margin-top:2px">$149.10 USDT</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">Binance · CoinGecko · CMC</div>
+      </div>
+    </div>
+
+    <!-- Network Info -->
+    <div class="info-card">
+      <h4 style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        🌐 Network &amp; Wallet Info
+      </h4>
+      <div class="network-tag">🔵 Solana Network (Mainnet)</div>
+      <div style="font-size:14px;color:#374151;margin-bottom:12px;line-height:1.6">
+        Your SOL will be sent to a <strong>Solana wallet address</strong>. Make sure you provide the correct address — transactions cannot be reversed.
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;font-size:13px;color:#92400e;margin-bottom:12px">
+        ⚠️ <strong>Do NOT enter a BNB (0x...) or TON (EQ...) address.</strong> Only Solana addresses are accepted here.
+      </div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">Supported Wallets</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pay-pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Phantom</span>
+        <span class="pay-pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Solflare</span>
+        <span class="pay-pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Backpack</span>
+        <span class="pay-pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Exodus</span>
+        <span class="pay-pill">Any Solana Wallet</span>
+      </div>
+    </div>
+
+    <!-- What happens next -->
+    <div class="info-card">
+      <h4 style="font-size:15px;font-weight:700;margin-bottom:14px">📋 What Happens After You Order</h4>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#2563eb;flex-shrink:0">1</div>
+          <div>
+            <div style="font-size:14px;font-weight:600">Send payment + upload proof</div>
+            <div style="font-size:13px;color:#64748b;margin-top:2px">Pay via JazzCash, Easypaisa, or bank. Screenshot required.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#2563eb;flex-shrink:0">2</div>
+          <div>
+            <div style="font-size:14px;font-weight:600">AI verification (2–5 min)</div>
+            <div style="font-size:13px;color:#64748b;margin-top:2px">Our AI checks your screenshot instantly. High confidence = auto-approved.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#059669;flex-shrink:0">3</div>
+          <div>
+            <div style="font-size:14px;font-weight:600">SOL arrives in your wallet</div>
+            <div style="font-size:13px;color:#64748b;margin-top:2px">Automatically sent. You'll get SMS + notification with the transaction hash.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Order Form -->
+  <div class="order-card">
+    <h3 style="font-size:18px;font-weight:800;margin-bottom:20px">Create Order</h3>
+
+    <!-- Amount inputs -->
+    <div class="amount-row">
+      <div class="amount-box active">
+        <div class="amount-label">You Pay</div>
+        <input class="amount-input" type="number" value="10000" oninput="calcAmount(this,'pkr')" id="pkr-input">
+        <div class="amount-currency">PKR — Pakistani Rupee</div>
+      </div>
+      <div class="swap-icon" onclick="swapInputFocus()" title="Switch input">⇄</div>
+      <div class="amount-box">
+        <div class="amount-label">You Receive</div>
+        <input class="amount-input" type="number" value="0.2348" oninput="calcAmount(this,'sol')" id="sol-input">
+        <div class="amount-currency">SOL — Solana</div>
+      </div>
+    </div>
+
+    <!-- Quote Box -->
+    <div class="quote-box">
+      <div class="quote-row">
+        <span class="label">Market rate</span>
+        <span class="value">1 SOL = PKR 41,850</span>
+      </div>
+      <div class="quote-row">
+        <span class="label">Platform spread (3%)</span>
+        <span class="value">+ PKR 1,255</span>
+      </div>
+      <div class="quote-row">
+        <span class="label">Network fee</span>
+        <span class="value">≈ PKR 45</span>
+      </div>
+      <div class="quote-row quote-total">
+        <span>Your rate</span>
+        <span style="color:#2563eb">1 SOL = PKR 43,150</span>
+      </div>
+    </div>
+
+    <!-- Quote Timer -->
+    <div class="quote-timer">
+      ⏱️ Quote valid for: <span id="timer" style="font-size:16px">09:58</span>
+    </div>
+
+    <!-- Payment Method -->
+    <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">Pay with</div>
+    <div class="pay-method-grid" style="margin-bottom:16px">
+      <div class="pay-method-btn active" onclick="selectPay(this)">
+        <div class="icon">📱</div>
+        <div class="name">JazzCash</div>
+      </div>
+      <div class="pay-method-btn" onclick="selectPay(this)">
+        <div class="icon">💚</div>
+        <div class="name">Easypaisa</div>
+      </div>
+      <div class="pay-method-btn" onclick="selectPay(this)">
+        <div class="icon">🏦</div>
+        <div class="name">Bank</div>
+      </div>
+    </div>
+
+    <!-- Provider -->
+    <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">Provider</div>
+    <div class="provider-select">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="merchant-avatar" style="width:36px;height:36px;font-size:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8)">P</div>
+        <div>
+          <div style="font-size:14px;font-weight:700">PakSwap Official</div>
+          <div class="rating">★★★★★ <span style="color:#64748b;font-size:12px">99.8% • 12,450 orders</span></div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#64748b">▼</div>
+    </div>
+
+    <!-- Wallet Address -->
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="form-label">Your SOL Wallet Address <span style="color:#ef4444">*</span></label>
+      <div style="font-size:12px;color:#64748b;margin-bottom:6px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 10px">
+        🟢 <strong>Solana format:</strong> Base58, 32–44 characters<br>
+        <span style="font-family:monospace;font-size:11px;color:#15803d">Example: 7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</span>
+      </div>
+      <div class="address-input-wrap">
+        <input class="form-input" id="addr" type="text" placeholder="Enter your Solana wallet address"
+          oninput="validateAddr(this,'sol')" style="font-family:monospace;font-size:13px;padding-right:44px">
+        <span class="addr-valid" id="addr-icon">·</span>
+      </div>
+      <div class="addr-warning" id="addr-error" style="display:none">
+        ⚠️ This does not look like a valid Solana address. Solana addresses are 32–44 characters in Base58 format and do NOT start with "0x" or "EQ".
+      </div>
+    </div>
+
+    <!-- Confirm -->
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px;font-size:12px;color:#dc2626;margin-bottom:16px">
+      ⚠️ <strong>Wrong address = permanent loss of funds.</strong> PakSwap cannot recover tokens sent to wrong addresses. Always verify your address before confirming.
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <input type="checkbox" id="confirm-check" style="width:16px;height:16px;accent-color:#2563eb">
+      <label for="confirm-check" style="font-size:13px;color:#374151;cursor:pointer">I have verified my wallet address and understand it cannot be changed after confirmation</label>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" onclick="location.href='instant-buy-payment.html'">
+      Confirm &amp; Proceed to Payment →
+    </button>
+
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:#94a3b8">
+      By continuing you agree to our Terms of Service
+    </div>
+  </div>
+
+</div>
+
+<script>
+const RATE = 43150;
+function calcAmount(el, from) {
+  if(from === 'pkr') {
+    document.getElementById('sol-input').value = (parseFloat(el.value) / RATE).toFixed(4);
+  } else {
+    document.getElementById('pkr-input').value = Math.round(parseFloat(el.value) * RATE);
+  }
+}
+function selectPay(el) {
+  document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function validateAddr(input, token) {
+  const val = input.value.trim();
+  const icon = document.getElementById('addr-icon');
+  const err = document.getElementById('addr-error');
+  let valid = false;
+  if(token === 'sol') {
+    valid = val.length >= 32 && val.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(val);
+  }
+  icon.textContent = val.length === 0 ? '·' : (valid ? '✅' : '❌');
+  err.style.display = (!valid && val.length > 5) ? 'flex' : 'none';
+}
+// Countdown timer
+let secs = 598;
+setInterval(() => {
+  secs = Math.max(0, secs - 1);
+  const m = Math.floor(secs/60).toString().padStart(2,'0');
+  const s = (secs%60).toString().padStart(2,'0');
+  document.getElementById('timer').textContent = m+':'+s;
+  if(secs < 60) document.getElementById('timer').style.color = '#ef4444';
+}, 1000);
+</script>
+</body>
+</html>

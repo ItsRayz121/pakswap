@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create Account — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+body { background: linear-gradient(135deg,#0f172a,#1e3a8a); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+.reg-card { background:white; border-radius:20px; width:100%; max-width:480px; box-shadow:0 32px 80px rgba(0,0,0,0.3); overflow:hidden; }
+.reg-header { background:linear-gradient(135deg,#1d4ed8,#3b82f6); padding:28px 32px; color:white; }
+.reg-body { padding:32px; }
+.step-indicator { display:flex; gap:0; margin-bottom:24px; }
+.si { flex:1; height:4px; border-radius:2px; background:#e2e8f0; transition:background 0.3s; }
+.si.done { background:#10b981; }
+.si.active { background:#2563eb; }
+.strength-bar { height:4px; border-radius:2px; transition:all 0.3s; }
+</style>
+</head>
+<body>
+<div class="reg-card">
+  <div class="reg-header">
+    <div style="font-size:22px;font-weight:800;margin-bottom:4px">Pak<span style="color:#bfdbfe">Swap</span></div>
+    <div id="step-title" style="font-size:20px;font-weight:700">Create Your Account</div>
+    <div id="step-sub" style="font-size:14px;opacity:0.75;margin-top:4px">Step 1 of 3 — Basic Information</div>
+    <div style="display:flex;gap:6px;margin-top:16px">
+      <div class="si active" id="s1"></div>
+      <div class="si" id="s2"></div>
+      <div class="si" id="s3"></div>
+    </div>
+  </div>
+
+  <div class="reg-body">
+    <!-- STEP 1 -->
+    <div id="step1">
+      <div class="form-group">
+        <label class="form-label">Full Name <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="text" placeholder="As on your CNIC (e.g. Muhammad Usman)">
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">Must match your CNIC exactly for verification</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pakistani Phone Number <span style="color:#ef4444">*</span></label>
+        <div style="display:flex;gap:8px">
+          <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-weight:600;font-size:14px;white-space:nowrap">🇵🇰 +92</div>
+          <input class="form-input" type="tel" placeholder="0312-4567890" style="flex:1">
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">Used for trade notifications and 2FA</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Referral Code <span style="color:#94a3b8">(optional)</span></label>
+        <input class="form-input" type="text" placeholder="e.g. PAKSWAP-USM42">
+        <div style="font-size:12px;color:#10b981;margin-top:4px">🎁 Both you and your referrer earn 500 PKR bonus!</div>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="nextStep(2)" style="border-radius:12px">Continue →</button>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="step2" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Create Password <span style="color:#ef4444">*</span></label>
+        <div style="position:relative">
+          <input class="form-input" type="password" id="pwd" placeholder="Min. 8 characters" style="width:100%;padding-right:44px" oninput="checkStrength(this.value)">
+          <button onclick="togglePwd('pwd')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8">👁</button>
+        </div>
+        <div style="margin-top:8px">
+          <div class="strength-bar" id="str-bar" style="background:#e2e8f0;width:100%"><div id="str-fill" style="height:4px;border-radius:2px;width:0%;background:#e2e8f0;transition:all 0.3s"></div></div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px" id="str-text">Enter a password</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="password" id="pwd2" placeholder="Re-enter password">
+      </div>
+
+      <div class="alert alert-info" style="margin-bottom:20px;font-size:13px">
+        📱 We'll send a 6-digit OTP to your phone to verify your number.
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="font-weight:600;font-size:14px;margin-bottom:12px">Verify Phone Number</div>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" type="tel" placeholder="+92-312-XXXXXXX (pre-filled)" style="flex:1" readonly>
+          <button class="btn btn-outline" onclick="this.textContent='Sent ✓';this.style.color='#10b981';this.style.borderColor='#10b981'">Send OTP</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input class="form-input" type="text" placeholder="Enter 6-digit OTP" style="flex:1">
+          <button class="btn btn-secondary">Verify</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="nextStep(1)">← Back</button>
+        <button class="btn btn-primary" style="flex:1;padding:12px" onclick="nextStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="step3" style="display:none">
+      <div style="margin-bottom:20px">
+        <div style="font-size:16px;font-weight:700;margin-bottom:16px">Agreement & Consent</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px">
+            <input type="checkbox" id="c1" onchange="checkAll()" style="margin-top:2px;accent-color:#2563eb;width:16px;height:16px;flex-shrink:0">
+            <div><div style="font-weight:600;font-size:14px">Terms of Service</div><div style="font-size:13px;color:#64748b;margin-top:2px">I agree to PakSwap's Terms of Service including trading rules and platform policies.</div></div>
+          </label>
+          <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px">
+            <input type="checkbox" id="c2" onchange="checkAll()" style="margin-top:2px;accent-color:#2563eb;width:16px;height:16px;flex-shrink:0">
+            <div><div style="font-weight:600;font-size:14px">Privacy Policy</div><div style="font-size:13px;color:#64748b;margin-top:2px">I consent to the collection and processing of my data as described in the Privacy Policy.</div></div>
+          </label>
+          <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px">
+            <input type="checkbox" id="c3" onchange="checkAll()" style="margin-top:2px;accent-color:#2563eb;width:16px;height:16px;flex-shrink:0">
+            <div><div style="font-weight:600;font-size:14px">Age Confirmation</div><div style="font-size:13px;color:#64748b;margin-top:2px">I confirm I am 18 years of age or older.</div></div>
+          </label>
+          <label style="display:flex;gap:12px;align-items:flex-start;cursor:pointer;padding:14px;border:1.5px solid #f1f5f9;border-radius:10px;background:#f8fafc">
+            <input type="checkbox" style="margin-top:2px;accent-color:#2563eb;width:16px;height:16px;flex-shrink:0">
+            <div><div style="font-weight:600;font-size:14px;color:#94a3b8">Marketing Emails <span style="font-weight:400">(optional)</span></div><div style="font-size:13px;color:#94a3b8;margin-top:2px">Receive tips, promotions, and market updates.</div></div>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-success btn-full btn-lg" id="create-btn" style="border-radius:12px;opacity:0.5" disabled onclick="window.location.href='kyc.html'">
+        🎉 Create My Account
+      </button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-secondary btn-full" onclick="nextStep(2)">← Back</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;font-size:14px;color:#64748b">
+      Already have an account? <a href="login.html" style="color:#2563eb;font-weight:600">Sign In</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStep = 1;
+function nextStep(s) {
+  document.getElementById('step'+currentStep).style.display='none';
+  document.getElementById('step'+s).style.display='block';
+  currentStep = s;
+  const titles = ['','Basic Information','Set Password & Verify','Agreement & Consent'];
+  document.getElementById('step-title').textContent = s===1?'Create Your Account':'Almost Done!';
+  document.getElementById('step-sub').textContent = 'Step '+s+' of 3 — '+titles[s];
+  for(let i=1;i<=3;i++){
+    const si = document.getElementById('s'+i);
+    si.className = 'si ' + (i<s?'done':i===s?'active':'');
+  }
+}
+function checkStrength(v) {
+  let score = 0;
+  if(v.length>=8) score++;
+  if(/[A-Z]/.test(v)) score++;
+  if(/[0-9]/.test(v)) score++;
+  if(/[^A-Za-z0-9]/.test(v)) score++;
+  const colors = ['#e2e8f0','#ef4444','#f59e0b','#3b82f6','#10b981'];
+  const labels = ['Enter a password','Too weak','Could be stronger','Good password','Strong password ✓'];
+  document.getElementById('str-fill').style.width = (score*25)+'%';
+  document.getElementById('str-fill').style.background = colors[score];
+  document.getElementById('str-text').textContent = labels[score];
+  document.getElementById('str-text').style.color = colors[score];
+}
+function togglePwd(id) {
+  const i = document.getElementById(id);
+  i.type = i.type==='password'?'text':'password';
+}
+function checkAll() {
+  const allChecked = ['c1','c2','c3'].every(id=>document.getElementById(id).checked);
+  const btn = document.getElementById('create-btn');
+  btn.disabled = !allChecked;
+  btn.style.opacity = allChecked?'1':'0.5';
+}
+</script>
+</body>
+</html>

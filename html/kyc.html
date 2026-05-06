@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KYC Verification — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.upload-zone { border:2px dashed #cbd5e1; border-radius:14px; padding:36px 24px; text-align:center; cursor:pointer; transition:all 0.2s; background:#f8fafc; }
+.upload-zone:hover { border-color:#3b82f6; background:#eff6ff; }
+.upload-zone.uploaded { border-color:#10b981; background:#ecfdf5; border-style:solid; }
+.kyc-step { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:20px; display:flex; align-items:center; gap:16px; cursor:pointer; transition:all 0.15s; }
+.kyc-step.done { border-color:#10b981; background:#ecfdf5; }
+.kyc-step.active { border-color:#3b82f6; background:#eff6ff; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+.kyc-step:hover { border-color:#3b82f6; }
+.tip-box { background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:12px 16px; font-size:13px; color:#92400e; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-right">
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;color:#92400e">⚠️ Verification Required</div>
+    <a href="marketplace.html"><button class="btn btn-ghost btn-sm">Skip for now</button></a>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:900px">
+  <div style="display:grid;grid-template-columns:300px 1fr;gap:32px;align-items:start">
+    <!-- LEFT: Steps overview -->
+    <div>
+      <div class="card" style="padding:24px">
+        <div style="font-size:18px;font-weight:800;margin-bottom:4px">Identity Verification</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:20px">Complete all steps to unlock full trading</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="kyc-step done" onclick="showStep(1)">
+            <div style="width:36px;height:36px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0">✓</div>
+            <div><div style="font-weight:700;font-size:14px">Step 1: CNIC Upload</div><div style="font-size:12px;color:#10b981">Completed</div></div>
+          </div>
+          <div class="kyc-step active" onclick="showStep(2)">
+            <div style="width:36px;height:36px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0">2</div>
+            <div><div style="font-weight:700;font-size:14px">Step 2: Selfie Check</div><div style="font-size:12px;color:#2563eb">In Progress</div></div>
+          </div>
+          <div class="kyc-step" onclick="showStep(3)">
+            <div style="width:36px;height:36px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:700;font-size:14px;flex-shrink:0">3</div>
+            <div><div style="font-weight:700;font-size:14px;color:#94a3b8">Step 3: Address Proof</div><div style="font-size:12px;color:#94a3b8">For higher limits</div></div>
+          </div>
+          <div class="kyc-step" onclick="showStep(4)">
+            <div style="width:36px;height:36px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:700;font-size:14px;flex-shrink:0">4</div>
+            <div><div style="font-weight:700;font-size:14px;color:#94a3b8">Step 4: Review</div><div style="font-size:12px;color:#94a3b8">Awaiting submission</div></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Why verify?</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#64748b">
+          <div>✅ Trade up to 500,000 PKR/day</div>
+          <div>✅ Access all payment methods</div>
+          <div>✅ Merchant eligibility</div>
+          <div>✅ Dispute protection</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Active Step Content -->
+    <div>
+      <!-- STEP 1: CNIC -->
+      <div id="panel1" class="card" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px">✓</div>
+          <div><div style="font-size:18px;font-weight:800">CNIC Upload</div><div style="color:#10b981;font-size:13px;font-weight:600">Completed successfully</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="upload-zone uploaded">
+            <div style="font-size:32px;margin-bottom:8px">✅</div>
+            <div style="font-weight:700;font-size:14px;color:#065f46">CNIC Front Uploaded</div>
+            <div style="font-size:12px;color:#6ee7b7;margin-top:4px">cnic_front.jpg (1.2MB)</div>
+          </div>
+          <div class="upload-zone uploaded">
+            <div style="font-size:32px;margin-bottom:8px">✅</div>
+            <div style="font-weight:700;font-size:14px;color:#065f46">CNIC Back Uploaded</div>
+            <div style="font-size:12px;color:#6ee7b7;margin-top:4px">cnic_back.jpg (0.9MB)</div>
+          </div>
+        </div>
+        <div class="alert alert-success" style="margin-top:16px">✓ OCR extracted: Name matches account. CNIC number detected. No issues found.</div>
+        <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="showStep(2)">Continue to Selfie →</button>
+      </div>
+
+      <!-- STEP 2: SELFIE -->
+      <div id="panel2" class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:18px">2</div>
+          <div><div style="font-size:18px;font-weight:800">Selfie Verification</div><div style="color:#2563eb;font-size:13px">Live face match — quick and easy</div></div>
+        </div>
+
+        <div style="text-align:center;margin-bottom:24px">
+          <div id="cam-placeholder" style="width:240px;height:300px;border-radius:20px;background:linear-gradient(135deg,#1e293b,#334155);margin:0 auto;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;cursor:pointer;position:relative;overflow:hidden" onclick="startCamera()">
+            <div style="width:120px;height:150px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:rgba(255,255,255,0.1);border:3px dashed rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-size:48px">👤</div>
+            <div style="color:rgba(255,255,255,0.8);font-size:14px;font-weight:600">Click to Start Camera</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:12px">Liveness detection enabled</div>
+          </div>
+          <div id="cam-captured" style="display:none;text-align:center">
+            <div style="width:240px;height:300px;border-radius:20px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:80px">😊</div>
+            <div style="margin-top:12px;color:#10b981;font-weight:700;font-size:15px">✓ Selfie Captured Successfully</div>
+          </div>
+        </div>
+
+        <div class="tip-box" style="margin-bottom:20px">
+          <strong>Tips for a good selfie:</strong>
+          <ul style="margin:8px 0 0 16px;display:flex;flex-direction:column;gap:4px">
+            <li>Face should be fully visible, no glasses</li>
+            <li>Good lighting — avoid shadows and glare</li>
+            <li>Look directly at the camera</li>
+            <li>Remove hat, hijab can stay on</li>
+          </ul>
+        </div>
+
+        <div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:#374151">Liveness Check Steps:</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div id="lv1" style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">1</span>Look straight at camera</div>
+            <div id="lv2" style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">2</span>Slowly turn left</div>
+            <div id="lv3" style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">3</span>Slowly turn right</div>
+            <div id="lv4" style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">4</span>Smile naturally</div>
+          </div>
+        </div>
+
+        <div id="selfie-btn-area">
+          <button class="btn btn-primary btn-full btn-lg" style="border-radius:12px" onclick="simulateLiveness()">📷 Start Liveness Check</button>
+        </div>
+        <div id="selfie-done" style="display:none">
+          <button class="btn btn-success btn-full btn-lg" style="border-radius:12px" onclick="showStep(3)">Continue to Address Proof →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: ADDRESS -->
+      <div id="panel3" class="card" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+          <div style="width:40px;height:40px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:18px;color:#94a3b8">3</div>
+          <div><div style="font-size:18px;font-weight:800">Address Proof</div><div style="color:#64748b;font-size:13px">For higher trading limits (optional)</div></div>
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:14px;font-weight:600;margin-bottom:12px">Upload one of the following:</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;gap:12px;align-items:center;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer">
+              <input type="radio" name="addr" checked style="accent-color:#2563eb"> <div style="font-weight:600;font-size:14px">Utility Bill</div><div style="font-size:12px;color:#64748b;margin-left:auto">Not older than 3 months</div>
+            </label>
+            <label style="display:flex;gap:12px;align-items:center;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer">
+              <input type="radio" name="addr" style="accent-color:#2563eb"> <div style="font-weight:600;font-size:14px">Bank Statement</div><div style="font-size:12px;color:#64748b;margin-left:auto">Last 90 days</div>
+            </label>
+            <label style="display:flex;gap:12px;align-items:center;padding:14px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer">
+              <input type="radio" name="addr" style="accent-color:#2563eb"> <div style="font-weight:600;font-size:14px">NADRA Certificate</div><div style="font-size:12px;color:#64748b;margin-left:auto">Current</div>
+            </label>
+          </div>
+        </div>
+        <div class="upload-zone" onclick="this.classList.add('uploaded');this.innerHTML='<div style=font-size:32px>✅</div><div style=font-weight:700;color:#065f46>Document Uploaded</div><div style=font-size:12px;color:#6ee7b7;margin-top:4px>utility_bill.pdf (2.1MB)</div>'">
+          <div style="font-size:40px;margin-bottom:12px">📄</div>
+          <div style="font-weight:700;font-size:14px">Click to Upload Document</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:6px">PDF, JPG, PNG — max 10MB</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button class="btn btn-secondary" onclick="showStep(2)">← Back</button>
+          <button class="btn btn-primary" style="flex:1;padding:12px" onclick="showStep(4)">Continue to Review →</button>
+        </div>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="showStep(4)">Skip for now (lower limits)</button>
+      </div>
+
+      <!-- STEP 4: REVIEW -->
+      <div id="panel4" class="card" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+          <div style="font-size:36px">🔍</div>
+          <div><div style="font-size:18px;font-weight:800">Review & Submit</div><div style="color:#64748b;font-size:13px">Check everything before submitting</div></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:14px">Submission Summary</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+            <div style="display:flex;justify-content:space-between"><span style="color:#64748b">CNIC Front & Back</span><span style="color:#10b981;font-weight:600">✓ Uploaded</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Selfie / Liveness</span><span style="color:#10b981;font-weight:600">✓ Captured</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Address Proof</span><span style="color:#10b981;font-weight:600">✓ Uploaded</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#64748b">KYC Level</span><span style="color:#1d4ed8;font-weight:700">Full KYC (500k PKR/day)</span></div>
+          </div>
+        </div>
+        <div class="alert alert-info" style="margin-bottom:20px">
+          ⏱ Average review time: <strong>15 min – 2 hours</strong> during business hours (9AM–9PM PKT). You'll receive an SMS and email when approved.
+        </div>
+        <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:14px;font-size:13px;color:#92400e;margin-bottom:20px">
+          ⚠️ <strong>Important:</strong> All documents must match your registered name exactly. Submitting fake or altered documents will result in permanent account ban.
+        </div>
+        <button class="btn btn-success btn-full btn-lg" style="border-radius:12px" onclick="submitKYC()">
+          ✅ Submit for Review
+        </button>
+        <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="showStep(3)">← Go Back</button>
+      </div>
+
+      <!-- SUBMITTED — Two-Layer Review Status -->
+      <div id="panel-submitted" class="card" style="display:none">
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:48px;margin-bottom:12px">📋</div>
+          <div style="font-size:22px;font-weight:800;margin-bottom:6px">KYC Submitted — Under Review</div>
+          <div style="font-size:14px;color:#64748b">Both layers must pass before your account is approved</div>
+        </div>
+
+        <!-- TWO-LAYER VERIFICATION BOX -->
+        <div class="two-layer-box" style="margin-bottom:20px">
+          <div class="two-layer-header">
+            <span>🔐</span> KYC Verification — Mandatory Two-Layer Review
+            <span class="tl-badge">BOTH REQUIRED</span>
+          </div>
+
+          <!-- LAYER 1: AI -->
+          <div class="layer-ai">
+            <div class="layer-ai-header">
+              <div class="layer-num">1</div>
+              <div>
+                <h4>AI Automated Scan</h4>
+                <div style="font-size:12px;color:#3b82f6;margin-top:1px">OCR · Face Match · Liveness · Duplicate Check</div>
+              </div>
+              <span class="ls-passed layer-status">✓ AI Passed</span>
+            </div>
+            <div class="layer-ai-body">
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>CNIC OCR</strong> — Name extracted: <em>Muhammad Usman</em> · ID: 35201-XXXXXXX-X</div>
+                <span class="badge badge-green" style="font-size:11px">PASS</span>
+              </div>
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>CNIC Authenticity</strong> — Layout, font, and format match genuine NADRA CNIC</div>
+                <span class="badge badge-green" style="font-size:11px">PASS</span>
+              </div>
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>Face Match</strong> — Selfie vs CNIC photo similarity: <em>91.4%</em> (threshold: 85%)</div>
+                <span class="badge badge-green" style="font-size:11px">91.4%</span>
+              </div>
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>Liveness Detection</strong> — Real person confirmed, no photo spoof detected</div>
+                <span class="badge badge-green" style="font-size:11px">PASS</span>
+              </div>
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>Duplicate Check</strong> — No existing account found with this CNIC or face</div>
+                <span class="badge badge-green" style="font-size:11px">CLEAR</span>
+              </div>
+              <div class="layer-ai-check">
+                <div class="chk chk-pass">✓</div>
+                <div style="flex:1"><strong>Sanctions Screening</strong> — Not on OFAC, UN, or Pakistan designated lists</div>
+                <span class="badge badge-green" style="font-size:11px">CLEAR</span>
+              </div>
+            </div>
+            <div class="layer-confidence">
+              <span style="font-size:12px;font-weight:700;color:#64748b;white-space:nowrap">AI Confidence</span>
+              <div class="bar"><div class="fill fill-high" style="width:93%"></div></div>
+              <span style="font-size:13px;font-weight:800;color:#059669;white-space:nowrap">93%</span>
+            </div>
+          </div>
+
+          <!-- LAYER 2: HUMAN -->
+          <div>
+            <div class="layer-human-header">
+              <div class="layer-num">2</div>
+              <div>
+                <h4>Human Admin Review <span class="mandatory-tag">MANDATORY</span></h4>
+                <div style="font-size:12px;color:#92400e;margin-top:1px">A trained reviewer checks every KYC — no exceptions</div>
+              </div>
+              <span class="ls-required layer-status">⏳ In Review</span>
+            </div>
+            <div class="layer-human-body">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                <div style="width:40px;height:40px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
+                <div>
+                  <div style="font-size:14px;font-weight:700;color:#1e293b">KYC Reviewer assigned</div>
+                  <div style="font-size:12px;color:#64748b">Currently reviewing your documents visually</div>
+                </div>
+                <div style="margin-left:auto;text-align:right">
+                  <div style="font-size:11px;color:#64748b">SLA</div>
+                  <div style="font-size:14px;font-weight:800;color:#d97706">~2 hrs</div>
+                </div>
+              </div>
+              <div style="background:#fffbeb;border-radius:10px;padding:12px;font-size:13px;color:#92400e;margin-bottom:14px">
+                🔍 <strong>What the reviewer checks:</strong> Document quality, name consistency, photo clarity, address document validity, any red flags AI may have missed
+              </div>
+              <div style="font-size:13px;color:#64748b;line-height:1.7">
+                ✉️ You'll receive an <strong>SMS and email</strong> once the human review is complete.
+                <br>📅 Submitted: <strong>05 May 2026, 2:30 PM</strong> · Expected by: <strong>4:30 PM PKT</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;font-size:13px;color:#166534;margin-bottom:20px">
+          ✅ <strong>AI scan passed (Layer 1).</strong> Your application is now in the human review queue (Layer 2). Most applications are approved within 2 hours during business hours (9AM–9PM PKT).
+        </div>
+
+        <div style="display:flex;gap:12px">
+          <a href="marketplace.html" style="flex:1"><button class="btn btn-primary btn-full">Browse Marketplace</button></a>
+          <a href="wallet.html" style="flex:1"><button class="btn btn-secondary btn-full">Go to Wallet</button></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showStep(n) {
+  for(let i=1;i<=4;i++) {
+    const p = document.getElementById('panel'+i);
+    if(p) p.style.display = 'none';
+  }
+  document.getElementById('panel-submitted').style.display = 'none';
+  document.getElementById('panel'+n).style.display = 'block';
+}
+let livenessStep = 0;
+function simulateLiveness() {
+  const steps = ['lv1','lv2','lv3','lv4'];
+  const labels = ['✓ Looking straight','✓ Turned left','✓ Turned right','✓ Smiled'];
+  let i = 0;
+  const go = () => {
+    if(i >= steps.length) {
+      document.getElementById('cam-placeholder').style.display='none';
+      document.getElementById('cam-captured').style.display='block';
+      document.getElementById('selfie-btn-area').style.display='none';
+      document.getElementById('selfie-done').style.display='block';
+      return;
+    }
+    const el = document.getElementById(steps[i]);
+    el.children[0].style.background = '#10b981';
+    el.children[0].style.color = 'white';
+    el.children[0].textContent = '✓';
+    el.style.color = '#065f46';
+    i++;
+    setTimeout(go, 700);
+  };
+  go();
+}
+function startCamera() {
+  simulateLiveness();
+}
+function submitKYC() {
+  document.getElementById('panel4').style.display='none';
+  document.getElementById('panel-submitted').style.display='block';
+}
+</script>
+</body>
+</html>

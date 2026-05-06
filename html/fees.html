@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fees — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.fee-table { width:100%; border-collapse:collapse; font-size:14px; }
+.fee-table th { background:#f8fafc; padding:12px 16px; text-align:left; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1.5px solid #e2e8f0; }
+.fee-table td { padding:14px 16px; border-bottom:1px solid #f1f5f9; color:#1e293b; }
+.fee-table tr:last-child td { border-bottom:none; }
+.fee-table tr:hover td { background:#fafafa; }
+.fee-highlight { font-weight:800; color:#059669; }
+.zero { font-weight:800; color:#2563eb; }
+.section-card { background:white; border:1.5px solid #e2e8f0; border-radius:16px; overflow:hidden; margin-bottom:24px; }
+.section-head { padding:20px 24px; border-bottom:1px solid #f1f5f9; }
+.section-head-title { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px; }
+.section-head-sub { font-size:13px; color:#64748b; }
+.tier-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="help.html">Help</a>
+    <a href="fees.html" class="active">Fees</a>
+  </div>
+  <div class="navbar-right">
+    <a href="login.html"><button class="btn btn-ghost btn-sm">Login</button></a>
+    <a href="register.html"><button class="btn btn-primary btn-sm">Get Started</button></a>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:860px">
+
+  <div style="margin-bottom:32px">
+    <h1 style="font-size:30px;font-weight:900;color:#1e293b;margin-bottom:8px">PakSwap Fee Schedule</h1>
+    <p style="font-size:15px;color:#64748b">Transparent pricing — no hidden charges. All fees in PKR unless stated.</p>
+    <div style="background:#d1fae5;border:1px solid #86efac;border-radius:10px;padding:12px 16px;font-size:13px;color:#065f46;margin-top:16px;font-weight:600">
+      ✅ PakSwap does not charge account maintenance, inactivity, or deposit fees. You only pay when you trade or withdraw.
+    </div>
+  </div>
+
+  <!-- P2P Trading Fees -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-title">🔄 P2P Trading Fees</div>
+      <div class="section-head-sub">Applied per completed trade. Charged from the taker (buyer initiating the trade).</div>
+    </div>
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>Role</th>
+          <th>Who</th>
+          <th>Fee</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tier-badge" style="background:#d1fae5;color:#065f46">Maker</span></td>
+          <td>Ad creator (merchant or regular user posting the ad)</td>
+          <td><span class="zero">0%</span></td>
+          <td>Makers provide liquidity — always free</td>
+        </tr>
+        <tr>
+          <td><span class="tier-badge" style="background:#eff6ff;color:#1d4ed8">Taker</span></td>
+          <td>User who initiates a trade against an existing ad</td>
+          <td><span class="fee-highlight">0.5%</span></td>
+          <td>Of the PKR trade value</td>
+        </tr>
+        <tr>
+          <td><span class="tier-badge" style="background:#fef3c7;color:#92400e">Verified Merchant — Maker</span></td>
+          <td>Merchant posting the ad</td>
+          <td><span class="zero">0%</span></td>
+          <td>Free for all merchants</td>
+        </tr>
+        <tr>
+          <td><span class="tier-badge" style="background:#fef3c7;color:#92400e">Verified Merchant — Taker</span></td>
+          <td>Trade initiated against a merchant ad</td>
+          <td><span class="fee-highlight">0.3%</span></td>
+          <td>Reduced rate for high-volume pairs</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Instant Buy / Sell Fees -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-title">⚡ Instant Buy / Sell (OTC) Fees</div>
+      <div class="section-head-sub">Instant Buy uses a fixed spread model — no separate commission line item.</div>
+    </div>
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>Coin</th>
+          <th>Buy Spread</th>
+          <th>Sell Spread</th>
+          <th>PKR Payment Processing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>USDT (TRC-20)</strong></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td>Included in spread</td>
+        </tr>
+        <tr>
+          <td><strong>USDT (ERC-20)</strong></td>
+          <td><span class="fee-highlight">1.8%</span></td>
+          <td><span class="fee-highlight">1.8%</span></td>
+          <td>Higher network cost reflected</td>
+        </tr>
+        <tr>
+          <td><strong>BTC</strong></td>
+          <td><span class="fee-highlight">1.2%</span></td>
+          <td><span class="fee-highlight">1.2%</span></td>
+          <td>Included in spread</td>
+        </tr>
+        <tr>
+          <td><strong>ETH</strong></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td>Included in spread</td>
+        </tr>
+        <tr>
+          <td><strong>USDC</strong></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td><span class="fee-highlight">1.5%</span></td>
+          <td>Included in spread</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:14px 24px;background:#f8fafc;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9">
+      💡 The spread is included in the quoted price. The price you see is the price you pay — no surprise fees at checkout.
+    </div>
+  </div>
+
+  <!-- Crypto Withdrawal Fees -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-title">📤 Crypto Withdrawal Fees</div>
+      <div class="section-head-sub">Network (blockchain) fees are passed through at cost. PakSwap does not add a markup.</div>
+    </div>
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>Coin / Network</th>
+          <th>Network Fee (approx.)</th>
+          <th>PakSwap Fee</th>
+          <th>Min Withdrawal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>USDT — TRC-20</strong></td>
+          <td>~1 USDT</td>
+          <td><span class="zero">0</span></td>
+          <td>10 USDT</td>
+        </tr>
+        <tr>
+          <td><strong>USDT — ERC-20</strong></td>
+          <td>~5–15 USDT (varies with gas)</td>
+          <td><span class="zero">0</span></td>
+          <td>20 USDT</td>
+        </tr>
+        <tr>
+          <td><strong>BTC — Bitcoin</strong></td>
+          <td>~0.00005 BTC</td>
+          <td><span class="zero">0</span></td>
+          <td>0.001 BTC</td>
+        </tr>
+        <tr>
+          <td><strong>ETH — ERC-20</strong></td>
+          <td>~0.001 ETH (varies)</td>
+          <td><span class="zero">0</span></td>
+          <td>0.01 ETH</td>
+        </tr>
+        <tr>
+          <td><strong>USDC — ERC-20</strong></td>
+          <td>~5–15 USDT equiv.</td>
+          <td><span class="zero">0</span></td>
+          <td>20 USDC</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:14px 24px;background:#fef3c7;font-size:13px;color:#92400e;border-top:1px solid #f1f5f9">
+      ⚠️ Network fees fluctuate with blockchain congestion. The fee shown at withdrawal time is final and real-time.
+    </div>
+  </div>
+
+  <!-- PKR Limits by KYC Tier -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-head-title">🛡️ Daily Limits by KYC Tier</div>
+      <div class="section-head-sub">Limits reset at midnight PKT (UTC+5). Cumulative across all P2P and Instant Buy activity.</div>
+    </div>
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>KYC Tier</th>
+          <th>Daily Buy Limit</th>
+          <th>Daily Sell Limit</th>
+          <th>Monthly Cap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="tier-badge" style="background:#f1f5f9;color:#64748b">No KYC</span>
+          </td>
+          <td style="color:#94a3b8">View only — no trading</td>
+          <td style="color:#94a3b8">—</td>
+          <td style="color:#94a3b8">—</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="tier-badge" style="background:#fef3c7;color:#92400e">Basic KYC</span>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">Phone verified</div>
+          </td>
+          <td>50,000 PKR</td>
+          <td>50,000 PKR</td>
+          <td>500,000 PKR</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="tier-badge" style="background:#dbeafe;color:#1d4ed8">Standard KYC</span>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">CNIC verified</div>
+          </td>
+          <td>200,000 PKR</td>
+          <td>200,000 PKR</td>
+          <td>2,000,000 PKR</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="tier-badge" style="background:#d1fae5;color:#065f46">Full KYC</span>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">CNIC + Selfie + Address</div>
+          </td>
+          <td>500,000 PKR</td>
+          <td>500,000 PKR</td>
+          <td>10,000,000 PKR</td>
+        </tr>
+        <tr>
+          <td>
+            <span class="tier-badge" style="background:#fdf4ff;color:#7c3aed">Verified Merchant</span>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">Full KYC + approved</div>
+          </td>
+          <td><span class="fee-highlight">5,000,000 PKR</span></td>
+          <td><span class="fee-highlight">5,000,000 PKR</span></td>
+          <td>Unlimited*</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:14px 24px;background:#f8fafc;font-size:13px;color:#64748b;border-top:1px solid #f1f5f9">
+      *Merchant monthly cap subject to compliance review for volumes above 50M PKR/month.
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div style="margin-top:8px">
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:16px">Frequently Asked Questions</h2>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">When exactly is the P2P taker fee deducted? <span>▾</span></div>
+      <div class="faq-a">The 0.5% taker fee is deducted from the crypto amount at the moment the trade is marked complete and USDT is released from escrow. You will see the exact fee amount on the trade receipt before you confirm the trade.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Can I see the fee before I submit a trade? <span>▾</span></div>
+      <div class="faq-a">Yes. The order confirmation screen always displays the fee breakdown: trade amount, fee amount, and the net crypto you receive — before you commit.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Is there a fee for depositing crypto into PakSwap? <span>▾</span></div>
+      <div class="faq-a">No. Crypto deposits are always free on the PakSwap side. You only pay the blockchain network fee charged by miners/validators to send from your external wallet.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Are Instant Buy fees negotiable for high-volume buyers? <span>▾</span></div>
+      <div class="faq-a">Merchant accounts trading above 20M PKR/month may apply for custom spread rates through our merchant support team. Contact us via the merchant dashboard.</div>
+    </div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What happens to fees on a cancelled or disputed trade? <span>▾</span></div>
+      <div class="faq-a">No fee is charged on cancelled trades. If a dispute is resolved in the buyer's favour, any deducted fee is refunded. If resolved in the seller's favour, the fee is not refunded.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;display:flex;align-items:center;gap:16px">
+    <div style="font-size:32px">💬</div>
+    <div>
+      <div style="font-weight:700;margin-bottom:4px">Have a question about fees?</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:10px">Our support team is available 9am – 9pm PKT, 7 days a week.</div>
+      <a href="help.html" class="btn btn-primary btn-sm" style="border-radius:8px">Visit Help Center</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q span').style.transition = 'transform 0.2s';
+  item.addEventListener('click', () => {
+    const arrow = item.querySelector('.faq-q span');
+    arrow.style.transform = item.classList.contains('open') ? 'rotate(180deg)' : '';
+  });
+});
+</script>
+</body>
+</html>

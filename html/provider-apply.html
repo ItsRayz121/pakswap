@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Become a Provider — PakSwap Instant Buy</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.apply-layout { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
+.apply-hero { background: linear-gradient(135deg, #166534, #15803d, #16a34a); border-radius: 20px; padding: 40px; color: white; text-align: center; margin-bottom: 32px; position: relative; overflow: hidden; }
+.apply-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.06), transparent 60%); }
+.apply-hero h1 { font-size:32px;font-weight:900;margin-bottom:12px;position:relative }
+.apply-hero p { font-size:16px;opacity:0.9;max-width:500px;margin:0 auto;position:relative }
+.benefit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 32px; }
+.benefit-card { background: white; border-radius: 14px; border: 1px solid #e2e8f0; padding: 20px; text-align: center; }
+.benefit-icon { font-size: 32px; margin-bottom: 10px; }
+.benefit-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.benefit-sub { font-size: 13px; color: #64748b; line-height: 1.5; }
+.apply-form { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 32px; }
+.section-divider { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin: 24px 0 16px; display: flex; align-items: center; gap: 10px; }
+.section-divider::after { content:''; flex:1; height:1px; background:#e2e8f0; }
+.token-checkboxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.token-check { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; }
+.token-check:hover { border-color: #2563eb; background: #eff6ff; }
+.token-check input[type=checkbox] { accent-color: #2563eb; width: 16px; height: 16px; }
+.token-check label { font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.requirements-card { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+.success-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 999; padding: 24px; }
+.success-card { background: white; border-radius: 20px; padding: 40px; max-width: 460px; width: 100%; text-align: center; }
+@media(max-width:640px){ .form-row{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="instant-buy.html" class="navbar-logo" style="font-size:16px;color:#64748b;font-weight:500">← Instant Buy</a>
+  <div style="margin:0 auto">
+    <span class="badge badge-green">🔓 Open Applications</span>
+  </div>
+</nav>
+
+<div class="apply-layout">
+
+  <!-- Hero -->
+  <div class="apply-hero">
+    <div style="font-size:48px;margin-bottom:12px;position:relative">💼</div>
+    <h1>Become a Liquidity Provider</h1>
+    <p>Earn by providing crypto inventory for PakSwap Instant Buy orders. Join our trusted provider network and earn on every fulfilled order.</p>
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:24px;flex-wrap:wrap;position:relative">
+      <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600">💰 Earn on every order</div>
+      <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600">🏅 Verified badge</div>
+      <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600">📊 Provider dashboard</div>
+    </div>
+  </div>
+
+  <!-- Benefits -->
+  <div class="benefit-grid">
+    <div class="benefit-card">
+      <div class="benefit-icon">💸</div>
+      <div class="benefit-title">Competitive Revenue</div>
+      <div class="benefit-sub">Set your own spread. Platform only takes 0.5% per fulfilled order.</div>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🤖</div>
+      <div class="benefit-title">Automated Orders</div>
+      <div class="benefit-sub">PKR orders are AI-verified. USDT orders are 100% automatic — no manual work.</div>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🛡️</div>
+      <div class="benefit-title">Platform Protection</div>
+      <div class="benefit-sub">Escrow and fraud detection built in. Only verified payments trigger releases.</div>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">📈</div>
+      <div class="benefit-title">Scale Your Volume</div>
+      <div class="benefit-sub">Tap into PakSwap's user base. Top providers fulfill 500+ orders monthly.</div>
+    </div>
+  </div>
+
+  <!-- Requirements -->
+  <div class="requirements-card">
+    <h3 style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:12px">📋 Provider Requirements</h3>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">✅ Full KYC verified on PakSwap (CNIC + selfie)</li>
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">✅ Minimum 500 USDT equivalent inventory to start</li>
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">✅ Complete 100 test orders successfully before public listing</li>
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">✅ Maintain dispute rate below 2%</li>
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">✅ Respond to manual orders within 30 minutes (SLA)</li>
+      <li style="font-size:14px;color:#78350f;display:flex;gap:8px">⚠️ Applications are for Phase 2 — we will contact you when ready</li>
+    </ul>
+  </div>
+
+  <!-- Application Form -->
+  <div class="apply-form">
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:6px">Provider Application</h2>
+    <p style="font-size:14px;color:#64748b;margin-bottom:24px">Fill this form to join the waitlist. We review applications and contact approved providers directly.</p>
+
+    <div class="section-divider">Personal Information</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Full Name <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="text" placeholder="As on your CNIC">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CNIC Number <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="text" placeholder="35201-1234567-1" maxlength="15">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Business Name <span style="color:#94a3b8">(optional)</span></label>
+        <input class="form-input" type="text" placeholder="Your company or brand name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">City <span style="color:#ef4444">*</span></label>
+        <select class="form-input form-select">
+          <option value="">Select your city</option>
+          <option>Karachi</option>
+          <option>Lahore</option>
+          <option>Islamabad</option>
+          <option>Rawalpindi</option>
+          <option>Faisalabad</option>
+          <option>Multan</option>
+          <option>Peshawar</option>
+          <option>Quetta</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-divider">Trading Capacity</div>
+
+    <div class="form-group">
+      <label class="form-label">Which tokens do you want to provide? <span style="color:#ef4444">*</span></label>
+      <div class="token-checkboxes" style="margin-top:8px">
+        <div class="token-check">
+          <input type="checkbox" id="bnb" name="tokens" value="BNB">
+          <label for="bnb">🟡 BNB</label>
+        </div>
+        <div class="token-check">
+          <input type="checkbox" id="eth" name="tokens" value="ETH">
+          <label for="eth">🔷 ETH</label>
+        </div>
+        <div class="token-check">
+          <input type="checkbox" id="sol" name="tokens" value="SOL">
+          <label for="sol">🟣 SOL</label>
+        </div>
+        <div class="token-check">
+          <input type="checkbox" id="ton" name="tokens" value="TON">
+          <label for="ton">💎 TON</label>
+        </div>
+        <div class="token-check">
+          <input type="checkbox" id="btc" name="tokens" value="BTC">
+          <label for="btc">🟠 BTC</label>
+        </div>
+        <div class="token-check">
+          <input type="checkbox" id="usdt" name="tokens" value="USDT">
+          <label for="usdt">💵 USDT</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Estimated daily volume (PKR) <span style="color:#ef4444">*</span></label>
+        <select class="form-input form-select">
+          <option value="">Select range</option>
+          <option>Under 50,000 PKR/day</option>
+          <option>50,000 – 200,000 PKR/day</option>
+          <option>200,000 – 500,000 PKR/day</option>
+          <option>500,000 – 1,000,000 PKR/day</option>
+          <option>Over 1,000,000 PKR/day</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trading experience <span style="color:#ef4444">*</span></label>
+        <select class="form-input form-select">
+          <option value="">Select</option>
+          <option>Less than 6 months</option>
+          <option>6 months – 1 year</option>
+          <option>1–2 years</option>
+          <option>2–5 years</option>
+          <option>5+ years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Platforms you currently use</label>
+      <input class="form-input" type="text" placeholder="e.g. Binance, Bybit, local exchanges...">
+    </div>
+
+    <div class="section-divider">Contact &amp; Intent</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Telegram Username <span style="color:#ef4444">*</span></label>
+        <input class="form-input" type="text" placeholder="@yourusername">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input class="form-input" type="tel" placeholder="03XX-XXXXXXX">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Why do you want to become a provider? <span style="color:#ef4444">*</span></label>
+      <textarea class="form-input" rows="4" placeholder="Tell us about your experience, why you're a good fit, and what you can bring to the PakSwap provider network..." style="resize:vertical"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Any questions or comments?</label>
+      <textarea class="form-input" rows="3" placeholder="Anything else you'd like to tell us..." style="resize:vertical"></textarea>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:24px">
+      <input type="checkbox" id="agree" style="width:16px;height:16px;accent-color:#2563eb;margin-top:2px;flex-shrink:0">
+      <label for="agree" style="font-size:13px;color:#374151;cursor:pointer">I understand that this is a waitlist application. Approval is subject to review and PakSwap reserves the right to approve or reject any application. I agree to the <a href="#" style="color:#2563eb">Provider Terms of Service</a>.</label>
+    </div>
+
+    <button class="btn btn-success btn-full btn-lg" onclick="submitApplication()">
+      Submit Application →
+    </button>
+
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:#64748b">
+      We review applications within 3–5 business days and contact you via Telegram.
+    </div>
+  </div>
+
+</div>
+
+<!-- Success Modal -->
+<div class="success-modal" id="success-modal">
+  <div class="success-card">
+    <div style="font-size:64px;margin-bottom:16px">🎉</div>
+    <h2 style="font-size:24px;font-weight:800;margin-bottom:10px">Application Submitted!</h2>
+    <p style="color:#64748b;font-size:15px;margin-bottom:24px">Thank you for applying to become a PakSwap liquidity provider. We'll review your application and contact you via Telegram within 3–5 business days.</p>
+    <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:24px;font-size:14px;color:#166534">
+      📋 Application Reference: <strong>#APP-2026-001847</strong>
+    </div>
+    <a href="instant-buy.html" class="btn btn-primary btn-full">Back to Instant Buy</a>
+  </div>
+</div>
+
+<script>
+function submitApplication() {
+  const agree = document.getElementById('agree').checked;
+  if(!agree) { alert('Please agree to the Provider Terms of Service to continue.'); return; }
+  document.getElementById('success-modal').style.display = 'flex';
+}
+// Highlight token checkboxes on click
+document.querySelectorAll('.token-check').forEach(card => {
+  card.addEventListener('click', function(e) {
+    const cb = this.querySelector('input[type=checkbox]');
+    if(e.target !== cb) cb.checked = !cb.checked;
+    this.style.borderColor = cb.checked ? '#2563eb' : '';
+    this.style.background = cb.checked ? '#eff6ff' : '';
+  });
+});
+</script>
+</body>
+</html>

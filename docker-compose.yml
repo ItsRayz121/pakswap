@@ -1,0 +1,141 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pakswap_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pakswap
+      POSTGRES_PASSWORD: pakswap
+      POSTGRES_DB: pakswap_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pakswap']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pakswap_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pakswap_api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://pakswap:pakswap@postgres:5432/pakswap_dev
+      REDIS_URL: redis://redis:6379
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      DEEPFACE_SERVICE_URL: http://deepface:5000
+      PADDLEOCR_SERVICE_URL: http://paddle-ocr:8866
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  blockchain-monitor:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: pakswap_blockchain_monitor
+    restart: unless-stopped
+    command: ['node', 'dist/workers/blockchain-monitor.worker.js']
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://pakswap:pakswap@postgres:5432/pakswap_dev
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  paddle-ocr:
+    image: paddlepaddle/paddle:2.6.0-cpu-python3.9
+    container_name: pakswap_paddle_ocr
+    restart: unless-stopped
+    ports:
+      - '8866:8866'
+    command: >
+      sh -c "pip install paddleocr fastapi uvicorn pillow &&
+             uvicorn paddleocr_server:app --host 0.0.0.0 --port 8866"
+    volumes:
+      - ./services/paddleocr:/app
+      - paddle_models:/root/.paddleocr
+
+  deepface:
+    build:
+      context: ./services/deepface
+      dockerfile: Dockerfile
+    container_name: pakswap_deepface
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    volumes:
+      - deepface_models:/root/.deepface
+
+  localstack:
+    image: localstack/localstack:3.4
+    container_name: pakswap_localstack
+    restart: unless-stopped
+    ports:
+      - '4566:4566'
+    environment:
+      SERVICES: s3,kms,secretsmanager
+      DEFAULT_REGION: us-east-1
+      PERSISTENCE: 1
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: pakswap_mailhog
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+volumes:
+  postgres_data:
+  redis_data:
+  localstack_data:
+  paddle_models:
+  deepface_models:

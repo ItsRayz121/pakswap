@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Send Crypto — Instant Buy — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.dep-layout { max-width: 760px; margin: 0 auto; padding: 28px 24px; }
+
+/* Header card */
+.dep-header { background: linear-gradient(135deg, #1e3a8a, #2563eb); border-radius: 20px; padding: 28px; color: white; margin-bottom: 20px; }
+.dep-order-id { font-size: 13px; opacity: 0.7; margin-bottom: 4px; }
+.dep-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.dep-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+.dep-meta-item { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; }
+
+/* Timer */
+.dep-timer { background: white; border-radius: 16px; border: 2px solid #fde68a; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; }
+.timer-circle { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #fef3c7, #fde68a); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+.timer-val { font-size: 16px; font-weight: 900; color: #92400e; line-height: 1; }
+.timer-sub { font-size: 9px; color: #d97706; font-weight: 600; text-transform: uppercase; }
+.timer-urgent { color: #dc2626 !important; animation: pulse 1s infinite; }
+
+/* Deposit address card */
+.dep-addr-card { background: white; border-radius: 20px; border: 1.5px solid #2563eb; padding: 24px; margin-bottom: 20px; }
+.dep-addr-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 8px; }
+.dep-addr-box { background: #f8fafc; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 16px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 13px; color: #1e293b; word-break: break-all; display: flex; align-items: flex-start; gap: 10px; }
+.dep-addr-text { flex: 1; line-height: 1.6; }
+.dep-amount-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #86efac; border-radius: 14px; padding: 18px 20px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.dep-amount-val { font-size: 28px; font-weight: 900; color: #166534; }
+.dep-amount-sym { font-size: 16px; font-weight: 700; color: #15803d; margin-top: 2px; }
+.dep-amount-warn { font-size: 12px; color: #166534; margin-top: 4px; opacity: 0.8; }
+
+/* QR code */
+.qr-placeholder { width: 130px; height: 130px; border-radius: 12px; background: white; border: 2px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+.qr-placeholder:hover { border-color: #2563eb; }
+
+/* Network badge */
+.network-chip { display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 700; color: #1d4ed8; margin-bottom: 12px; }
+
+/* Warnings */
+.warn-box { border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start; font-size: 13px; }
+.warn-box.red { background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626; }
+.warn-box.yellow { background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e; }
+.warn-box.blue { background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1d4ed8; }
+
+/* Confirmation tracker */
+.conf-tracker { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 20px; }
+.conf-status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.conf-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.conf-dot.waiting { background: #e2e8f0; }
+.conf-dot.detected { background: #f59e0b; animation: pulse 1s infinite; }
+.conf-dot.confirming { background: #2563eb; animation: pulse 1s infinite; }
+.conf-dot.confirmed { background: #059669; }
+
+.conf-bar-wrap { background: #f1f5f9; border-radius: 12px; overflow: hidden; height: 10px; margin: 12px 0; }
+.conf-bar-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #059669); border-radius: 12px; transition: width 1s; }
+
+.conf-step { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.conf-step:last-child { border-bottom: none; }
+.conf-step-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.cs-done { background: #d1fae5; }
+.cs-active { background: #dbeafe; animation: pulse 1.5s infinite; }
+.cs-pending { background: #f1f5f9; color: #94a3b8; }
+
+/* Checklist */
+.check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f8fafc; font-size: 13px; }
+.check-item:last-child { border-bottom: none; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@media(max-width:600px){ .dep-amount-box{flex-direction:column;align-items:flex-start} }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="instant-buy.html" class="navbar-logo" style="font-size:16px;color:#64748b;font-weight:500">← Instant Buy</a>
+  <div style="margin:0 auto;font-size:14px;font-weight:700;color:#1e293b">Send USDT · #IBO-2026-004531</div>
+  <div class="navbar-right">
+    <a href="instant-buy-history.html" class="btn btn-secondary btn-sm">My Orders</a>
+  </div>
+</nav>
+
+<div class="dep-layout">
+
+  <!-- Header -->
+  <div class="dep-header">
+    <div class="dep-order-id">Order #IBO-2026-004531 · Crypto Payment</div>
+    <div class="dep-title">Send USDT to Receive BNB</div>
+    <div class="dep-meta">
+      <div class="dep-meta-item">💵 Pay: 50 USDT (TRC-20)</div>
+      <div class="dep-meta-item">🟡 Receive: 0.0841 BNB</div>
+      <div class="dep-meta-item">📊 Rate: 1 BNB = 595.0 USDT</div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="dep-timer">
+    <div class="timer-circle">
+      <div class="timer-val" id="timer-val">14:52</div>
+      <div class="timer-sub">remaining</div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:15px;font-weight:700;color:#92400e">Order expires in 15 minutes</div>
+      <div style="font-size:13px;color:#d97706;margin-top:3px">Send <strong>exactly</strong> the amount shown. Do NOT send more or less. Order is cancelled after expiry.</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:12px;color:#64748b">Expires at</div>
+      <div style="font-size:14px;font-weight:700;color:#1e293b" id="expiry-time">3:44 PM</div>
+    </div>
+  </div>
+
+  <!-- Deposit address card -->
+  <div class="dep-addr-card">
+    <div class="network-chip" id="network-chip">🔴 TRON / TRC-20 Network · 20 confirmations required</div>
+
+    <div class="dep-addr-label">Send your USDT to this deposit address</div>
+    <div class="dep-addr-box">
+      <div class="dep-addr-text" id="deposit-addr">TEJmxFDfWCPnRbXZovbWzRLVCZTF5y6aLq</div>
+      <button class="copy-btn btn-sm" onclick="copyAddr()" style="flex-shrink:0">Copy</button>
+    </div>
+    <div style="font-size:12px;color:#64748b;margin-top:6px;display:flex;align-items:center;gap:6px">
+      ℹ️ This address is unique to your order and expires when the order expires.
+    </div>
+
+    <!-- Amount + QR -->
+    <div class="dep-amount-box">
+      <div>
+        <div style="font-size:12px;color:#166534;font-weight:700;margin-bottom:4px;text-transform:uppercase">EXACT Amount to Send</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <div class="dep-amount-val" id="dep-amount">50.000000</div>
+          <div class="dep-amount-sym" id="dep-sym">USDT</div>
+        </div>
+        <div class="dep-amount-warn">⚠️ Send EXACTLY this amount. Under/over payment may delay your order.</div>
+        <button class="btn btn-success" style="margin-top:10px" onclick="copyAmount()">📋 Copy Amount</button>
+      </div>
+      <div class="qr-placeholder" onclick="alert('QR code modal — scan with your wallet')">
+        <div style="font-size:32px;margin-bottom:6px">📱</div>
+        <div style="font-size:11px;color:#64748b;text-align:center;line-height:1.4">Tap to<br>Scan QR</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Critical warnings -->
+  <div class="warn-box red">
+    <span style="font-size:20px;flex-shrink:0">🚫</span>
+    <div>
+      <strong>Wrong network = permanent loss of funds.</strong> Only send USDT on the <strong>TRON / TRC-20</strong> network. Do not send ERC-20, BEP-20, or any other network to this address. PakSwap cannot recover wrong-network deposits.
+    </div>
+  </div>
+  <div class="warn-box yellow">
+    <span style="font-size:20px;flex-shrink:0">⏳</span>
+    <div>
+      <strong>TRON requires 20 network confirmations</strong> (~1 minute after your tx is broadcast). Your BNB will be released automatically once confirmed. No action needed from you.
+    </div>
+  </div>
+  <div class="warn-box blue">
+    <span style="font-size:20px;flex-shrink:0">💡</span>
+    <div>
+      Only send from a wallet you control. Exchanges may take longer to broadcast. Ensure your tx is broadcast before the timer expires.
+    </div>
+  </div>
+
+  <!-- Confirmation Tracker -->
+  <div class="conf-tracker">
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px">🔗 Live Blockchain Status</div>
+
+    <div class="conf-status-row">
+      <div class="conf-dot waiting" id="status-dot"></div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700" id="status-text">Waiting for your transaction...</div>
+        <div style="font-size:13px;color:#64748b" id="status-sub">Monitoring TRON network for incoming USDT to your deposit address</div>
+      </div>
+      <span class="badge badge-gray" id="status-badge">Waiting</span>
+    </div>
+
+    <!-- Confirmation progress -->
+    <div id="conf-progress" style="display:none">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:4px">
+        <span>Network Confirmations</span>
+        <span id="conf-count">0 / 20</span>
+      </div>
+      <div class="conf-bar-wrap"><div class="conf-bar-fill" id="conf-bar" style="width:0%"></div></div>
+      <div style="font-size:12px;color:#64748b" id="conf-tx">TX: waiting...</div>
+    </div>
+
+    <!-- Step tracker -->
+    <div style="margin-top:16px">
+      <div class="conf-step">
+        <div class="conf-step-icon cs-active" id="cstep1-icon">⏳</div>
+        <div style="flex:1">
+          <div style="font-weight:700" id="cstep1-title">Waiting for Transaction</div>
+          <div style="font-size:12px;color:#64748b">Monitor scanning TRON blocks every 3 seconds</div>
+        </div>
+        <span class="badge badge-yellow" id="cstep1-badge">Watching</span>
+      </div>
+      <div class="conf-step">
+        <div class="conf-step-icon cs-pending" id="cstep2-icon">2</div>
+        <div style="flex:1">
+          <div style="font-weight:700">Transaction Detected</div>
+          <div style="font-size:12px;color:#64748b">TX found on network — waiting for confirmations</div>
+        </div>
+        <span class="badge badge-gray" id="cstep2-badge">Pending</span>
+      </div>
+      <div class="conf-step">
+        <div class="conf-step-icon cs-pending" id="cstep3-icon">3</div>
+        <div style="flex:1">
+          <div style="font-weight:700">Confirmation Reached (20/20)</div>
+          <div style="font-size:12px;color:#64748b">Payment confirmed — ready for payout</div>
+        </div>
+        <span class="badge badge-gray" id="cstep3-badge">Pending</span>
+      </div>
+      <div class="conf-step">
+        <div class="conf-step-icon cs-pending" id="cstep4-icon">4</div>
+        <div style="flex:1">
+          <div style="font-weight:700">BNB Released to Your Wallet</div>
+          <div style="font-size:12px;color:#64748b">0.0841 BNB sent to your wallet address on BSC</div>
+        </div>
+        <span class="badge badge-gray" id="cstep4-badge">Pending</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-Layer Verification (crypto mode) -->
+  <div class="two-layer-box" style="margin-bottom:20px">
+    <div class="two-layer-header">
+      🔐 Mandatory Two-Layer Verification
+      <span class="mandatory-tag" style="margin-left:auto">BOTH LAYERS REQUIRED</span>
+    </div>
+    <!-- Layer 1: Blockchain -->
+    <div class="layer-ai">
+      <div class="layer-ai-header">
+        <div class="layer-num" style="background:#2563eb;color:white">1</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a5f">Layer 1 — Blockchain Auto-Verification</div>
+          <div style="font-size:12px;color:#3b82f6">Automatic — no screenshot, no manual scan needed</div>
+        </div>
+        <span class="ls-running" style="margin-left:auto" id="layer1-status">⚙️ Monitoring</span>
+      </div>
+      <div style="padding:12px 18px">
+        <div class="layer-ai-check"><span class="chk-run" id="chk-addr">↻</span><span style="flex:1;font-weight:600">Deposit address match</span><span style="color:#64748b;font-size:12px">Watching: TEJmx...6aLq</span><span class="badge badge-yellow" id="chk-addr-badge" style="margin-left:8px">Watching</span></div>
+        <div class="layer-ai-check"><span class="chk-run" id="chk-contract">↻</span><span style="flex:1;font-weight:600">Token contract verification</span><span style="color:#64748b;font-size:12px">USDT TRC-20 contract</span><span class="badge badge-yellow" id="chk-contract-badge" style="margin-left:8px">Watching</span></div>
+        <div class="layer-ai-check"><span class="chk-run" id="chk-amount">↻</span><span style="flex:1;font-weight:600">Amount verification (50.000 USDT)</span><span style="color:#64748b;font-size:12px">±0.1% tolerance</span><span class="badge badge-yellow" id="chk-amount-badge" style="margin-left:8px">Watching</span></div>
+        <div class="layer-ai-check"><span class="chk-run" id="chk-dup">↻</span><span style="flex:1;font-weight:600">Duplicate TX check</span><span style="color:#64748b;font-size:12px">Prevent replay attacks</span><span class="badge badge-yellow" id="chk-dup-badge" style="margin-left:8px">Watching</span></div>
+        <div class="layer-ai-check" style="border-bottom:none"><span class="chk-run" id="chk-conf">↻</span><span style="flex:1;font-weight:600">Confirmation count (0/20)</span><span style="color:#64748b;font-size:12px" id="chk-conf-sub">Waiting for TX broadcast</span><span class="badge badge-yellow" id="chk-conf-badge" style="margin-left:8px">Waiting</span></div>
+        <div style="margin-top:10px;padding:10px;background:#eff6ff;border-radius:8px;font-size:12px;color:#1d4ed8">
+          🔗 Blockchain is the source of truth. No AI screenshot scan required for crypto payments.
+        </div>
+      </div>
+    </div>
+    <!-- Layer 2: Human Admin Review — ALWAYS REQUIRED -->
+    <div>
+      <div class="layer-ai-header layer-human-header">
+        <div class="layer-num" style="background:#d97706;color:white">2</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#78350f">Layer 2 — Admin Human Review</div>
+          <div style="font-size:12px;color:#d97706">Mandatory — BNB is blocked until a PakSwap admin approves release</div>
+        </div>
+        <span class="ls-pending" style="margin-left:auto">⏳ Awaiting Layer 1</span>
+      </div>
+      <div style="padding:14px 18px;background:#fffbeb">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff3cd;border-radius:8px;margin-bottom:10px;font-size:13px;color:#92400e">
+          <span style="font-size:16px">⚠️</span>
+          <span><strong>Token release is blocked</strong> until an admin manually reviews and approves — even after blockchain confirmation. This applies to all orders.</span>
+        </div>
+        <div style="font-size:13px;color:#78350f;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px"><span>👤</span> Admin will verify deposit TX on blockchain explorer</div>
+          <div style="display:flex;align-items:center;gap:8px"><span>🔍</span> Admin confirms: correct token, correct amount, correct wallet</div>
+          <div style="display:flex;align-items:center;gap:8px"><span>⏱️</span> SLA: 30 minutes from blockchain confirmation</div>
+          <div style="display:flex;align-items:center;gap:8px"><span>📲</span> You will be notified by SMS + app once admin approves and BNB is sent</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What to do checklist -->
+  <div class="card" style="padding:20px;margin-bottom:20px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px">✅ Your Checklist</div>
+    <div class="check-item">
+      <span style="font-size:18px;flex-shrink:0">1️⃣</span>
+      <div>Open your TRON wallet (TronLink, Trust Wallet, Binance app, or any TRC-20 wallet)</div>
+    </div>
+    <div class="check-item">
+      <span style="font-size:18px;flex-shrink:0">2️⃣</span>
+      <div>Select USDT and make sure network is set to <strong>TRON / TRC-20</strong></div>
+    </div>
+    <div class="check-item">
+      <span style="font-size:18px;flex-shrink:0">3️⃣</span>
+      <div>Paste the deposit address: <strong>TEJmxFDfWCPnRbXZovbWzRLVCZTF5y6aLq</strong></div>
+    </div>
+    <div class="check-item">
+      <span style="font-size:18px;flex-shrink:0">4️⃣</span>
+      <div>Send exactly <strong>50.000000 USDT</strong> — not more, not less</div>
+    </div>
+    <div class="check-item" style="border-bottom:none">
+      <span style="font-size:18px;flex-shrink:0">5️⃣</span>
+      <div>Wait on this page — we will detect and confirm your payment automatically</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <a href="instant-buy-history.html" class="btn btn-secondary">View My Orders</a>
+    <button class="btn btn-ghost" onclick="alert('Support chat launched')">💬 Need Help?</button>
+  </div>
+
+</div>
+
+<!-- Completed overlay (shown after demo) -->
+<div id="completed-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;padding:24px">
+  <div style="background:white;border-radius:24px;padding:40px;max-width:440px;width:100%;text-align:center">
+    <div style="font-size:64px;margin-bottom:12px">🎉</div>
+    <div style="font-size:24px;font-weight:900;margin-bottom:8px">Payment Confirmed!</div>
+    <div style="font-size:15px;color:#64748b;margin-bottom:20px">20/20 confirmations reached. Releasing 0.0841 BNB to your wallet...</div>
+    <div style="background:#1e293b;border-radius:10px;padding:12px 14px;font-family:monospace;font-size:12px;color:#e2e8f0;word-break:break-all;margin-bottom:20px;text-align:left">
+      <div style="color:#94a3b8;font-size:10px;margin-bottom:4px">DEPOSIT TX HASH (TRON)</div>
+      a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
+    </div>
+    <div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-family:monospace;font-size:12px;color:#166534;word-break:break-all;margin-bottom:24px;text-align:left">
+      <div style="color:#166534;font-size:10px;font-weight:700;margin-bottom:4px">PAYOUT TX HASH (BSC)</div>
+      0x4a7b8c9d0e1f234567890abcdef1234567890abcde
+    </div>
+    <a href="instant-buy-status.html" class="btn btn-success btn-full btn-lg">View Order Completion →</a>
+  </div>
+</div>
+
+<script>
+// ── Timer ──────────────────────────────────────────────────
+let seconds = 14 * 60 + 52;
+const timerEl = document.getElementById('timer-val');
+const timerInterval = setInterval(() => {
+  seconds--;
+  if (seconds <= 0) { clearInterval(timerInterval); timerEl.textContent = '00:00'; timerEl.parentElement.style.background='linear-gradient(135deg,#fee2e2,#fca5a5)'; return; }
+  const m = Math.floor(seconds / 60).toString().padStart(2,'0');
+  const s = (seconds % 60).toString().padStart(2,'0');
+  timerEl.textContent = `${m}:${s}`;
+  if (seconds < 180) timerEl.classList.add('timer-urgent');
+}, 1000);
+
+// ── Expiry time ────────────────────────────────────────────
+const expiry = new Date(Date.now() + 895000);
+document.getElementById('expiry-time').textContent = expiry.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+
+// ── Copy functions ─────────────────────────────────────────
+function copyAddr() {
+  navigator.clipboard?.writeText('TEJmxFDfWCPnRbXZovbWzRLVCZTF5y6aLq').catch(()=>{});
+  const btn = document.querySelector('.copy-btn');
+  btn.textContent = '✓ Copied'; btn.style.background='#059669'; btn.style.color='white';
+  setTimeout(()=>{ btn.textContent='Copy'; btn.style.background=''; btn.style.color=''; }, 2000);
+}
+function copyAmount() {
+  navigator.clipboard?.writeText('50.000000').catch(()=>{});
+}
+
+// ── Demo: simulate blockchain detection after 5s ───────────
+setTimeout(() => {
+  // Step 1 done — TX detected
+  document.getElementById('cstep1-icon').className = 'conf-step-icon cs-done'; document.getElementById('cstep1-icon').textContent = '✓';
+  document.getElementById('cstep1-badge').className = 'badge badge-green'; document.getElementById('cstep1-badge').textContent = 'Done';
+  document.getElementById('cstep2-icon').className = 'conf-step-icon cs-active'; document.getElementById('cstep2-icon').textContent = '⏳';
+  document.getElementById('cstep2-badge').className = 'badge badge-blue'; document.getElementById('cstep2-badge').textContent = 'Detected';
+  document.getElementById('status-dot').className = 'conf-dot detected';
+  document.getElementById('status-text').textContent = 'Transaction detected on TRON network!';
+  document.getElementById('status-sub').textContent = 'TX: a1b2c3d4e5f6789012345678901234567890abcdef… · Waiting for 20 confirmations';
+  document.getElementById('status-badge').className = 'badge badge-blue'; document.getElementById('status-badge').textContent = 'Detected';
+  document.getElementById('conf-progress').style.display = 'block';
+  document.getElementById('conf-tx').textContent = 'TX: a1b2c3d4e5...123456';
+
+  // Layer 1 checks pass
+  ['chk-addr','chk-contract','chk-amount','chk-dup'].forEach(id => {
+    document.getElementById(id).className = 'chk-pass'; document.getElementById(id).textContent = '✓';
+    document.getElementById(id+'-badge').className = 'badge badge-green'; document.getElementById(id+'-badge').textContent = 'PASS';
+  });
+  document.getElementById('layer1-status').className = 'ls-running'; document.getElementById('layer1-status').textContent = '⚙️ Confirming';
+
+  // Simulate confirmations
+  let confs = 0; const reqConfs = 20;
+  const confInterval = setInterval(() => {
+    confs += 2;
+    if(confs > reqConfs) confs = reqConfs;
+    const pct = Math.round(confs/reqConfs*100);
+    document.getElementById('conf-bar').style.width = pct + '%';
+    document.getElementById('conf-count').textContent = confs + ' / ' + reqConfs;
+    document.getElementById('chk-conf-sub').textContent = confs + '/20 confirmations';
+    document.getElementById('status-sub').textContent = confs + '/20 confirmations · ~' + Math.ceil((reqConfs-confs)*3) + 's remaining';
+    if(confs >= reqConfs) {
+      clearInterval(confInterval);
+      // All confirmed
+      document.getElementById('chk-conf').className = 'chk-pass'; document.getElementById('chk-conf').textContent = '✓';
+      document.getElementById('chk-conf-badge').className = 'badge badge-green'; document.getElementById('chk-conf-badge').textContent = 'PASS';
+      document.getElementById('layer1-status').className = 'ls-passed'; document.getElementById('layer1-status').textContent = '✓ Verified';
+      document.getElementById('cstep2-icon').className = 'conf-step-icon cs-done'; document.getElementById('cstep2-icon').textContent = '✓';
+      document.getElementById('cstep2-badge').className = 'badge badge-green'; document.getElementById('cstep2-badge').textContent = 'Done';
+      document.getElementById('cstep3-icon').className = 'conf-step-icon cs-done'; document.getElementById('cstep3-icon').textContent = '✓';
+      document.getElementById('cstep3-badge').className = 'badge badge-green'; document.getElementById('cstep3-badge').textContent = 'Done';
+      document.getElementById('cstep4-icon').className = 'conf-step-icon cs-active'; document.getElementById('cstep4-icon').textContent = '🚀';
+      document.getElementById('cstep4-badge').className = 'badge badge-blue'; document.getElementById('cstep4-badge').textContent = 'Releasing';
+      document.getElementById('status-dot').className = 'conf-dot confirmed';
+      document.getElementById('status-text').textContent = '20/20 Confirmations — Releasing BNB!';
+      document.getElementById('status-badge').className = 'badge badge-green'; document.getElementById('status-badge').textContent = 'Confirmed';
+      // Show completed overlay after 2s
+      setTimeout(() => { document.getElementById('completed-overlay').style.display='flex'; }, 2000);
+    }
+  }, 400);
+}, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Confirmed — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+body { background:#f1f5f9; }
+.confirm-wrapper { max-width:620px; margin:0 auto; padding:32px 24px; }
+.confetti-hero { background:linear-gradient(135deg,#059669,#10b981); border-radius:20px; padding:40px 32px; text-align:center; margin-bottom:20px; color:white; }
+.order-card { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:24px; margin-bottom:16px; }
+.detail-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9; font-size:14px; }
+.detail-row:last-child { border-bottom:none; }
+.step-row { display:flex; gap:14px; align-items:flex-start; padding:10px 0; }
+.step-icon { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="dashboard.html">Home</a>
+    <a href="marketplace.html">Marketplace</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">M</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="confirm-wrapper">
+
+  <!-- Hero confirmation -->
+  <div class="confetti-hero">
+    <div style="font-size:64px;margin-bottom:12px" id="hero-icon">✅</div>
+    <h1 style="font-size:26px;font-weight:900;margin-bottom:8px">Order Confirmed!</h1>
+    <p style="font-size:15px;opacity:0.9;margin-bottom:20px">Your payment has been received. We're now verifying it and processing your crypto.</p>
+    <div style="background:rgba(255,255,255,0.2);border-radius:12px;padding:12px 20px;display:inline-block">
+      <div style="font-size:12px;opacity:0.8;margin-bottom:2px">Order ID</div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:1px" id="order-id">IBO-2026-004521</div>
+    </div>
+  </div>
+
+  <!-- Order Summary -->
+  <div class="order-card">
+    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px">📋 Order Summary</div>
+    <div class="detail-row">
+      <span style="color:#64748b">You paid</span>
+      <span style="font-weight:800;font-size:16px">28,300 PKR</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">You receive</span>
+      <span style="font-weight:800;font-size:16px;color:#059669">100.00 USDT</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Rate</span>
+      <span style="font-weight:600">283 PKR / USDT</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Spread fee</span>
+      <span style="font-weight:600">1.5% (included in rate)</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Payment method</span>
+      <span style="font-weight:600">📱 JazzCash</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Network</span>
+      <span style="font-weight:600">TRC-20 (TRON)</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Destination wallet</span>
+      <span style="font-weight:600;font-size:12px;color:#2563eb">Your PakSwap Wallet</span>
+    </div>
+    <div class="detail-row">
+      <span style="color:#64748b">Order placed</span>
+      <span style="font-weight:600;font-family:monospace;font-size:13px">06 May 2026 · 14:32 PKT</span>
+    </div>
+  </div>
+
+  <!-- What Happens Next -->
+  <div class="order-card">
+    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px">⏱️ What Happens Next</div>
+    <div class="step-row">
+      <div class="step-icon" style="background:#d1fae5;color:#065f46">✓</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">Payment Received</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Your JazzCash payment has been received by our system.</div>
+        <div style="font-size:12px;color:#059669;font-weight:600;margin-top:4px">✓ Completed · 14:32 PKT</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-icon" style="background:#dbeafe;color:#2563eb;animation:pulse 1.5s infinite">🔍</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">Admin Verification</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Our team is reviewing your payment screenshot and transaction record. This typically takes 5–15 minutes.</div>
+        <div style="font-size:12px;color:#2563eb;font-weight:600;margin-top:4px" id="review-status">⏳ In progress...</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-icon" style="background:#f1f5f9;color:#94a3b8">💰</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#94a3b8">Crypto Released to Wallet</div>
+        <div style="font-size:13px;color:#94a3b8;margin-top:2px">Once verified, 100.00 USDT will appear in your PakSwap wallet instantly.</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">Pending verification</div>
+      </div>
+    </div>
+    <div class="step-row" style="padding-bottom:0">
+      <div class="step-icon" style="background:#f1f5f9;color:#94a3b8">📲</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#94a3b8">SMS & Email Notification</div>
+        <div style="font-size:13px;color:#94a3b8;margin-top:2px">You'll receive a confirmation SMS to your registered number and email when the order completes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Important Notes -->
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:8px">⚠️ Important</div>
+    <ul style="margin:0;padding-left:18px;font-size:13px;color:#92400e;line-height:1.8">
+      <li>Do <strong>not</strong> request a chargeback from your bank — this will flag your account for fraud review.</li>
+      <li>If you don't receive your crypto within <strong>60 minutes</strong>, use the button below to contact support.</li>
+      <li>Your order ID is <strong id="order-id-note">IBO-2026-004521</strong> — save it for reference.</li>
+    </ul>
+  </div>
+
+  <!-- Action Buttons -->
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+    <a href="instant-buy-status.html" class="btn btn-primary btn-lg btn-full" style="border-radius:12px;text-align:center">📡 Track Order Status →</a>
+    <div style="display:flex;gap:10px">
+      <a href="wallet.html" class="btn btn-secondary btn-sm" style="flex:1;text-align:center;border-radius:10px">👛 View Wallet</a>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm" style="flex:1;text-align:center;border-radius:10px">🏠 Dashboard</a>
+      <button class="btn btn-ghost btn-sm" style="flex:1;border-radius:10px" onclick="shareOrder()">📤 Share Receipt</button>
+    </div>
+  </div>
+
+  <!-- Support -->
+  <div style="background:white;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:28px">🎧</div>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px">Need help with this order?</div>
+      <div style="font-size:12px;color:#64748b">Support is available 9am – 9pm PKT · Response in under 15 min</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="border-radius:8px" onclick="alert('Opening live chat for order IBO-2026-004521...')">Chat</button>
+  </div>
+
+</div>
+
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+</style>
+<script>
+function shareOrder() {
+  const text = 'My PakSwap Instant Buy order IBO-2026-004521 — 100 USDT for 28,300 PKR is being processed.';
+  if(navigator.share) {
+    navigator.share({ title:'PakSwap Order', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('Order details copied to clipboard!'));
+  }
+}
+
+// Simulate review completion after 8 seconds (demo)
+setTimeout(() => {
+  const el = document.getElementById('review-status');
+  if(el) el.textContent = '✓ Verified — crypto releasing now';
+}, 8000);
+</script>
+</body>
+</html>

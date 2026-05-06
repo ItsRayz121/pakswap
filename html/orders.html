@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orders — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.order-card { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:18px 20px; margin-bottom:10px; transition:all 0.15s; cursor:pointer; }
+.order-card:hover { border-color:#93c5fd; box-shadow:0 2px 12px rgba(37,99,235,0.06); }
+.order-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:999; padding:24px; }
+.order-modal-card { background:white; border-radius:20px; padding:32px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="orders.html" class="active">Orders</a>
+    <a href="create-ad.html">+ Create Ad</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <h1 style="font-size:26px;font-weight:800">My Orders</h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input class="form-input" type="text" placeholder="🔍 Search by order ID or merchant" style="padding:8px 14px;width:220px;font-size:13px">
+      <select class="form-input form-select" style="padding:8px 14px;font-size:13px;width:130px">
+        <option>All Coins</option>
+        <option>USDT</option>
+        <option>BTC</option>
+        <option>ETH</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="four-col" style="margin-bottom:24px">
+    <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">Total Trades</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#10b981">11</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#ef4444">0</div><div class="stat-label">Disputed</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#f59e0b">1</div><div class="stat-label">Cancelled</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div style="margin-bottom:20px">
+    <div class="tab-bar" style="display:inline-flex">
+      <button class="tab active" onclick="filterTab(this,'all')">All (12)</button>
+      <button class="tab" onclick="filterTab(this,'active')">Active (1)</button>
+      <button class="tab" onclick="filterTab(this,'completed')">Completed (10)</button>
+      <button class="tab" onclick="filterTab(this,'cancelled')">Cancelled (1)</button>
+    </div>
+  </div>
+
+  <!-- ACTIVE ORDER -->
+  <div class="order-card" style="border-color:#f59e0b;background:linear-gradient(135deg,#fffbeb,#ffffff)" onclick="openModal('active')">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:20px">⏳</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-blue" style="font-size:11px">BUY USDT</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:#374151">#PKS-2026-00473</span>
+            <span class="badge badge-yellow">⏳ In Progress</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Merchant: <strong>FastTrade</strong> · JazzCash · 05 May 2026</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:#1e293b">35.71 USDT</div>
+        <div style="font-size:14px;color:#64748b">10,000 PKR paid</div>
+        <a href="trade.html"><button class="btn btn-primary btn-sm" style="margin-top:6px">Continue Trade →</button></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLETED ORDERS -->
+  <div class="order-card" onclick="openModal('complete1')">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-blue" style="font-size:11px">BUY USDT</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:#374151">#PKS-2026-00472</span>
+            <span class="badge badge-green">✅ Completed</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Merchant: <strong>CryptoKing</strong> · JazzCash · 05 May 2026 · 3:14 PM</div>
+          <div class="stars" style="font-size:12px;margin-top:2px">★★★★★ <span style="color:#64748b">You rated</span></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:#10b981">+17.82 USDT</div>
+        <div style="font-size:14px;color:#64748b">5,000 PKR paid</div>
+        <div style="font-size:12px;color:#94a3b8">14 min duration</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="order-card" onclick="openModal('sell1')">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-red" style="font-size:11px">SELL USDT</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:#374151">#PKS-2026-00441</span>
+            <span class="badge badge-green">✅ Completed</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Buyer: <strong>PKR_Pro</strong> · Bank HBL · 03 May 2026 · 1:45 PM</div>
+          <div class="stars" style="font-size:12px;margin-top:2px">★★★★★ <span style="color:#64748b">You rated</span></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:#ef4444">-20.00 USDT</div>
+        <div style="font-size:14px;color:#10b981;font-weight:600">+5,584 PKR received</div>
+        <div style="font-size:12px;color:#94a3b8">Rate: 279.20 PKR/USDT</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="order-card" onclick="openModal('btc1')">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:20px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-blue" style="font-size:11px">BUY BTC</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:#374151">#PKS-2026-00402</span>
+            <span class="badge badge-green">✅ Completed</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Merchant: <strong>BTC_Master</strong> · Easypaisa · 25 Apr 2026</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:#f7931a">+0.00142 BTC</div>
+        <div style="font-size:14px;color:#64748b">27,264 PKR paid</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANCELLED -->
+  <div class="order-card" style="opacity:0.7">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:20px">✕</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-blue" style="font-size:11px">BUY USDT</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:#374151">#PKS-2026-00380</span>
+            <span class="badge badge-red">✕ Cancelled</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Merchant: <strong>UKK_Exchange</strong> · JazzCash · 20 Apr 2026</div>
+          <div style="font-size:12px;color:#ef4444;margin-top:2px">Reason: Timer expired</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:900;color:#94a3b8">10.00 USDT</div>
+        <div style="font-size:14px;color:#64748b">2,805 PKR</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:20px;color:#64748b;font-size:14px">
+    Showing 5 of 12 orders · <a href="#" style="color:#2563eb;font-weight:600">Load More</a>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="order-modal" id="order-modal">
+  <div class="order-modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div style="font-size:20px;font-weight:800">Order Details</div>
+      <button onclick="document.getElementById('order-modal').style.display='none'" style="background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+function filterTab(btn, type) {
+  document.querySelectorAll('.tab-bar .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openModal(type) {
+  const content = {
+    complete1: `<div style="text-align:center;margin-bottom:20px"><div class="badge badge-green" style="font-size:14px;padding:8px 20px">✅ Completed</div></div>
+    <div style="background:#f8fafc;border-radius:12px;padding:16px">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Order ID</span><strong style="font-family:monospace">#PKS-2026-00472</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Type</span><span class="badge badge-blue">BUY USDT</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Amount</span><strong style="color:#26a17b">17.82 USDT</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Paid</span><strong>5,000 PKR</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Rate</span><strong>280.50 PKR/USDT</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Payment</span><span class="pay-pill jcash">⚡ JazzCash</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Merchant</span><strong>CryptoKing 👑</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px"><span style="color:#64748b">Started</span><strong>05 May 2026, 3:00 PM</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px"><span style="color:#64748b">Completed</span><strong>05 May 2026, 3:14 PM</strong></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-outline btn-full" onclick="alert('PDF download would start')">📄 Download Receipt</button>
+      <button class="btn btn-ghost btn-full" onclick="alert('Support ticket created')">Report Issue</button>
+    </div>`,
+    active: `<div style="text-align:center;margin-bottom:20px"><div class="badge badge-yellow" style="font-size:14px;padding:8px 20px">⏳ In Progress</div></div>
+    <div style="background:#fffbeb;border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:700;color:#92400e">This trade is still active!</div>
+      <div style="font-size:13px;color:#92400e;margin-top:4px">Timer is running. Go to trade room to complete.</div>
+    </div>
+    <a href="trade.html"><button class="btn btn-primary btn-full btn-lg">Go to Trade Room →</button></a>`,
+  };
+  document.getElementById('modal-content').innerHTML = content[type] || '<p style="color:#64748b;text-align:center">Order details</p>';
+  document.getElementById('order-modal').style.display = 'flex';
+}
+document.getElementById('order-modal').addEventListener('click', function(e){if(e.target===this)this.style.display='none'});
+</script>
+</body>
+</html>

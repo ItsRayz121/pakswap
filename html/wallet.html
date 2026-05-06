@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wallet — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.wallet-card { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:20px; cursor:pointer; transition:all 0.2s; }
+.wallet-card.active { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+.wallet-card:hover { border-color:#93c5fd; }
+.tx-row { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #f1f5f9; }
+.tx-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.network-badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; background:#e0e7ff; color:#3730a3; }
+.address-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-family:monospace; font-size:13px; word-break:break-all; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">Marketplace</a>
+    <a href="wallet.html" class="active">Wallet</a>
+    <a href="orders.html">Orders</a>
+    <a href="create-ad.html">+ Create Ad</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:26px;font-weight:800">My Wallet</h1>
+      <div style="color:#64748b;font-size:14px;margin-top:4px">Total value: <strong style="color:#1e293b">≈ 12,450 PKR</strong> · <strong style="color:#1e293b">≈ $44.25 USD</strong></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" onclick="showPanel('deposit')">📥 Deposit</button>
+      <button class="btn btn-primary" onclick="showPanel('withdraw')">📤 Withdraw</button>
+    </div>
+  </div>
+
+  <!-- Coin Cards -->
+  <div class="four-col" style="margin-bottom:28px">
+    <div class="wallet-card active" onclick="selectCoin(this,'USDT')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="coin-dot coin-usdt" style="width:40px;height:40px;font-size:18px">₮</div>
+        <div><div style="font-weight:800;font-size:16px">USDT</div><div style="font-size:12px;color:#64748b">Tether</div></div>
+      </div>
+      <div style="font-size:24px;font-weight:900">35.50</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px">≈ 9,952 PKR</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+        <span style="color:#94a3b8">Available: 35.50</span>
+        <span style="color:#f59e0b">Escrow: 0.00</span>
+      </div>
+    </div>
+    <div class="wallet-card" onclick="selectCoin(this,'BTC')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="coin-dot coin-btc" style="width:40px;height:40px;font-size:18px">₿</div>
+        <div><div style="font-weight:800;font-size:16px">BTC</div><div style="font-size:12px;color:#64748b">Bitcoin</div></div>
+      </div>
+      <div style="font-size:24px;font-weight:900">0.00142</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px">≈ 27,264 PKR</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+        <span style="color:#94a3b8">Available: 0.00142</span>
+        <span style="color:#f59e0b">Escrow: 0.00</span>
+      </div>
+    </div>
+    <div class="wallet-card" onclick="selectCoin(this,'ETH')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="coin-dot coin-eth" style="width:40px;height:40px;font-size:18px">Ξ</div>
+        <div><div style="font-weight:800;font-size:16px">ETH</div><div style="font-size:12px;color:#64748b">Ethereum</div></div>
+      </div>
+      <div style="font-size:24px;font-weight:900">0.0821</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px">≈ 8,577 PKR</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+        <span style="color:#94a3b8">Available: 0.0821</span>
+        <span style="color:#f59e0b">Escrow: 0.00</span>
+      </div>
+    </div>
+    <div class="wallet-card" onclick="selectCoin(this,'USDC')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="coin-dot coin-usdc" style="width:40px;height:40px;font-size:18px">$</div>
+        <div><div style="font-weight:800;font-size:16px">USDC</div><div style="font-size:12px;color:#64748b">USD Coin</div></div>
+      </div>
+      <div style="font-size:24px;font-weight:900">0.00</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px">≈ 0 PKR</div>
+      <div style="margin-top:10px"><button class="btn btn-ghost btn-sm" style="font-size:11px">Deposit to start</button></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+    <!-- LEFT: Deposit/Withdraw panel -->
+    <div>
+      <!-- DEPOSIT PANEL -->
+      <div id="panel-deposit" class="card" style="margin-bottom:24px">
+        <div style="font-size:17px;font-weight:800;margin-bottom:20px">📥 Deposit USDT</div>
+        <div style="margin-bottom:16px">
+          <label class="form-label">Network</label>
+          <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+            <button onclick="selectNet(this,'TRC-20')" class="net-btn" style="padding:8px 16px;border-radius:8px;border:2px solid #2563eb;background:#eff6ff;color:#1d4ed8;font-weight:700;font-size:13px;cursor:pointer">TRC-20 (Tron)</button>
+            <button onclick="selectNet(this,'ERC-20')" class="net-btn" style="padding:8px 16px;border-radius:8px;border:2px solid #e2e8f0;background:white;color:#374151;font-weight:600;font-size:13px;cursor:pointer">ERC-20 (Ethereum)</button>
+            <button onclick="selectNet(this,'BEP-20')" class="net-btn" style="padding:8px 16px;border-radius:8px;border:2px solid #e2e8f0;background:white;color:#374151;font-weight:600;font-size:13px;cursor:pointer">BEP-20 (BSC)</button>
+          </div>
+        </div>
+        <div class="alert alert-warning" style="margin-bottom:16px;font-size:13px">⚠️ Only send <strong>USDT (TRC-20)</strong> to this address. Sending wrong coin or network will result in permanent loss.</div>
+        <div style="margin-bottom:12px">
+          <label class="form-label">Your USDT Deposit Address (TRC-20)</label>
+          <div class="address-box" style="margin-top:6px">
+            <span id="dep-addr" style="color:#1e293b">TQn8i7x7C4UQBVV5NpSRH9KVo4G7mJXi3</span>
+            <button onclick="copyAddr()" style="background:#e0e7ff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:#3730a3;flex-shrink:0" id="copy-btn">Copy</button>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px">
+          <div style="width:120px;height:120px;background:white;border:3px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:11px;color:#94a3b8;font-weight:600">QR Code<br>TRC-20</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:8px">Scan QR code with your wallet app</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:13px;color:#64748b">
+          <div style="font-weight:700;margin-bottom:6px;color:#374151">Deposit Info:</div>
+          <div>• Minimum deposit: 1 USDT</div>
+          <div>• Network confirmations required: 1 (TRC-20)</div>
+          <div>• Credits usually within 5–10 minutes</div>
+        </div>
+      </div>
+
+      <!-- WITHDRAW PANEL -->
+      <div id="panel-withdraw" class="card" style="display:none;margin-bottom:24px">
+        <div style="font-size:17px;font-weight:800;margin-bottom:20px">📤 Withdraw USDT</div>
+        <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between">
+          <span style="font-size:14px;color:#065f46">Available Balance:</span>
+          <strong style="font-size:16px;color:#065f46">35.50 USDT</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Network</label>
+          <select class="form-input form-select">
+            <option>TRC-20 (Tron) — Fee: 1 USDT</option>
+            <option>ERC-20 (Ethereum) — Fee: 5 USDT</option>
+            <option>BEP-20 (BSC) — Fee: 0.5 USDT</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Withdrawal Address</label>
+          <input class="form-input" type="text" placeholder="Enter USDT wallet address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount (USDT)</label>
+          <div style="position:relative">
+            <input class="form-input" type="number" placeholder="0.00" id="wd-amount" oninput="calcWd()" style="padding-right:70px">
+            <button onclick="document.getElementById('wd-amount').value='35.50';calcWd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#e0e7ff;border:none;border-radius:5px;padding:3px 8px;font-size:12px;font-weight:700;cursor:pointer;color:#3730a3">MAX</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13px">
+            <span style="color:#64748b">Network fee: <strong>1 USDT</strong></span>
+            <span style="color:#64748b">You receive: <strong id="wd-receive">—</strong></span>
+          </div>
+        </div>
+        <div class="alert alert-warning" style="margin-bottom:16px;font-size:13px">🔐 2FA verification required to withdraw. Ensure the address is correct — withdrawals are irreversible.</div>
+        <button class="btn btn-danger btn-full btn-lg" style="border-radius:12px" onclick="alert('2FA required — enter your code to proceed')">Confirm Withdrawal →</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Transaction History -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:800">Transaction History</div>
+        <a href="orders.html"><button class="btn btn-ghost btn-sm">View All</button></a>
+      </div>
+      <div>
+        <div class="tx-row">
+          <div class="tx-icon" style="background:#d1fae5">↙</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">P2P Buy — Received</div>
+            <div style="font-size:12px;color:#64748b">#PKS-472 · JazzCash · 05 May</div>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800;color:#10b981">+17.82 USDT</div><div class="badge badge-green" style="font-size:10px">Completed</div></div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon" style="background:#fee2e2">↗</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">P2P Sell — Sent</div>
+            <div style="font-size:12px;color:#64748b">#PKS-441 · Bank HBL · 03 May</div>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800;color:#ef4444">-20.00 USDT</div><div class="badge badge-green" style="font-size:10px">Completed</div></div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon" style="background:#dbeafe">📥</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">Deposit</div>
+            <div style="font-size:12px;color:#64748b">TRC-20 · 01 May · TX: QKx3...</div>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800;color:#10b981">+50.00 USDT</div><div class="badge badge-green" style="font-size:10px">Confirmed</div></div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-icon" style="background:#fee2e2">📤</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">Withdrawal</div>
+            <div style="font-size:12px;color:#64748b">TRC-20 · 28 Apr · TX: TXn...</div>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800;color:#ef4444">-30.00 USDT</div><div class="badge badge-green" style="font-size:10px">Confirmed</div></div>
+        </div>
+        <div class="tx-row" style="border-bottom:none">
+          <div class="tx-icon" style="background:#d1fae5">↙</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">P2P Buy — Received</div>
+            <div style="font-size:12px;color:#64748b">#PKS-402 · Easypaisa · 25 Apr</div>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800;color:#10b981">+35.00 USDT</div><div class="badge badge-green" style="font-size:10px">Completed</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPanel(p) {
+  document.getElementById('panel-deposit').style.display = p==='deposit'?'block':'none';
+  document.getElementById('panel-withdraw').style.display = p==='withdraw'?'block':'none';
+}
+function selectCoin(el, coin) {
+  document.querySelectorAll('.wallet-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+function selectNet(btn, net) {
+  document.querySelectorAll('.net-btn').forEach(b=>{
+    b.style.border='2px solid #e2e8f0'; b.style.background='white'; b.style.color='#374151';
+  });
+  btn.style.border='2px solid #2563eb'; btn.style.background='#eff6ff'; btn.style.color='#1d4ed8';
+}
+function copyAddr() {
+  const btn = document.getElementById('copy-btn');
+  btn.textContent='Copied ✓'; btn.style.background='#d1fae5'; btn.style.color='#065f46';
+  setTimeout(()=>{btn.textContent='Copy'; btn.style.background='#e0e7ff'; btn.style.color='#3730a3';},2000);
+}
+function calcWd() {
+  const amt = parseFloat(document.getElementById('wd-amount').value)||0;
+  const receive = Math.max(0, amt-1);
+  document.getElementById('wd-receive').textContent = receive.toFixed(2)+' USDT';
+}
+</script>
+</body>
+</html>

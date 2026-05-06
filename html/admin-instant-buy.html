@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instant Buy Admin — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.admin-layout { display: flex; min-height: 100vh; }
+.main-content { flex: 1; padding: 28px; overflow-y: auto; }
+.ib-tabs { display: flex; gap: 4px; background: #f1f5f9; border-radius: 12px; padding: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+.ib-tab { padding: 9px 18px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; color: #64748b; border: none; background: transparent; transition: all 0.15s; white-space: nowrap; }
+.ib-tab.active { background: white; color: #1d4ed8; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+/* Verification Queue */
+.verif-card { background: white; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+.verif-card.urgent { border-color: #fca5a5; background: #fff8f8; }
+.sla-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.sla-ok { background: #d1fae5; color: #065f46; }
+.sla-warn { background: #fef3c7; color: #92400e; }
+.sla-breach { background: #fee2e2; color: #991b1b; animation: pulse 1s infinite; }
+.ai-mini-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.ai-check { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.ai-check.pass { background: #d1fae5; color: #059669; }
+.ai-check.fail { background: #fee2e2; color: #dc2626; }
+.ai-check.warn { background: #fef3c7; color: #d97706; }
+/* Token Config */
+.token-config-row { background: white; border-radius: 14px; border: 1px solid #e2e8f0; padding: 18px 20px; margin-bottom: 10px; display: grid; grid-template-columns: 50px 1fr auto auto auto auto auto; gap: 16px; align-items: center; }
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: #2563eb; }
+input:checked + .slider:before { transform: translateX(20px); }
+/* Inventory */
+.inv-card { background: white; border-radius: 14px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 12px; }
+.inv-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.inv-fill { height: 100%; border-radius: 4px; }
+/* Applications */
+.app-row { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo"><span>Pak<em>Swap</em> Admin</span></div>
+    <a href="admin.html" class="sidebar-item"><span class="icon">📊</span> Dashboard</a>
+    <a href="#" class="sidebar-item"><span class="icon">👤</span> KYC Queue</a>
+    <a href="#" class="sidebar-item"><span class="icon">⚡</span> Trade Monitor</a>
+    <a href="#" class="sidebar-item"><span class="icon">⚖️</span> Disputes</a>
+    <a href="#" class="sidebar-item"><span class="icon">👥</span> Users</a>
+    <a href="admin-instant-buy.html" class="sidebar-item active"><span class="icon">🚀</span> Instant Buy</a>
+    <a href="#" class="sidebar-item"><span class="icon">🚩</span> Fraud Monitor</a>
+    <a href="#" class="sidebar-item"><span class="icon">⚙️</span> Settings</a>
+  </div>
+
+  <div class="main-content">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 style="font-size:24px;font-weight:800">Instant Buy — Admin Panel</h1>
+        <p style="font-size:14px;color:#64748b;margin-top:4px">Manage tokens, inventory, verifications, and orders</p>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary btn-sm">📥 Export Report</button>
+        <button class="btn btn-primary btn-sm">+ Add Token</button>
+      </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-value">47</div>
+        <div class="stat-label">Orders Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:#059669">41</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:22px;font-weight:800;color:#f59e0b">3</div>
+        <div class="stat-label">Pending Verification</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">PKR 4.2M</div>
+        <div class="stat-label">Volume Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:#2563eb">PKR 21,000</div>
+        <div class="stat-label">Fee Revenue Today</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:22px;font-weight:800;color:#ef4444">1</div>
+        <div class="stat-label">Low Inventory Alert</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ib-tabs">
+      <button class="ib-tab active" onclick="showTab('verif',this)">🔍 Verify Queue (3)</button>
+      <button class="ib-tab" onclick="showTab('tokens',this)">🪙 Token Config</button>
+      <button class="ib-tab" onclick="showTab('inventory',this)">🏦 Inventory</button>
+      <button class="ib-tab" onclick="showTab('deposits',this)">🔗 Deposit Monitor <span style="background:#3b82f6;color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">4</span></button>
+      <button class="ib-tab" onclick="showTab('payouts',this)">📤 Manual Payouts <span style="background:#ef4444;color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px">2</span></button>
+      <button class="ib-tab" onclick="showTab('orders',this)">📋 All Orders</button>
+      <button class="ib-tab" onclick="showTab('applications',this)">💼 Provider Apps (12)</button>
+    </div>
+
+    <!-- ===== VERIFICATION QUEUE ===== -->
+    <div id="tab-verif" class="tab-content active">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="font-size:16px;font-weight:700">Manual Review Queue</h3>
+        <span style="font-size:13px;color:#64748b">SLA: 30 minutes per item</span>
+      </div>
+
+      <!-- Urgent Item -->
+      <div class="verif-card urgent">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:15px;font-weight:700">Order #IBO-004521</div>
+            <div style="font-size:13px;color:#64748b">Muhammad Usman • 0.2348 SOL • 10,135 PKR</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="sla-badge sla-warn">⏱️ 12 min remaining</span>
+            <span class="badge badge-yellow">JazzCash</span>
+          </div>
+        </div>
+        <!-- Screenshot -->
+        <div style="background:#f8fafc;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase">Payment Screenshot</div>
+          <div style="background:#e2e8f0;border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:13px;cursor:pointer" onclick="alert('Full screenshot modal')">
+            📷 Click to view full size
+          </div>
+        </div>
+
+        <!-- Two-Layer Verification -->
+        <div class="two-layer-box" style="margin-bottom:14px">
+          <div class="two-layer-header">🔐 Mandatory Two-Layer Verification <span class="mandatory-tag" style="margin-left:auto">BOTH REQUIRED BEFORE RELEASE</span></div>
+          <!-- Layer 1 -->
+          <div class="layer-ai">
+            <div class="layer-ai-header">
+              <div class="layer-num" style="background:#2563eb;color:white">1</div>
+              <div><div style="font-size:13px;font-weight:700;color:#1e3a5f">Layer 1 — AI Scan</div><div style="font-size:11px;color:#3b82f6">Completed automatically</div></div>
+              <span class="ls-passed" style="margin-left:auto">✓ Done</span>
+            </div>
+            <div style="padding:10px 18px">
+              <div class="ai-mini-row"><div class="ai-check pass">✓</div><span>Amount: PKR 10,135 → exact match</span><span class="badge badge-green" style="margin-left:auto;font-size:10px">PASS</span></div>
+              <div class="ai-mini-row"><div class="ai-check pass">✓</div><span>Recipient: PakSwap Pvt Ltd → verified</span><span class="badge badge-green" style="margin-left:auto;font-size:10px">PASS</span></div>
+              <div class="ai-mini-row"><div class="ai-check pass">✓</div><span>Sender: Muhammad Usman → KYC match</span><span class="badge badge-green" style="margin-left:auto;font-size:10px">PASS</span></div>
+              <div class="ai-mini-row"><div class="ai-check pass">✓</div><span>Timestamp 14:29 → within order window</span><span class="badge badge-green" style="margin-left:auto;font-size:10px">PASS</span></div>
+              <div class="ai-mini-row" style="margin-bottom:0"><div class="ai-check warn">!</div><span style="color:#92400e">Image quality: low resolution (flagged)</span><span class="badge badge-yellow" style="margin-left:auto;font-size:10px">WARN</span></div>
+              <div class="layer-confidence" style="padding:10px 0 4px">
+                <span style="font-size:12px;color:#64748b;white-space:nowrap">Confidence</span>
+                <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden"><div class="fill-mid" style="width:87%;height:100%;border-radius:3px"></div></div>
+                <span style="font-size:13px;font-weight:800;color:#f59e0b;white-space:nowrap">87%</span>
+              </div>
+            </div>
+          </div>
+          <!-- Layer 2 -->
+          <div>
+            <div class="layer-ai-header layer-human-header">
+              <div class="layer-num" style="background:#d97706;color:white">2</div>
+              <div><div style="font-size:13px;font-weight:700;color:#78350f">Layer 2 — Your Human Review</div><div style="font-size:11px;color:#d97706">Mandatory — SOL blocked until you decide</div></div>
+              <span class="ls-required" style="margin-left:auto">YOUR ACTION NEEDED</span>
+            </div>
+            <div style="padding:12px 18px;font-size:13px;color:#78350f;background:#fffbeb">
+              ⚠️ AI flagged low image quality. <strong>View screenshot above and verify the payment manually</strong> before approving or rejecting.
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label class="form-label">Admin Notes (required for rejection)</label>
+          <input class="form-input" type="text" placeholder="Note for audit log...">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-success" style="flex:1;min-width:120px" onclick="approveOrder(this)">✅ Approve &amp; Release SOL</button>
+          <button class="btn btn-danger" style="flex:1;min-width:120px" onclick="rejectOrder(this)">❌ Reject Order</button>
+          <button class="btn btn-secondary" onclick="alert('Message user modal')">💬 Message User</button>
+        </div>
+      </div>
+
+      <!-- Normal Item 2 -->
+      <div class="verif-card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:15px;font-weight:700">Order #IBO-004518</div>
+            <div style="font-size:13px;color:#64748b">Ali Hassan • 0.0023 BTC • 63,280 PKR</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+            <span class="sla-badge sla-ok">✓ 24 min remaining</span>
+            <span class="badge badge-purple">Bank Transfer</span>
+          </div>
+        </div>
+        <div style="font-size:13px;color:#374151;margin-bottom:12px">
+          AI: 78% confidence — 4/5 checks passed, template mismatch flagged
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm">✅ Approve</button>
+          <button class="btn btn-danger btn-sm">❌ Reject</button>
+          <button class="btn btn-secondary btn-sm">🔍 View Details</button>
+        </div>
+      </div>
+
+      <!-- Normal Item 3 -->
+      <div class="verif-card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:15px;font-weight:700">Order #IBO-004515</div>
+            <div style="font-size:13px;color:#64748b">Sara Malik • 50.5 TON • 83,830 PKR</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+            <span class="sla-badge sla-ok">✓ 28 min remaining</span>
+            <span class="badge badge-yellow">Easypaisa</span>
+          </div>
+        </div>
+        <div style="font-size:13px;color:#374151;margin-bottom:12px">
+          AI: 82% confidence — amount confirmed, sender name partial match (Sara M.)
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm">✅ Approve</button>
+          <button class="btn btn-danger btn-sm">❌ Reject</button>
+          <button class="btn btn-secondary btn-sm">🔍 View Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TOKEN CONFIG ===== -->
+    <div id="tab-tokens" class="tab-content">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:13px;color:#92400e;margin-bottom:16px">
+        ⚠️ Changes to fees, spreads, and limits take effect immediately for new quotes. Active quotes are unaffected.
+      </div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:8px;display:grid;grid-template-columns:50px 1fr auto auto auto auto auto;gap:16px;padding:0 20px">
+        <span></span><span>Token</span><span>Active</span><span>Spread %</span><span>Min PKR</span><span>Max PKR</span><span>Actions</span>
+      </div>
+      <div class="token-config-row">
+        <div style="font-size:28px">🟡</div>
+        <div><div style="font-weight:700">BNB</div><div style="font-size:12px;color:#64748b">BSC — BEP-20</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+        <div><input class="form-input" type="number" value="3.0" style="width:80px;padding:7px 10px;font-size:13px"><span style="font-size:12px;color:#64748b">%</span></div>
+        <input class="form-input" type="number" value="500" style="width:90px;padding:7px 10px;font-size:13px">
+        <input class="form-input" type="number" value="500000" style="width:100px;padding:7px 10px;font-size:13px">
+        <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm">Save</button><button class="btn btn-secondary btn-sm">History</button></div>
+      </div>
+      <div class="token-config-row">
+        <div style="font-size:28px">🔷</div>
+        <div><div style="font-weight:700">ETH</div><div style="font-size:12px;color:#64748b">Ethereum — ERC-20</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+        <div><input class="form-input" type="number" value="2.5" style="width:80px;padding:7px 10px;font-size:13px"><span style="font-size:12px;color:#64748b">%</span></div>
+        <input class="form-input" type="number" value="1000" style="width:90px;padding:7px 10px;font-size:13px">
+        <input class="form-input" type="number" value="500000" style="width:100px;padding:7px 10px;font-size:13px">
+        <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm">Save</button><button class="btn btn-secondary btn-sm">History</button></div>
+      </div>
+      <div class="token-config-row">
+        <div style="font-size:28px">🟣</div>
+        <div><div style="font-weight:700">SOL</div><div style="font-size:12px;color:#64748b">Solana Network</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+        <div><input class="form-input" type="number" value="3.0" style="width:80px;padding:7px 10px;font-size:13px"><span style="font-size:12px;color:#64748b">%</span></div>
+        <input class="form-input" type="number" value="500" style="width:90px;padding:7px 10px;font-size:13px">
+        <input class="form-input" type="number" value="500000" style="width:100px;padding:7px 10px;font-size:13px">
+        <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm">Save</button><button class="btn btn-secondary btn-sm">History</button></div>
+      </div>
+      <div class="token-config-row">
+        <div style="font-size:28px">💎</div>
+        <div><div style="font-weight:700">TON</div><div style="font-size:12px;color:#64748b">TON Network</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+        <div><input class="form-input" type="number" value="3.5" style="width:80px;padding:7px 10px;font-size:13px"><span style="font-size:12px;color:#64748b">%</span></div>
+        <input class="form-input" type="number" value="500" style="width:90px;padding:7px 10px;font-size:13px">
+        <input class="form-input" type="number" value="200000" style="width:100px;padding:7px 10px;font-size:13px">
+        <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm">Save</button><button class="btn btn-secondary btn-sm">History</button></div>
+      </div>
+      <div class="token-config-row">
+        <div style="font-size:28px">🟠</div>
+        <div><div style="font-weight:700">BTC</div><div style="font-size:12px;color:#64748b">Bitcoin Network</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+        <div><input class="form-input" type="number" value="2.0" style="width:80px;padding:7px 10px;font-size:13px"><span style="font-size:12px;color:#64748b">%</span></div>
+        <input class="form-input" type="number" value="2000" style="width:90px;padding:7px 10px;font-size:13px">
+        <input class="form-input" type="number" value="500000" style="width:100px;padding:7px 10px;font-size:13px">
+        <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm">Save</button><button class="btn btn-secondary btn-sm">History</button></div>
+      </div>
+    </div>
+
+    <!-- ===== INVENTORY ===== -->
+    <div id="tab-inventory" class="tab-content">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+
+        <div class="inv-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:28px">🟡</span>
+              <div><div style="font-weight:700;font-size:16px">BNB (BSC)</div><div style="font-size:12px;color:#64748b">PakSwap Official</div></div>
+            </div>
+            <span class="badge badge-green">Healthy</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Available</span><strong>8.42 BNB</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Reserved (pending)</span><strong style="color:#f59e0b">0.35 BNB</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px">
+            <span style="color:#64748b">Alert threshold</span><span>2.00 BNB</span>
+          </div>
+          <div class="inv-bar"><div class="inv-fill" style="width:80%;background:linear-gradient(90deg,#2563eb,#059669)"></div></div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;margin-bottom:12px">80% capacity</div>
+          <div style="display:flex;gap:8px"><button class="btn btn-success btn-sm">+ Top Up</button><button class="btn btn-secondary btn-sm">History</button></div>
+        </div>
+
+        <div class="inv-card" style="border-color:#fca5a5;background:#fff8f8">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:28px">🟠</span>
+              <div><div style="font-weight:700;font-size:16px">BTC</div><div style="font-size:12px;color:#64748b">PakSwap Official</div></div>
+            </div>
+            <span class="badge badge-red">⚠️ Low</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Available</span><strong style="color:#dc2626">0.00048 BTC</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Reserved</span><strong>0.0002 BTC</strong>
+          </div>
+          <div class="inv-bar"><div class="inv-fill" style="width:15%;background:#ef4444"></div></div>
+          <div style="font-size:11px;color:#dc2626;margin-top:4px;margin-bottom:12px;font-weight:600">⚠️ Below alert threshold — replenish now</div>
+          <div style="display:flex;gap:8px"><button class="btn btn-danger btn-sm">🚨 Top Up Now</button><button class="btn btn-secondary btn-sm">Disable Token</button></div>
+        </div>
+
+        <div class="inv-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:28px">🟣</span>
+              <div><div style="font-weight:700;font-size:16px">SOL</div><div style="font-size:12px;color:#64748b">PakSwap Official</div></div>
+            </div>
+            <span class="badge badge-green">Healthy</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Available</span><strong>124.5 SOL</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px">
+            <span style="color:#64748b">Reserved</span><strong style="color:#f59e0b">2.3 SOL</strong>
+          </div>
+          <div class="inv-bar"><div class="inv-fill" style="width:65%;background:linear-gradient(90deg,#2563eb,#059669)"></div></div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;margin-bottom:12px">65% capacity</div>
+          <div style="display:flex;gap:8px"><button class="btn btn-success btn-sm">+ Top Up</button><button class="btn btn-secondary btn-sm">History</button></div>
+        </div>
+
+        <div class="inv-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:28px">💎</span>
+              <div><div style="font-weight:700;font-size:16px">TON</div><div style="font-size:12px;color:#64748b">PakSwap Official</div></div>
+            </div>
+            <span class="badge badge-yellow">⚠️ Medium</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px">
+            <span style="color:#64748b">Available</span><strong>1,850 TON</strong>
+          </div>
+          <div class="inv-bar"><div class="inv-fill" style="width:35%;background:linear-gradient(90deg,#f59e0b,#059669)"></div></div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;margin-bottom:12px">35% capacity</div>
+          <div style="display:flex;gap:8px"><button class="btn btn-success btn-sm">+ Top Up</button><button class="btn btn-secondary btn-sm">History</button></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== DEPOSIT MONITOR ===== -->
+    <div id="tab-deposits" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h3 style="font-size:16px;font-weight:700">Crypto Deposit Monitor</h3>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">Live view of all blockchain deposits — auto-refreshes every 10 seconds</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="form-input form-select" style="padding:8px 12px;font-size:13px;width:auto"><option>All Networks</option><option>TRON / TRC-20</option><option>BSC / BEP-20</option><option>Solana</option><option>Ethereum</option></select>
+          <select class="form-input form-select" style="padding:8px 12px;font-size:13px;width:auto"><option>All Status</option><option>Waiting</option><option>Detected</option><option>Confirming</option><option>Confirmed</option><option>Wrong Token</option></select>
+          <div style="display:flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#166534">
+            <div style="width:8px;height:8px;border-radius:50%;background:#059669;animation:pulse 1s infinite"></div>
+            Live
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary pills -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:10px 16px;text-align:center;min-width:100px">
+          <div style="font-size:20px;font-weight:800;color:#64748b">7</div>
+          <div style="font-size:11px;color:#94a3b8;font-weight:600">Waiting</div>
+        </div>
+        <div style="background:#dbeafe;border:1px solid #bfdbfe;border-radius:10px;padding:10px 16px;text-align:center;min-width:100px">
+          <div style="font-size:20px;font-weight:800;color:#2563eb">4</div>
+          <div style="font-size:11px;color:#3b82f6;font-weight:600">Confirming</div>
+        </div>
+        <div style="background:#d1fae5;border:1px solid #86efac;border-radius:10px;padding:10px 16px;text-align:center;min-width:100px">
+          <div style="font-size:20px;font-weight:800;color:#059669">18</div>
+          <div style="font-size:11px;color:#059669;font-weight:600">Confirmed Today</div>
+        </div>
+        <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 16px;text-align:center;min-width:100px">
+          <div style="font-size:20px;font-weight:800;color:#dc2626">1</div>
+          <div style="font-size:11px;color:#dc2626;font-weight:600">Wrong Token</div>
+        </div>
+        <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 16px;text-align:center;min-width:100px">
+          <div style="font-size:20px;font-weight:800;color:#d97706">2</div>
+          <div style="font-size:11px;color:#d97706;font-weight:600">Underpaid</div>
+        </div>
+      </div>
+
+      <!-- Deposit rows -->
+      <div style="background:white;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden">
+        <div style="background:#f8fafc;padding:10px 16px;display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;gap:10px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">
+          <span>Order / Network</span><span>Token / Amount</span><span>Confirmations</span><span>TX Hash</span><span>Status</span><span>Action</span>
+        </div>
+
+        <!-- Confirming row -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;gap:10px;font-size:13px;background:#eff6ff">
+          <div>
+            <div style="font-weight:700;color:#2563eb">IBO-004531</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">🔴 TRON / TRC-20</div>
+            <div style="font-size:11px;color:#64748b">User: Ahmad Raza</div>
+          </div>
+          <div>
+            <div style="font-weight:700">50 USDT</div>
+            <div style="font-size:11px;color:#64748b">→ 0.0841 BNB out</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#2563eb">14 / 20</div>
+            <div style="background:#e2e8f0;border-radius:3px;height:5px;margin-top:4px;overflow:hidden">
+              <div style="width:70%;height:100%;background:#2563eb;border-radius:3px"></div>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">~18s remaining</div>
+          </div>
+          <div style="font-family:monospace;font-size:11px;color:#64748b">a1b2c3d4e5f6...<br><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;margin-top:3px">Explorer →</button></div>
+          <span class="badge badge-blue" style="animation:pulse 1s infinite">⚙️ Confirming</span>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Order detail modal')">View</button>
+        </div>
+
+        <!-- Confirming row 2 -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;gap:10px;font-size:13px;background:#eff6ff">
+          <div>
+            <div style="font-weight:700;color:#2563eb">IBO-004529</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">🟡 BSC / BEP-20</div>
+            <div style="font-size:11px;color:#64748b">User: Fatima K.</div>
+          </div>
+          <div>
+            <div style="font-weight:700">0.5 BNB</div>
+            <div style="font-size:11px;color:#64748b">→ 140 USDT out</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#2563eb">12 / 15</div>
+            <div style="background:#e2e8f0;border-radius:3px;height:5px;margin-top:4px;overflow:hidden">
+              <div style="width:80%;height:100%;background:#2563eb;border-radius:3px"></div>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">~9s remaining</div>
+          </div>
+          <div style="font-family:monospace;font-size:11px;color:#64748b">0x9f8e7d6c5b4a...<br><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;margin-top:3px">Explorer →</button></div>
+          <span class="badge badge-blue" style="animation:pulse 1s infinite">⚙️ Confirming</span>
+          <button class="btn btn-secondary btn-sm">View</button>
+        </div>
+
+        <!-- Waiting row -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;gap:10px;font-size:13px">
+          <div>
+            <div style="font-weight:700;color:#2563eb">IBO-004528</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">🟣 Solana</div>
+            <div style="font-size:11px;color:#64748b">User: Ali Hassan</div>
+          </div>
+          <div>
+            <div style="font-weight:700">50 USDC</div>
+            <div style="font-size:11px;color:#64748b">→ 0.016 ETH out</div>
+          </div>
+          <div style="color:#94a3b8;font-size:12px">— / 32<br><div style="font-size:11px">No TX yet</div></div>
+          <div style="font-family:monospace;font-size:11px;color:#94a3b8">—</div>
+          <span class="badge badge-gray">⏳ Waiting</span>
+          <button class="btn btn-secondary btn-sm">View</button>
+        </div>
+
+        <!-- Wrong token row -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;gap:10px;font-size:13px;background:#fff8f8;border-left:3px solid #ef4444">
+          <div>
+            <div style="font-weight:700;color:#dc2626">IBO-004525</div>
+            <div style="font-size:11px;color:#dc2626;margin-top:2px">🟡 BSC / BEP-20</div>
+            <div style="font-size:11px;color:#64748b">User: Sara Malik</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#dc2626">WRONG TOKEN</div>
+            <div style="font-size:11px;color:#dc2626">Sent BUSD, expected USDT</div>
+          </div>
+          <div>
+            <div style="font-weight:700">15 / 15 ✓</div>
+            <div style="font-size:11px;color:#dc2626">TX confirmed but wrong token</div>
+          </div>
+          <div style="font-family:monospace;font-size:11px;color:#64748b">0xabcdef1234...<br><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;margin-top:3px">Explorer →</button></div>
+          <span class="badge badge-red">❌ Wrong Token</span>
+          <button class="btn btn-danger btn-sm" onclick="alert('Open wrong token resolution flow')">Resolve</button>
+        </div>
+
+        <!-- Underpaid row -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;align-items:center;padding:14px 16px;gap:10px;font-size:13px;background:#fffbeb;border-left:3px solid #f59e0b">
+          <div>
+            <div style="font-weight:700;color:#d97706">IBO-004522</div>
+            <div style="font-size:11px;color:#d97706;margin-top:2px">🔴 TRON / TRC-20</div>
+            <div style="font-size:11px;color:#64748b">User: Bilal A.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#d97706">48.5 USDT</div>
+            <div style="font-size:11px;color:#d97706">Expected: 50 USDT (underpaid by 1.5)</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#059669">20/20 ✓</div>
+            <div style="font-size:11px;color:#d97706">Confirmed but underpaid</div>
+          </div>
+          <div style="font-family:monospace;font-size:11px;color:#64748b">b2c3d4e5f6a7...<br><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;margin-top:3px">Explorer →</button></div>
+          <span class="badge badge-yellow">⚠️ Underpaid</span>
+          <button class="btn btn-sm" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e" onclick="alert('Underpayment options: partial fulfill, request top-up, or refund')">Handle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MANUAL PAYOUT QUEUE ===== -->
+    <div id="tab-payouts" class="tab-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h3 style="font-size:16px;font-weight:700">Manual Payout Queue</h3>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">Orders where auto-payout failed or was disabled — requires admin to send manually</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#dc2626">
+          ⚠️ SLA: 30 minutes per item
+        </div>
+      </div>
+
+      <!-- Queue item 1 — Low balance -->
+      <div style="background:white;border:1.5px solid #fca5a5;border-radius:14px;padding:20px;margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="font-size:15px;font-weight:700">Order #IBO-004530</div>
+              <span class="badge badge-red">⚠️ Low Balance</span>
+              <span class="sla-badge sla-warn">⏱️ 18 min in queue</span>
+            </div>
+            <div style="font-size:13px;color:#64748b;margin-top:4px">Sara Malik · 0.01840 ETH · received 51.5 USDT via BSC</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:#64748b">ETH hot wallet</div>
+            <div style="font-size:14px;font-weight:700;color:#dc2626">0.002 ETH (CRITICAL LOW)</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div style="background:#f8fafc;border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Deposit Confirmed ✓</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:3px">
+              <div><span style="color:#94a3b8">TX:</span> 0x9f8e7d6c5b4a...3f2e</div>
+              <div><span style="color:#94a3b8">Network:</span> BSC BEP-20</div>
+              <div><span style="color:#94a3b8">Amount:</span> <strong style="color:#059669">51.5 USDT ✓</strong></div>
+              <div><span style="color:#94a3b8">Confs:</span> 15/15 ✓</div>
+            </div>
+          </div>
+          <div style="background:#fef2f2;border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:8px">Payout Required</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:3px">
+              <div><span style="color:#94a3b8">Send:</span> <strong>0.01840 ETH</strong></div>
+              <div><span style="color:#94a3b8">Network:</span> Ethereum ERC-20</div>
+              <div><span style="color:#94a3b8">To wallet:</span> <span style="font-family:monospace">0x742d35...Cc4</span></div>
+              <div><span style="color:#94a3b8">Reason:</span> <strong style="color:#dc2626">Hot wallet low</strong></div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:12px;color:#92400e;margin-bottom:12px">
+          ⚠️ Auto-payout failed: ETH hot wallet balance (0.002 ETH) below required payout (0.01840 ETH). Please top up hot wallet and send manually, or transfer from warm wallet.
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">Payout TX Hash <span style="color:#ef4444">*</span></label>
+          <input class="form-input" type="text" placeholder="0x... paste your outbound transaction hash here" style="font-family:monospace;font-size:13px">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" style="flex:1;min-width:140px" onclick="confirmPayout(this)">✅ Mark Payout Sent</button>
+          <button class="btn btn-secondary" onclick="alert('Top-up hot wallet from warm wallet')">🏦 Top Up Hot Wallet</button>
+          <button class="btn btn-ghost btn-sm" onclick="alert('View full order details')">View Order</button>
+        </div>
+      </div>
+
+      <!-- Queue item 2 — Manual review threshold -->
+      <div style="background:white;border:1.5px solid #fde68a;border-radius:14px;padding:20px;margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="font-size:15px;font-weight:700">Order #IBO-004518</div>
+              <span class="badge badge-yellow">Large Order Threshold</span>
+              <span class="sla-badge sla-ok">✓ 22 min in queue</span>
+            </div>
+            <div style="font-size:13px;color:#64748b;margin-top:4px">Bilal Ahmed · 0.0023 BTC · received 218 USDT via TRC-20</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:#64748b">Order value</div>
+            <div style="font-size:14px;font-weight:700;color:#d97706">PKR 63,280 (above 50K threshold)</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div style="background:#f8fafc;border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Deposit Confirmed ✓</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:3px">
+              <div><span style="color:#94a3b8">TX:</span> a1b2c3d4e5f6...7g8h</div>
+              <div><span style="color:#94a3b8">Network:</span> TRON TRC-20</div>
+              <div><span style="color:#94a3b8">Amount:</span> <strong style="color:#059669">218 USDT ✓</strong></div>
+              <div><span style="color:#94a3b8">Confs:</span> 20/20 ✓</div>
+            </div>
+          </div>
+          <div style="background:#fffbeb;border-radius:10px;padding:12px">
+            <div style="font-size:11px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:8px">Payout Required</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:3px">
+              <div><span style="color:#94a3b8">Send:</span> <strong>0.0023 BTC</strong></div>
+              <div><span style="color:#94a3b8">Network:</span> Bitcoin</div>
+              <div><span style="color:#94a3b8">To wallet:</span> <span style="font-family:monospace">bc1qxy2...k58</span></div>
+              <div><span style="color:#94a3b8">Reason:</span> <strong style="color:#d97706">Manual review threshold</strong></div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;font-size:12px;color:#166534;margin-bottom:12px">
+          ✅ Payment verified. Auto-payout was disabled for orders above PKR 50,000. Manually verify user identity before sending BTC.
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">BTC Payout TX Hash <span style="color:#ef4444">*</span></label>
+          <input class="form-input" type="text" placeholder="Paste Bitcoin outbound TXID..." style="font-family:monospace;font-size:13px">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" style="flex:1;min-width:140px" onclick="confirmPayout(this)">✅ Mark Payout Sent</button>
+          <button class="btn btn-secondary btn-sm" onclick="alert('User profile + KYC')">Verify User</button>
+          <button class="btn btn-ghost btn-sm">View Order</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:20px;color:#64748b;font-size:13px;background:white;border-radius:12px;border:1px dashed #e2e8f0">
+        No more items in queue · 2 resolved today
+      </div>
+    </div>
+
+    <!-- ===== ORDERS ===== -->
+    <div id="tab-orders" class="tab-content">
+      <!-- Filter + Export bar -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+        <input class="form-input" type="text" placeholder="Order ID or user name..." style="flex:1;min-width:160px;padding:9px 12px;font-size:13px">
+        <select class="form-input form-select" style="padding:9px 12px;font-size:13px;width:auto"><option>All Status</option><option>Completed</option><option>Pending Verify</option><option>Releasing</option><option>Cancelled</option><option>Failed</option><option>Refunded</option></select>
+        <select class="form-input form-select" style="padding:9px 12px;font-size:13px;width:auto"><option>All Tokens</option><option>USDT (TRC-20)</option><option>USDT (ERC-20)</option><option>BNB</option><option>ETH</option><option>SOL</option><option>TON</option><option>BTC</option></select>
+        <select class="form-input form-select" style="padding:9px 12px;font-size:13px;width:auto"><option>All Payment</option><option>JazzCash</option><option>Easypaisa</option><option>Bank Transfer</option><option>Crypto Deposit</option></select>
+        <select class="form-input form-select" style="padding:9px 12px;font-size:13px;width:auto"><option>Today</option><option>Last 7 days</option><option>Last 30 days</option><option>Custom range</option></select>
+        <button class="btn btn-secondary btn-sm" onclick="alert('Exporting orders as CSV...')">📥 Export</button>
+      </div>
+      <!-- Summary row -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:9px 16px;font-size:13px"><strong>47</strong> <span style="color:#64748b">Total Today</span></div>
+        <div style="background:#d1fae5;border:1px solid #86efac;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#065f46">41</strong> <span style="color:#064e3b">Completed</span></div>
+        <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#92400e">3</strong> <span style="color:#78350f">Pending Verify</span></div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#1d4ed8">1</strong> <span style="color:#1e40af">Releasing</span></div>
+        <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#991b1b">2</strong> <span style="color:#7f1d1d">Cancelled / Failed</span></div>
+        <div style="margin-left:auto;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#059669">PKR 21,000</strong> <span style="color:#064e3b">Fee Revenue Today</span></div>
+      </div>
+      <!-- Table -->
+      <div style="overflow-x:auto;border-radius:14px;border:1px solid #e2e8f0">
+        <table style="width:100%;border-collapse:collapse;background:white;min-width:900px">
+          <thead><tr style="background:#f8fafc">
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0;white-space:nowrap">Order / Time</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">User</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Token</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Amount Out</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">PKR / Mode</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Status</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Fee</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0">Action</th>
+          </tr></thead>
+          <tbody>
+            <!-- Completed -->
+            <tr style="border-bottom:1px solid #f1f5f9" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='white'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:700">IBO-004521</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 2:29 PM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Muhammad U.</div><div style="font-size:11px;color:#64748b">#2814</div></td>
+              <td style="padding:12px 14px">🟣 SOL<div style="font-size:11px;color:#64748b">Solana</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#059669">0.2348 SOL</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">10,135 PKR</div><div style="font-size:11px;color:#64748b">📸 JazzCash</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-yellow">⏳ Verifying</span></td>
+              <td style="padding:12px 14px;font-size:13px">50.7 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-primary btn-sm" onclick="openOrderDetail('IBO-004521','Muhammad Usman','SOL','0.2348 SOL','10,135 PKR','JazzCash','verifying')">Review →</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='white'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:700">IBO-004520</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 2:11 PM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Sara M.</div><div style="font-size:11px;color:#64748b">#2901</div></td>
+              <td style="padding:12px 14px">🟡 BNB<div style="font-size:11px;color:#64748b">BSC BEP-20</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#059669">0.118 BNB</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">10,080 PKR</div><div style="font-size:11px;color:#64748b">📸 Easypaisa</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-green">✓ Completed</span></td>
+              <td style="padding:12px 14px;font-size:13px">50.4 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-secondary btn-sm" onclick="openOrderDetail('IBO-004520','Sara Malik','BNB','0.118 BNB','10,080 PKR','Easypaisa','completed')">View</button></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='white'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:700">IBO-004519</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 1:55 PM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Ali H.</div><div style="font-size:11px;color:#64748b">#3102</div></td>
+              <td style="padding:12px 14px">💎 TON<div style="font-size:11px;color:#64748b">TON Network</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#059669">301 TON</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">50,048 PKR</div><div style="font-size:11px;color:#64748b">🏦 Bank Transfer</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-green">✓ Completed</span></td>
+              <td style="padding:12px 14px;font-size:13px">250.2 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-secondary btn-sm" onclick="openOrderDetail('IBO-004519','Ali Hassan','TON','301 TON','50,048 PKR','Bank Transfer','completed')">View</button></td>
+            </tr>
+            <!-- Releasing -->
+            <tr style="border-bottom:1px solid #f1f5f9;background:#eff6ff" onmouseenter="this.style.background='#dbeafe'" onmouseleave="this.style.background='#eff6ff'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:700">IBO-004518</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 1:48 PM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Bilal A.</div><div style="font-size:11px;color:#64748b">#3881</div></td>
+              <td style="padding:12px 14px">🔷 ETH<div style="font-size:11px;color:#64748b">ERC-20</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#2563eb">0.0023 ETH</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">218 USDT</div><div style="font-size:11px;color:#64748b">🔗 Crypto Deposit</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-blue" style="animation:pulse 1s infinite">⚙️ Releasing</span></td>
+              <td style="padding:12px 14px;font-size:13px">316.1 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-secondary btn-sm" onclick="openOrderDetail('IBO-004518','Bilal Ahmed','ETH','0.0023 ETH','218 USDT Crypto','Crypto Deposit','releasing')">View</button></td>
+            </tr>
+            <!-- Crypto deposit completed order -->
+            <tr style="border-bottom:1px solid #f1f5f9" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='white'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:700">IBO-004515</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 1:22 PM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Sara Ma.</div><div style="font-size:11px;color:#64748b">#4012</div></td>
+              <td style="padding:12px 14px">🟣 SOL<div style="font-size:11px;color:#64748b">Solana</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#059669">50.5 SOL</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">50 USDT</div><div style="font-size:11px;color:#64748b">🔗 Crypto Deposit</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-green">✓ Completed</span></td>
+              <td style="padding:12px 14px;font-size:13px">280 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-secondary btn-sm" onclick="openOrderDetail('IBO-004515','Sara Malik','SOL','50.5 SOL','50 USDT Crypto','Crypto Deposit','completed')">View</button></td>
+            </tr>
+            <!-- Cancelled -->
+            <tr style="border-bottom:1px solid #f1f5f9;background:#fff8f8" onmouseenter="this.style.background='#fef2f2'" onmouseleave="this.style.background='#fff8f8'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#94a3b8;font-weight:700">IBO-004508</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 11:40 AM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600;color:#94a3b8">User #5512</div><div style="font-size:11px;color:#94a3b8">#5512</div></td>
+              <td style="padding:12px 14px;color:#94a3b8">🟠 BTC<div style="font-size:11px;color:#94a3b8">Bitcoin</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#94a3b8">0.00041 BTC</td>
+              <td style="padding:12px 14px"><div style="font-weight:600;color:#94a3b8">63,500 PKR</div><div style="font-size:11px;color:#94a3b8">📸 JazzCash</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-red">✗ Rejected</span></td>
+              <td style="padding:12px 14px;font-size:13px;color:#94a3b8">0 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-ghost btn-sm" onclick="openOrderDetail('IBO-004508','User #5512','BTC','0.00041 BTC','63,500 PKR','JazzCash','rejected')">View</button></td>
+            </tr>
+            <!-- Failed payout -->
+            <tr style="background:#fff8f8" onmouseenter="this.style.background='#fef2f2'" onmouseleave="this.style.background='#fff8f8'">
+              <td style="padding:12px 14px"><div style="font-family:monospace;font-size:12px;color:#ef4444;font-weight:700">IBO-004501</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">Today 10:08 AM</div></td>
+              <td style="padding:12px 14px;font-size:13px"><div style="font-weight:600">Ahmad R.</div><div style="font-size:11px;color:#64748b">#1901</div></td>
+              <td style="padding:12px 14px">🔷 ETH<div style="font-size:11px;color:#64748b">ERC-20</div></td>
+              <td style="padding:12px 14px;font-weight:700;color:#ef4444">0.0184 ETH</td>
+              <td style="padding:12px 14px"><div style="font-weight:600">51,500 PKR</div><div style="font-size:11px;color:#64748b">🔗 Crypto Deposit</div></td>
+              <td style="padding:12px 14px"><span class="badge badge-red">⚠️ Payout Failed</span></td>
+              <td style="padding:12px 14px;font-size:13px">257.5 PKR</td>
+              <td style="padding:12px 14px"><button class="btn btn-danger btn-sm" onclick="alert('Open in Payout Queue tab')">Resolve →</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination footer -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;color:#64748b">Showing 7 of 47 orders today</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" style="padding:6px 12px">← Prev</button>
+          <button class="btn btn-secondary btn-sm" style="padding:6px 12px">1</button>
+          <button class="btn btn-ghost btn-sm" style="padding:6px 12px">2</button>
+          <button class="btn btn-ghost btn-sm" style="padding:6px 12px">3</button>
+          <button class="btn btn-ghost btn-sm" style="padding:6px 12px">Next →</button>
+        </div>
+      </div>
+
+      <!-- ORDER DETAIL PANEL -->
+      <div id="order-detail-panel" style="display:none;margin-top:20px;background:white;border-radius:14px;border:1.5px solid #2563eb;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+          <div><div id="odp-title" style="font-size:17px;font-weight:800">Order IBO-004521</div><div id="odp-sub" style="font-size:13px;color:#64748b;margin-top:2px">Muhammad Usman · SOL · JazzCash</div></div>
+          <button onclick="document.getElementById('order-detail-panel').style.display='none'" class="btn btn-ghost btn-sm">← Close</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="odp-token" style="font-weight:700;font-size:15px">0.2348 SOL</div><div style="font-size:11px;color:#64748b">Crypto Out</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="odp-pkr" style="font-weight:700;font-size:15px;color:#2563eb">10,135 PKR</div><div style="font-size:11px;color:#64748b">PKR Paid</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="odp-method" style="font-weight:700;font-size:14px">JazzCash</div><div style="font-size:11px;color:#64748b">Payment Method</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div style="font-weight:700;font-size:14px">50.7 PKR</div><div style="font-size:11px;color:#64748b">Platform Fee</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="odp-status" style="font-weight:700;font-size:14px;color:#f59e0b">Verifying</div><div style="font-size:11px;color:#64748b">Status</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#f8fafc;border-radius:10px;padding:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Timeline</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0"></div><span style="color:#64748b">Order created</span><span style="margin-left:auto;color:#94a3b8">2:26 PM</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0"></div><span style="color:#64748b">Payment uploaded</span><span style="margin-left:auto;color:#94a3b8">2:28 PM</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0"></div><span style="color:#64748b">AI scan completed (87%)</span><span style="margin-left:auto;color:#94a3b8">2:29 PM</span></div>
+              <div style="display:flex;align-items:center;gap:8px;opacity:0.4"><div style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0"></div><span style="color:#94a3b8">Admin review pending...</span><span style="margin-left:auto;color:#94a3b8">Now</span></div>
+            </div>
+          </div>
+          <div style="background:#f8fafc;border-radius:10px;padding:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Payment Screenshot</div>
+            <div style="background:#e2e8f0;border-radius:8px;height:100px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:#64748b" onclick="alert('Full screenshot modal')">📷 Click to view full size</div>
+          </div>
+        </div>
+        <div id="odp-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="alert('Order approved — releasing crypto to user')">✅ Approve & Release</button>
+          <button class="btn btn-danger" onclick="alert('Order rejected — user notified')">❌ Reject Order</button>
+          <button class="btn btn-secondary" onclick="alert('Message sent to user')">💬 Message User</button>
+          <button class="btn btn-ghost btn-sm" onclick="alert('Refund initiated')">↩ Refund</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROVIDER APPLICATIONS ===== -->
+    <div id="tab-applications" class="tab-content">
+      <!-- Header + filter -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h3 style="font-size:16px;font-weight:700">Instant Buy Provider Applications</h3>
+          <div style="font-size:13px;color:#64748b;margin-top:2px">Review and approve merchants to supply crypto inventory for Instant Buy orders</div>
+        </div>
+        <select class="form-input form-select" style="padding:8px 12px;font-size:13px;width:auto"><option>All Status</option><option>Submitted</option><option>Under Review</option><option>Approved</option><option>Waitlisted</option><option>Rejected</option></select>
+      </div>
+      <!-- Status pills -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#92400e">8</strong> <span style="color:#78350f">Submitted</span></div>
+        <div style="background:#dbeafe;border:1px solid #bfdbfe;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#1d4ed8">2</strong> <span style="color:#1e40af">Under Review</span></div>
+        <div style="background:#d1fae5;border:1px solid #86efac;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#065f46">1</strong> <span style="color:#064e3b">Approved</span></div>
+        <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:9px 16px;font-size:13px"><strong style="color:#475569">1</strong> <span style="color:#64748b">Waitlisted</span></div>
+      </div>
+
+      <!-- Application 1 — Submitted -->
+      <div class="app-row" style="border:1.5px solid #fde68a;background:#fffbeb;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="merchant-avatar" style="width:38px;height:38px;font-size:15px;background:linear-gradient(135deg,#f59e0b,#fbbf24)">B</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">Bilal Traders</div>
+              <div style="font-size:12px;color:#64748b;margin-top:1px">Ahmed Bilal · Lahore · Applied: 3 days ago</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            <span style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟡 BNB</span>
+            <span style="background:#f0fdf4;border:1px solid #86efac;color:#166534;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟣 SOL</span>
+            <span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">💎 TON</span>
+          </div>
+        </div>
+        <div style="text-align:right;min-width:130px">
+          <div style="font-size:12px;color:#64748b">Est. daily volume</div>
+          <div style="font-weight:700;font-size:15px">200K PKR</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Experience: 2–5 yrs</div>
+        </div>
+        <span class="badge badge-yellow" style="white-space:nowrap">⏳ Submitted</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openProviderDetail('Bilal Traders','Ahmed Bilal','Lahore','200K','BNB, SOL, TON','2-5 years','submitted')">View Full →</button>
+          <button class="btn btn-success btn-sm" onclick="alert('Bilal Traders approved as Instant Buy provider. Welcome email sent.')">Approve</button>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Bilal Traders moved to waitlist.')">Waitlist</button>
+          <button class="btn btn-danger btn-sm" onclick="alert('Application rejected.')">Reject</button>
+        </div>
+      </div>
+
+      <!-- Application 2 — Under Review -->
+      <div class="app-row" style="border:1.5px solid #bfdbfe;background:#eff6ff;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="merchant-avatar" style="width:38px;height:38px;font-size:15px;background:linear-gradient(135deg,#2563eb,#60a5fa)">F</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">FastCrypto PK</div>
+              <div style="font-size:12px;color:#64748b;margin-top:1px">Usman Khan · Karachi · Applied: 1 week ago</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            <span style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟡 BNB</span>
+            <span style="background:#ede9fe;border:1px solid #c4b5fd;color:#5b21b6;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🔷 ETH</span>
+            <span style="background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟠 BTC</span>
+          </div>
+        </div>
+        <div style="text-align:right;min-width:130px">
+          <div style="font-size:12px;color:#64748b">Est. daily volume</div>
+          <div style="font-weight:700;font-size:15px">500K PKR</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Experience: 5+ yrs</div>
+        </div>
+        <span class="badge badge-blue" style="white-space:nowrap">🔍 Under Review</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openProviderDetail('FastCrypto PK','Usman Khan','Karachi','500K','BNB, ETH, BTC','5+ years','under_review')">View Full →</button>
+          <button class="btn btn-success btn-sm" onclick="alert('FastCrypto PK approved!')">Approve</button>
+          <button class="btn btn-secondary btn-sm">Waitlist</button>
+          <button class="btn btn-danger btn-sm">Reject</button>
+        </div>
+      </div>
+
+      <!-- Application 3 — Approved (active provider) -->
+      <div class="app-row" style="border:1.5px solid #86efac;background:#f0fdf4;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="merchant-avatar" style="width:38px;height:38px;font-size:15px;background:linear-gradient(135deg,#059669,#34d399)">A</div>
+            <div>
+              <div style="font-size:15px;font-weight:700">Ali Exchange <span style="background:#d1fae5;color:#065f46;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700;margin-left:4px">Active Provider</span></div>
+              <div style="font-size:12px;color:#64748b;margin-top:1px">Ali Raza · Islamabad · Approved 2 days ago</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            <span style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟡 BNB</span>
+            <span style="background:#f0fdf4;border:1px solid #86efac;color:#166634;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">🟣 SOL</span>
+          </div>
+        </div>
+        <div style="text-align:right;min-width:130px">
+          <div style="font-size:12px;color:#64748b">Volume since approval</div>
+          <div style="font-weight:700;font-size:15px;color:#059669">820K PKR</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Commission: PKR 4,100</div>
+        </div>
+        <span class="badge badge-green" style="white-space:nowrap">✓ Approved</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="openProviderDetail('Ali Exchange','Ali Raza','Islamabad','400K','BNB, SOL','4 years','approved')">View Profile</button>
+          <button class="btn btn-ghost btn-sm" onclick="alert('Viewing inventory — Ali Exchange: BNB 5.2 available, SOL 124 available')">Inventory</button>
+          <button class="btn btn-danger btn-sm" onclick="alert('Provider status revoked. Inventory released back to platform.')">Revoke</button>
+        </div>
+      </div>
+
+      <!-- Application 4 — Waitlisted -->
+      <div class="app-row" style="border:1px solid #e2e8f0;background:#f8fafc;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="merchant-avatar" style="width:38px;height:38px;font-size:15px;background:#94a3b8">P</div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#64748b">PK_Crypto</div>
+              <div style="font-size:12px;color:#94a3b8;margin-top:1px">Khalid M. · Faisalabad · Applied: 2 weeks ago</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:8px">Tokens: USDT only · Est. 100K PKR/day · Experience: &lt;1 year</div>
+        </div>
+        <div style="text-align:right;min-width:130px">
+          <div style="font-size:12px;color:#94a3b8">Est. daily volume</div>
+          <div style="font-weight:700;font-size:15px;color:#94a3b8">100K PKR</div>
+        </div>
+        <span class="badge badge-gray" style="white-space:nowrap">⏸ Waitlisted</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openProviderDetail('PK_Crypto','Khalid M.','Faisalabad','100K','USDT','<1 year','waitlisted')">View</button>
+          <button class="btn btn-success btn-sm" onclick="alert('PK_Crypto moved from waitlist to approved.')">Approve Now</button>
+          <button class="btn btn-danger btn-sm" onclick="alert('PK_Crypto application rejected.')">Reject</button>
+        </div>
+      </div>
+
+      <!-- PROVIDER DETAIL PANEL -->
+      <div id="provider-detail-panel" style="display:none;margin-top:20px;background:white;border-radius:14px;border:1.5px solid #2563eb;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+          <div><div id="pdp-name" style="font-size:18px;font-weight:800">Bilal Traders</div><div id="pdp-sub" style="font-size:13px;color:#64748b;margin-top:2px">Ahmed Bilal · Lahore</div></div>
+          <button onclick="document.getElementById('provider-detail-panel').style.display='none'" class="btn btn-ghost btn-sm">← Close</button>
+        </div>
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="pdp-volume" style="font-weight:700;font-size:15px;color:#2563eb">200K PKR</div><div style="font-size:11px;color:#64748b">Est. Daily Volume</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="pdp-exp" style="font-weight:700;font-size:15px">2–5 yrs</div><div style="font-size:11px;color:#64748b">Experience</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="pdp-tokens" style="font-weight:700;font-size:14px">BNB, SOL, TON</div><div style="font-size:11px;color:#64748b">Tokens Offered</div></div>
+          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="pdp-status" style="font-weight:700;font-size:14px;color:#f59e0b">Submitted</div><div style="font-size:11px;color:#64748b">Status</div></div>
+        </div>
+        <!-- Application details -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:#f8fafc;border-radius:10px;padding:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Business Information</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:5px">
+              <div><span style="color:#94a3b8">Business Name:</span> <strong>Bilal Traders</strong></div>
+              <div><span style="color:#94a3b8">Owner:</span> <strong>Ahmed Bilal</strong></div>
+              <div><span style="color:#94a3b8">City:</span> <strong>Lahore</strong></div>
+              <div><span style="color:#94a3b8">Phone:</span> <strong>+92 300 1234567</strong></div>
+              <div><span style="color:#94a3b8">Business Type:</span> <strong>Individual Crypto Trader</strong></div>
+              <div><span style="color:#94a3b8">CNIC Verified:</span> <span class="badge badge-green" style="font-size:10px">✓ Verified</span></div>
+            </div>
+          </div>
+          <div style="background:#f8fafc;border-radius:10px;padding:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Inventory Commitment</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:5px">
+              <div><span style="color:#94a3b8">BNB committed:</span> <strong>10 BNB (~PKR 290,000)</strong></div>
+              <div><span style="color:#94a3b8">SOL committed:</span> <strong>250 SOL (~PKR 240,000)</strong></div>
+              <div><span style="color:#94a3b8">TON committed:</span> <strong>5,000 TON (~PKR 300,000)</strong></div>
+              <div style="margin-top:4px;padding-top:8px;border-top:1px solid #e2e8f0"><span style="color:#94a3b8">Total est. value:</span> <strong style="color:#059669">~PKR 830,000</strong></div>
+            </div>
+          </div>
+        </div>
+        <!-- Applicant statement -->
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;text-transform:uppercase">Applicant Statement</div>
+          <div style="font-size:13px;color:#78350f">"I have been trading crypto since 2021. I hold substantial BNB, SOL and TON reserves and can reliably fill Instant Buy orders. I am KYC verified and agree to all platform terms including the two-layer payout verification policy."</div>
+        </div>
+        <!-- Documents -->
+        <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Supporting Documents</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="alert('Viewing CNIC copy')">🪪 CNIC Copy</button>
+            <button class="btn btn-ghost btn-sm" onclick="alert('Viewing crypto wallet proof')">💼 Wallet Balance Proof</button>
+            <button class="btn btn-ghost btn-sm" onclick="alert('Viewing business NTN')">📄 NTN / Business Registration</button>
+          </div>
+        </div>
+        <!-- Admin notes -->
+        <div style="margin-bottom:16px"><label class="form-label">Admin Review Notes (internal)</label><textarea class="form-input" rows="2" placeholder="Notes about this application..." style="resize:none;margin-top:6px;font-size:13px"></textarea></div>
+        <!-- Actions -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="approveProvider()">✅ Approve as Provider</button>
+          <button class="btn btn-secondary" onclick="alert('Application moved to waitlist. Applicant notified.')">⏸ Move to Waitlist</button>
+          <button class="btn btn-danger" onclick="alert('Application rejected. Applicant notified with reason.')">❌ Reject Application</button>
+          <button class="btn btn-ghost btn-sm" onclick="alert('Message sent to applicant asking for more info.')">💬 Request More Info</button>
+        </div>
+        <div id="provider-approved-msg" style="display:none;background:#d1fae5;border:1px solid #86efac;border-radius:8px;padding:12px;margin-top:12px;font-size:13px;color:#065f46">
+          ✅ <strong>Provider approved!</strong> Welcome email sent. Provider can now log in and deposit inventory to start filling orders.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.ib-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+function openOrderDetail(id, user, token, amount, pkr, method, status) {
+  document.getElementById('odp-title').textContent = 'Order ' + id;
+  document.getElementById('odp-sub').textContent = user + ' · ' + token + ' · ' + method;
+  document.getElementById('odp-token').textContent = amount;
+  document.getElementById('odp-pkr').textContent = pkr;
+  document.getElementById('odp-method').textContent = method;
+  const statusEl = document.getElementById('odp-status');
+  const statusMap = { verifying:'Pending Verify', completed:'Completed', releasing:'Releasing', rejected:'Rejected', cancelled:'Cancelled' };
+  const colorMap = { verifying:'#f59e0b', completed:'#059669', releasing:'#2563eb', rejected:'#dc2626', cancelled:'#94a3b8' };
+  statusEl.textContent = statusMap[status] || status;
+  statusEl.style.color = colorMap[status] || '#64748b';
+  const actions = document.getElementById('odp-actions');
+  if(status === 'completed' || status === 'cancelled' || status === 'rejected') {
+    actions.innerHTML = '<span style="font-size:13px;color:#64748b">This order is closed — no further action required.</span>';
+  } else {
+    actions.innerHTML = '<button class="btn btn-success" onclick="alert(\'Order approved — releasing crypto to user\')">✅ Approve & Release</button><button class="btn btn-danger" onclick="alert(\'Order rejected — user notified\')">❌ Reject Order</button><button class="btn btn-secondary" onclick="alert(\'Message sent to user\')">💬 Message User</button><button class="btn btn-ghost btn-sm" onclick="alert(\'Refund initiated\')">↩ Refund</button>';
+  }
+  const panel = document.getElementById('order-detail-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+function openProviderDetail(name, person, city, volume, tokens, exp, status) {
+  document.getElementById('pdp-name').textContent = name;
+  document.getElementById('pdp-sub').textContent = person + ' · ' + city;
+  document.getElementById('pdp-volume').textContent = volume + ' PKR';
+  document.getElementById('pdp-exp').textContent = exp;
+  document.getElementById('pdp-tokens').textContent = tokens;
+  const statusEl = document.getElementById('pdp-status');
+  const statusMap = { submitted:'Submitted', under_review:'Under Review', approved:'Approved', waitlisted:'Waitlisted' };
+  const colorMap = { submitted:'#f59e0b', under_review:'#2563eb', approved:'#059669', waitlisted:'#64748b' };
+  statusEl.textContent = statusMap[status] || status;
+  statusEl.style.color = colorMap[status] || '#64748b';
+  document.getElementById('provider-approved-msg').style.display = 'none';
+  const panel = document.getElementById('provider-detail-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+function approveProvider() {
+  document.getElementById('provider-approved-msg').style.display = 'block';
+  document.getElementById('pdp-status').textContent = 'Approved';
+  document.getElementById('pdp-status').style.color = '#059669';
+}
+function confirmPayout(btn) {
+  const card = btn.closest('[style*="border-radius:14px"]');
+  const txInput = card.querySelector('input[type=text]');
+  if(!txInput.value.trim()) { alert('Please paste the payout TX hash before confirming.'); txInput.focus(); return; }
+  card.style.borderColor = '#86efac';
+  card.style.background = '#f0fdf4';
+  const actionArea = btn.parentElement;
+  actionArea.innerHTML = '<div style="text-align:center;padding:12px;font-size:14px;color:#059669;font-weight:700">✅ Payout marked as sent · User notified · Order closed</div>';
+}
+function approveOrder(btn) {
+  const card = btn.closest('.verif-card');
+  card.style.borderColor = '#86efac';
+  card.style.background = '#f0fdf4';
+  card.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:10px">✅</div><div style="font-weight:700;font-size:16px;color:#059669">Order Approved — SOL Released</div><div style="font-size:13px;color:#64748b;margin-top:6px">Transaction hash will appear shortly</div></div>';
+}
+function rejectOrder(btn) {
+  const card = btn.closest('.verif-card');
+  card.style.borderColor = '#fca5a5';
+  card.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:10px">❌</div><div style="font-weight:700;font-size:16px;color:#dc2626">Order Rejected — User Notified</div></div>';
+}
+</script>
+</body>
+</html>

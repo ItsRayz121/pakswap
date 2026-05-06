@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dispute History — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.dispute-card { background:white; border:1.5px solid #e2e8f0; border-radius:14px; padding:18px 20px; margin-bottom:10px; transition:all 0.15s; cursor:pointer; }
+.dispute-card:hover { border-color:#93c5fd; box-shadow:0 2px 12px rgba(37,99,235,0.06); }
+.dispute-card.active-case { border-color:#ef4444; background:#fff8f8; }
+.timeline-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="dashboard.html">Home</a>
+    <a href="orders.html">Orders</a>
+    <a href="dispute-history.html" class="active">Disputes</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">M</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width:860px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:26px;font-weight:800">Dispute Center</h1>
+      <p style="color:#64748b;font-size:14px;margin-top:4px">View and manage your current and past trade disputes</p>
+    </div>
+    <a href="dispute.html" class="btn btn-danger btn-sm">⚖️ View Active Dispute</a>
+  </div>
+
+  <!-- Stats row -->
+  <div class="four-col" style="margin-bottom:24px">
+    <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">Total Disputes</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#ef4444">1</div><div class="stat-label">Active</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#10b981">2</div><div class="stat-label">Resolved (Won)</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#64748b">0</div><div class="stat-label">Lost</div></div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="margin-bottom:20px">
+    <div class="tab-bar" style="display:inline-flex">
+      <button class="tab active" onclick="filterDisputes(this,'all')">All (3)</button>
+      <button class="tab" onclick="filterDisputes(this,'active')">Active (1)</button>
+      <button class="tab" onclick="filterDisputes(this,'resolved')">Resolved (2)</button>
+    </div>
+  </div>
+
+  <!-- ACTIVE DISPUTE -->
+  <div class="dispute-card active-case" data-status="active" onclick="location.href='dispute.html'">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">⚖️</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:800">#DIS-2026-00088</span>
+            <span class="badge badge-red">🔴 Under Review</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">Trade #PKS-472 · Opened 05 May 2026 · Agent: Ali K.</div>
+        </div>
+      </div>
+      <a href="dispute.html" class="btn btn-danger btn-sm" onclick="event.stopPropagation()">View Case →</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;font-size:13px">
+      <div style="background:#fef2f2;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">You opened as</div><div style="font-weight:700">Buyer</div></div>
+      <div style="background:#fef2f2;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Trade Type</div><div style="font-weight:700">BUY USDT</div></div>
+      <div style="background:#fef2f2;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Amount at Stake</div><div style="font-weight:700;color:#ef4444">17.82 USDT</div></div>
+      <div style="background:#fef2f2;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">SLA Remaining</div><div style="font-weight:700;color:#ef4444">3h 22m</div></div>
+    </div>
+    <div style="font-size:13px;color:#64748b;background:#fef2f2;border-radius:8px;padding:10px 12px">
+      <strong style="color:#dc2626">Your claim:</strong> "I sent 5,000 PKR via JazzCash (TX: JZ2026050500834) but seller claims not received."
+    </div>
+  </div>
+
+  <!-- RESOLVED DISPUTE 1 — Won -->
+  <div class="dispute-card" data-status="resolved" onclick="openDetail('DIS-2026-00051','Buyer','BUY USDT','35.71 USDT','won','15 Apr 2026','17 Apr 2026','Payment confirmed by admin — 35.71 USDT released to buyer (you).')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:800">#DIS-2026-00051</span>
+            <span class="badge badge-green">Resolved — Won</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">Trade #PKS-398 · Opened 15 Apr · Resolved 17 Apr 2026 (2 days)</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail('DIS-2026-00051','Buyer','BUY USDT','35.71 USDT','won','15 Apr 2026','17 Apr 2026','Payment confirmed by admin — 35.71 USDT released to buyer (you).')">View Details →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;font-size:13px">
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Your Role</div><div style="font-weight:700">Buyer</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Trade</div><div style="font-weight:700">BUY 35.71 USDT</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Outcome</div><div style="font-weight:700;color:#059669">✓ You Won</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Duration</div><div style="font-weight:700">2 days</div></div>
+    </div>
+  </div>
+
+  <!-- RESOLVED DISPUTE 2 — Won -->
+  <div class="dispute-card" data-status="resolved" onclick="openDetail('DIS-2026-00019','Seller','SELL USDT','50.00 USDT','won','02 Feb 2026','03 Feb 2026','Buyer confirmed payment received after admin evidence review. USDT released from escrow.')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">✅</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:800">#DIS-2026-00019</span>
+            <span class="badge badge-green">Resolved — Won</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">Trade #PKS-201 · Opened 02 Feb · Resolved 03 Feb 2026 (1 day)</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail('DIS-2026-00019','Seller','SELL USDT','50.00 USDT','won','02 Feb 2026','03 Feb 2026','Buyer confirmed payment received after admin evidence review. USDT released from escrow.')">View Details →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;font-size:13px">
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Your Role</div><div style="font-weight:700">Seller</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Trade</div><div style="font-weight:700">SELL 50.00 USDT</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Outcome</div><div style="font-weight:700;color:#059669">✓ You Won</div></div>
+      <div style="background:#f0fdf4;border-radius:8px;padding:10px"><div style="color:#64748b;font-size:11px;margin-bottom:2px">Duration</div><div style="font-weight:700">1 day</div></div>
+    </div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div id="detail-panel" style="display:none;margin-top:16px;background:white;border-radius:14px;border:1.5px solid #2563eb;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div><div id="dp-id" style="font-size:18px;font-weight:800">Dispute #DIS-2026-00051</div><div id="dp-sub" style="font-size:13px;color:#64748b;margin-top:2px">Trade #PKS-398 · BUY USDT</div></div>
+      <button onclick="document.getElementById('detail-panel').style.display='none'" class="btn btn-ghost btn-sm">← Close</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="dp-role" style="font-weight:700;font-size:15px">Buyer</div><div style="font-size:11px;color:#64748b">Your Role</div></div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="dp-amount" style="font-weight:700;font-size:15px;color:#2563eb">35.71 USDT</div><div style="font-size:11px;color:#64748b">Amount</div></div>
+      <div style="background:#d1fae5;border-radius:10px;padding:12px;text-align:center"><div id="dp-outcome" style="font-weight:700;font-size:15px;color:#059669">Won ✓</div><div style="font-size:11px;color:#64748b">Outcome</div></div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="dp-opened" style="font-weight:700;font-size:14px">15 Apr 2026</div><div style="font-size:11px;color:#64748b">Opened</div></div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div id="dp-resolved" style="font-weight:700;font-size:14px">17 Apr 2026</div><div style="font-size:11px;color:#64748b">Resolved</div></div>
+    </div>
+    <!-- Timeline -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:#374151">Resolution Timeline</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;font-size:13px"><div class="timeline-dot" style="background:#059669"></div><span style="color:#64748b;min-width:100px">15 Apr · 2:30 PM</span><span>Dispute opened — evidence submitted</span></div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:13px"><div class="timeline-dot" style="background:#059669"></div><span style="color:#64748b;min-width:100px">15 Apr · 4:00 PM</span><span>Admin assigned — SLA timer started</span></div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:13px"><div class="timeline-dot" style="background:#059669"></div><span style="color:#64748b;min-width:100px">16 Apr · 10:00 AM</span><span>Additional evidence requested from both parties</span></div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:13px"><div class="timeline-dot" style="background:#059669"></div><span style="color:#64748b;min-width:100px">17 Apr · 11:15 AM</span><span id="dp-resolution-text">Payment confirmed — 35.71 USDT released to you</span></div>
+      </div>
+    </div>
+    <!-- Admin decision note -->
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px;font-size:13px;color:#065f46">
+      <div style="font-weight:700;margin-bottom:4px">Admin Decision Note:</div>
+      <div id="dp-admin-note">Payment confirmed by admin — 35.71 USDT released to buyer (you).</div>
+    </div>
+  </div>
+
+  <!-- Help CTA -->
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-weight:700;font-size:14px">Need help understanding dispute outcomes?</div>
+      <div style="font-size:13px;color:#64748b;margin-top:2px">Read our guide on how disputes work and how to submit strong evidence.</div>
+    </div>
+    <a href="help.html" class="btn btn-secondary btn-sm">📚 Dispute Guide</a>
+  </div>
+
+</div>
+
+<script>
+function filterDisputes(btn, status) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.dispute-card').forEach(card=>{
+    const show = status==='all' || card.dataset.status===status;
+    card.style.display = show ? 'block' : 'none';
+  });
+}
+function openDetail(id, role, type, amount, outcome, opened, resolved, note) {
+  document.getElementById('dp-id').textContent='Dispute #'+id;
+  document.getElementById('dp-sub').textContent=type+' · Opened '+opened;
+  document.getElementById('dp-role').textContent=role;
+  document.getElementById('dp-amount').textContent=amount;
+  const outcomeEl=document.getElementById('dp-outcome');
+  outcomeEl.textContent=outcome==='won'?'Won ✓':'Lost';
+  outcomeEl.style.color=outcome==='won'?'#059669':'#dc2626';
+  document.getElementById('dp-opened').textContent=opened;
+  document.getElementById('dp-resolved').textContent=resolved;
+  document.getElementById('dp-admin-note').textContent=note;
+  document.getElementById('dp-resolution-text').textContent=note;
+  const panel=document.getElementById('detail-panel');
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

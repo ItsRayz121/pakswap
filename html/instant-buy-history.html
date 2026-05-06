@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Purchase History — Instant Buy — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.hist-layout { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+.filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+.history-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+.history-table thead th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+.history-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; cursor: pointer; }
+.history-table tbody tr:hover { background: #f8fafc; }
+.history-table tbody tr:last-child { border-bottom: none; }
+.history-table td { padding: 14px 16px; font-size: 14px; color: #1e293b; }
+.token-cell { display: flex; align-items: center; gap: 10px; }
+.token-cell .tok-logo { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.order-detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 999; padding: 24px; }
+.modal-card { background: white; border-radius: 20px; padding: 28px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="marketplace.html">P2P Market</a>
+    <a href="instant-buy.html">Instant Buy</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="orders.html">P2P Orders</a>
+  </div>
+  <div class="navbar-right">
+    <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:8px 14px;cursor:pointer">
+      <div class="merchant-avatar" style="width:28px;height:28px;font-size:12px">U</div>
+      <span style="font-size:14px;font-weight:600">Muhammad U.</span>
+    </div>
+  </div>
+</nav>
+
+<div class="hist-layout">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:24px;font-weight:800">Purchase History</h1>
+      <p style="color:#64748b;font-size:14px;margin-top:4px">All your Instant Buy orders</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm">📥 Export CSV</button>
+      <a href="instant-buy.html" class="btn btn-primary btn-sm">+ Buy Crypto</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-value">24</div>
+      <div class="stat-label">Total Orders</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#059669">22</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">PKR 284,500</div>
+      <div class="stat-label">Total Spent</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#2563eb">0</div>
+      <div class="stat-label">Disputed</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-row">
+    <input class="form-input" type="text" placeholder="Search order ID..." style="max-width:200px;padding:9px 12px;font-size:13px">
+    <select class="form-input form-select" style="padding:9px 28px 9px 12px;font-size:13px;width:auto">
+      <option>All Tokens</option>
+      <option>BNB</option>
+      <option>ETH</option>
+      <option>SOL</option>
+      <option>TON</option>
+      <option>BTC</option>
+    </select>
+    <select class="form-input form-select" style="padding:9px 28px 9px 12px;font-size:13px;width:auto">
+      <option>All Status</option>
+      <option>Completed</option>
+      <option>Pending</option>
+      <option>Cancelled</option>
+    </select>
+    <select class="form-input form-select" style="padding:9px 28px 9px 12px;font-size:13px;width:auto">
+      <option>All Time</option>
+      <option>Last 7 days</option>
+      <option>Last 30 days</option>
+      <option>This Month</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div style="overflow-x:auto;border-radius:16px">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Token</th>
+          <th>Received</th>
+          <th>Paid</th>
+          <th>Rate</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr onclick="openModal('IBO-004521')">
+          <td style="font-family:monospace;font-size:12px;color:#2563eb">IBO-004521</td>
+          <td><div class="token-cell"><div class="tok-logo" style="background:#f0fdf4">🟣</div><strong>SOL</strong></div></td>
+          <td style="font-weight:700;color:#059669">0.2348 SOL</td>
+          <td>10,135 PKR</td>
+          <td style="font-size:12px;color:#64748b">43,150/SOL</td>
+          <td><span class="pay-pill jcash">JazzCash</span></td>
+          <td><span class="badge badge-yellow">⏳ Verifying</span></td>
+          <td style="color:#64748b;font-size:13px">May 5, 14:23</td>
+        </tr>
+        <tr onclick="openModal('IBO-004498')">
+          <td style="font-family:monospace;font-size:12px;color:#2563eb">IBO-004498</td>
+          <td><div class="token-cell"><div class="tok-logo" style="background:#fef3c7">🟡</div><strong>BNB</strong></div></td>
+          <td style="font-weight:700;color:#059669">0.1180 BNB</td>
+          <td>10,080 PKR</td>
+          <td style="font-size:12px;color:#64748b">85,420/BNB</td>
+          <td><span class="pay-pill epay">Easypaisa</span></td>
+          <td><span class="badge badge-green">✓ Completed</span></td>
+          <td style="color:#64748b;font-size:13px">May 4, 11:05</td>
+        </tr>
+        <tr onclick="openModal('IBO-004321')">
+          <td style="font-family:monospace;font-size:12px;color:#2563eb">IBO-004321</td>
+          <td><div class="token-cell"><div class="tok-logo" style="background:#eff6ff">💎</div><strong>TON</strong></div></td>
+          <td style="font-weight:700;color:#059669">301.2 TON</td>
+          <td>50,048 PKR</td>
+          <td style="font-size:12px;color:#64748b">1,662/TON</td>
+          <td><span class="pay-pill bank">Bank Transfer</span></td>
+          <td><span class="badge badge-green">✓ Completed</span></td>
+          <td style="color:#64748b;font-size:13px">May 3, 17:45</td>
+        </tr>
+        <tr onclick="openModal('IBO-004280')">
+          <td style="font-family:monospace;font-size:12px;color:#2563eb">IBO-004280</td>
+          <td><div class="token-cell"><div class="tok-logo" style="background:#ede9fe">🔷</div><strong>ETH</strong></div></td>
+          <td style="font-weight:700;color:#059669">0.0203 ETH</td>
+          <td>20,000 PKR</td>
+          <td style="font-size:12px;color:#64748b">985,200/ETH</td>
+          <td><span class="pay-pill jcash">JazzCash</span></td>
+          <td><span class="badge badge-green">✓ Completed</span></td>
+          <td style="color:#64748b;font-size:13px">May 1, 09:12</td>
+        </tr>
+        <tr onclick="openModal('IBO-004101')">
+          <td style="font-family:monospace;font-size:12px;color:#2563eb">IBO-004101</td>
+          <td><div class="token-cell"><div class="tok-logo" style="background:#fff7ed">🟠</div><strong>BTC</strong></div></td>
+          <td style="font-weight:700;color:#059669">0.000363 BTC</td>
+          <td>10,000 PKR</td>
+          <td style="font-size:12px;color:#64748b">27.5M/BTC</td>
+          <td><span class="pay-pill epay">Easypaisa</span></td>
+          <td><span class="badge badge-red">✗ Cancelled</span></td>
+          <td style="color:#64748b;font-size:13px">Apr 28, 21:33</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px">
+    <span style="font-size:13px;color:#64748b">Showing 5 of 24 orders</span>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-secondary btn-sm">← Prev</button>
+      <button class="btn btn-primary btn-sm">1</button>
+      <button class="btn btn-secondary btn-sm">2</button>
+      <button class="btn btn-secondary btn-sm">3</button>
+      <button class="btn btn-secondary btn-sm">Next →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Order Detail Modal -->
+<div class="order-detail-modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-size:18px;font-weight:800">Order #IBO-004521</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div class="od-item" style="background:#f8fafc;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Token</div>
+        <div style="font-size:15px;font-weight:700">🟣 SOL</div>
+      </div>
+      <div class="od-item" style="background:#f8fafc;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Amount</div>
+        <div style="font-size:15px;font-weight:700;color:#059669">0.2348 SOL</div>
+      </div>
+      <div class="od-item" style="background:#f8fafc;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Paid</div>
+        <div style="font-size:15px;font-weight:700">10,135 PKR</div>
+      </div>
+      <div class="od-item" style="background:#f8fafc;border-radius:10px;padding:12px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Status</div>
+        <span class="badge badge-yellow">⏳ Verifying</span>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px">DESTINATION</div>
+      <div style="font-family:monospace;font-size:12px;word-break:break-all;color:#1e293b">7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <a href="instant-buy-status.html" class="btn btn-primary btn-sm" style="flex:1">Track Order</a>
+      <button class="btn btn-secondary btn-sm">Download Receipt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal(id) {
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+</script>
+</body>
+</html>

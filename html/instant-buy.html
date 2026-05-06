@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instant Buy Crypto — PakSwap</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.ib-hero { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%); padding: 48px 24px 72px; text-align: center; color: white; position: relative; overflow: hidden; }
+.ib-hero::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Ccircle cx='30' cy='30' r='20' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/g%3E%3C/svg%3E"); }
+.ib-hero h1 { font-size:36px;font-weight:900;margin-bottom:10px;position:relative }
+.ib-hero p { font-size:16px;opacity:0.85;max-width:520px;margin:0 auto 28px;position:relative }
+.trust-bar { display:flex;gap:24px;justify-content:center;position:relative;flex-wrap:wrap }
+.trust-item { display:flex;align-items:center;gap:7px;font-size:13px;opacity:0.9 }
+
+/* Wizard card */
+.wizard-card { background:white;border-radius:24px;border:1px solid #e2e8f0;box-shadow:0 8px 40px rgba(0,0,0,0.10);max-width:820px;margin:-36px auto 32px;position:relative;overflow:hidden }
+.wizard-steps-bar { display:grid;grid-template-columns:1fr 1fr 1fr;background:#f8fafc;border-bottom:1px solid #e2e8f0 }
+.wstep { padding:14px 16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#94a3b8;font-weight:600;transition:all 0.2s;border-bottom:3px solid transparent }
+.wstep.active { color:#1d4ed8;border-bottom-color:#2563eb;background:white }
+.wstep.done { color:#059669 }
+.wstep-num { width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:#e2e8f0;color:#64748b;flex-shrink:0;transition:all 0.2s }
+.wstep.active .wstep-num { background:#2563eb;color:white }
+.wstep.done .wstep-num { background:#059669;color:white }
+.wizard-body { padding:28px 32px 24px }
+
+/* Pay-with selector */
+.pay-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:4px }
+.pay-option { border:2px solid #e2e8f0;border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.15s }
+.pay-option:hover { border-color:#2563eb;background:#eff6ff }
+.pay-option.selected { border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,0.12) }
+.pay-option .po-icon { font-size:26px;margin-bottom:6px }
+.pay-option .po-name { font-size:13px;font-weight:700;color:#1e293b }
+.pay-option .po-sub { font-size:11px;color:#64748b;margin-top:2px }
+
+/* Category tabs */
+.cat-tabs { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px }
+.cat-tab { padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e2e8f0;color:#64748b;transition:all 0.15s }
+.cat-tab:hover { border-color:#2563eb;color:#2563eb }
+.cat-tab.active { background:#2563eb;color:white;border-color:#2563eb }
+
+/* Token grid */
+.token-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:10px }
+.token-card { border:2px solid #e2e8f0;border-radius:14px;padding:14px;cursor:pointer;transition:all 0.15s;position:relative;background:white }
+.token-card:hover { border-color:#2563eb;transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,0.10) }
+.token-card.selected { border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,0.12) }
+.token-card .tc-icon { font-size:30px;margin-bottom:8px }
+.token-card .tc-name { font-size:14px;font-weight:700;color:#1e293b }
+.token-card .tc-symbol { font-size:11px;color:#64748b;margin-top:1px }
+.token-card .tc-nets { font-size:11px;color:#2563eb;margin-top:6px;font-weight:600 }
+.token-card .tc-price { font-size:13px;font-weight:700;color:#1e293b;margin-top:8px }
+.token-badge { position:absolute;top:8px;right:8px;font-size:10px;padding:2px 6px }
+.mvp-dot { display:inline-block;width:7px;height:7px;border-radius:50%;background:#059669;margin-right:3px;vertical-align:middle }
+
+/* Network selector */
+.net-select-box { background:#f8fafc;border:1.5px solid #bfdbfe;border-radius:16px;padding:20px;margin-top:16px }
+.net-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:12px }
+.net-option { border:2px solid #e2e8f0;border-radius:10px;padding:11px 12px;cursor:pointer;transition:all 0.15s;background:white;display:flex;align-items:center;gap:8px }
+.net-option:hover { border-color:#2563eb;background:#eff6ff }
+.net-option.selected { border-color:#2563eb;background:#eff6ff }
+.net-option .no-name { font-size:13px;font-weight:700;color:#1e293b }
+.net-option .no-sub { font-size:11px;color:#64748b }
+.speed-fast { color:#059669;font-size:11px;font-weight:700 }
+.speed-med { color:#f59e0b;font-size:11px;font-weight:700 }
+.speed-slow { color:#ef4444;font-size:11px;font-weight:700 }
+
+/* Warnings */
+.net-warning { background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 14px;font-size:13px;color:#dc2626;display:flex;gap:10px;align-items:flex-start;margin-top:12px }
+.net-warning-yellow { background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:13px;color:#92400e;display:flex;gap:10px;align-items:flex-start;margin-top:12px }
+
+/* Quote mini */
+.quote-mini { background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:14px;padding:16px 20px;margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap }
+
+/* Wizard footer */
+.wizard-footer { padding:16px 32px 24px;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap }
+
+/* Below wizard */
+.page-inner { max-width:820px;margin:0 auto;padding:0 24px 40px }
+.how-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:20px }
+.how-step { text-align:center }
+.how-num { width:38px;height:38px;border-radius:50%;background:#eff6ff;color:#2563eb;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px }
+.how-icon { font-size:28px;margin-bottom:8px }
+.how-title { font-size:14px;font-weight:700;margin-bottom:4px }
+.how-sub { font-size:12px;color:#64748b;line-height:1.5 }
+
+@media(max-width:600px){ .wizard-body{padding:20px 16px 16px} .wizard-footer{padding:14px 16px 20px} .wstep-label{display:none} .wizard-steps-bar{display:none} .token-grid{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Pak<span>Swap</span></a>
+  <div class="navbar-links">
+    <a href="trade.html" class="navbar-link">P2P Trade</a>
+    <a href="instant-buy.html" class="navbar-link active">Instant Buy</a>
+  </div>
+  <div class="navbar-right">
+    <a href="kyc.html" class="btn btn-secondary btn-sm">My Account</a>
+    <a href="trade.html" class="btn btn-primary btn-sm">Trade P2P</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="ib-hero">
+  <h1>Buy Crypto Instantly in Pakistan</h1>
+  <p>Pay with PKR, USDT, or any supported crypto. 25+ tokens, 15+ networks. Instant delivery to your wallet.</p>
+  <div class="trust-bar">
+    <div class="trust-item">⚡ Auto blockchain verification</div>
+    <div class="trust-item">🔐 Two-layer security</div>
+    <div class="trust-item">🇵🇰 JazzCash &amp; Easypaisa supported</div>
+    <div class="trust-item">💬 24/7 support</div>
+  </div>
+</div>
+
+<!-- WIZARD CARD -->
+<div style="padding:0 24px">
+<div class="wizard-card" id="wizard">
+
+  <!-- Step bar -->
+  <div class="wizard-steps-bar">
+    <div class="wstep active" id="ws1">
+      <div class="wstep-num">1</div>
+      <span class="wstep-label">Pay With</span>
+    </div>
+    <div class="wstep" id="ws2">
+      <div class="wstep-num">2</div>
+      <span class="wstep-label">Select Token</span>
+    </div>
+    <div class="wstep" id="ws3">
+      <div class="wstep-num">3</div>
+      <span class="wstep-label">Select Network</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: Pay With -->
+  <div id="step1" class="wizard-body">
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">How will you pay?</div>
+    <div style="font-size:14px;color:#64748b;margin-bottom:20px">Choose your payment currency. PKR orders use JazzCash / bank transfer. Crypto orders are verified automatically on-chain.</div>
+    <div class="pay-grid">
+      <div class="pay-option selected" onclick="selectPayWith(this,'PKR')" id="pw-PKR">
+        <div class="po-icon">🇵🇰</div>
+        <div class="po-name">PKR</div>
+        <div class="po-sub">JazzCash / Bank</div>
+      </div>
+      <div class="pay-option" onclick="selectPayWith(this,'USDT')" id="pw-USDT">
+        <div class="po-icon">💵</div>
+        <div class="po-name">USDT</div>
+        <div class="po-sub">Any network</div>
+      </div>
+      <div class="pay-option" onclick="selectPayWith(this,'USDC')" id="pw-USDC">
+        <div class="po-icon">🔵</div>
+        <div class="po-name">USDC</div>
+        <div class="po-sub">Any network</div>
+      </div>
+      <div class="pay-option" onclick="selectPayWith(this,'BNB')" id="pw-BNB">
+        <div class="po-icon">🟡</div>
+        <div class="po-name">BNB</div>
+        <div class="po-sub">BSC / BEP-20</div>
+      </div>
+      <div class="pay-option" onclick="selectPayWith(this,'ETH')" id="pw-ETH">
+        <div class="po-icon">🔷</div>
+        <div class="po-name">ETH</div>
+        <div class="po-sub">Any EVM chain</div>
+      </div>
+      <div class="pay-option" onclick="selectPayWith(this,'SOL')" id="pw-SOL">
+        <div class="po-icon">🟣</div>
+        <div class="po-name">SOL</div>
+        <div class="po-sub">Solana</div>
+      </div>
+    </div>
+    <div id="pay-crypto-note" style="display:none;margin-top:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#166534">
+      ⚡ <strong>Crypto payments are verified automatically on-chain.</strong> No screenshot needed — send crypto to the deposit address and the system confirms it instantly.
+    </div>
+    <div class="wizard-footer" style="margin-top:24px;padding:16px 0 0;border-top:1px solid #f1f5f9">
+      <div style="font-size:13px;color:#64748b">PKR orders: JazzCash, Bank Transfer, Easypaisa</div>
+      <button class="btn btn-primary" onclick="goStep(2)">Select Token →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Token Selection -->
+  <div id="step2" class="wizard-body" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="font-size:18px;font-weight:800">Which token do you want to receive?</div>
+    </div>
+    <div style="font-size:14px;color:#64748b;margin-bottom:16px">Select the crypto asset you want to buy. <span id="pay-with-label" style="font-weight:600;color:#1d4ed8"></span></div>
+
+    <!-- Category tabs -->
+    <div class="cat-tabs">
+      <div class="cat-tab active" onclick="filterCat('popular',this)">⭐ Popular</div>
+      <div class="cat-tab" onclick="filterCat('stable',this)">💵 Stablecoins</div>
+      <div class="cat-tab" onclick="filterCat('gas',this)">⚡ Gas Tokens</div>
+      <div class="cat-tab" onclick="filterCat('all',this)">🌐 All Tokens</div>
+    </div>
+
+    <div class="token-grid" id="token-grid"></div>
+
+    <div class="wizard-footer" style="margin-top:20px;padding:16px 0 0;border-top:1px solid #f1f5f9">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+      <div style="font-size:13px;color:#64748b" id="token-hint">Select a token to continue</div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Network Selection -->
+  <div id="step3" class="wizard-body" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div id="sel-token-icon" style="font-size:36px"></div>
+      <div>
+        <div style="font-size:18px;font-weight:800" id="sel-token-name">Select Network</div>
+        <div style="font-size:13px;color:#64748b" id="sel-token-price"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="goStep(2)">Change Token</button>
+    </div>
+
+    <div class="net-select-box">
+      <div style="font-size:14px;font-weight:700;color:#1e3a5f;margin-bottom:4px">Select the receiving network</div>
+      <div style="font-size:13px;color:#64748b">Make sure your wallet supports the selected network. Tokens sent to the wrong network may be lost forever.</div>
+      <div class="net-grid" id="network-grid"></div>
+    </div>
+
+    <!-- Warnings -->
+    <div class="net-warning" id="net-wrong-warning" style="display:none">
+      <span style="font-size:18px;flex-shrink:0">⚠️</span>
+      <div><strong>Wrong network = permanent loss of funds.</strong> Only send to the exact network you select. PakSwap cannot recover tokens sent to the wrong network.</div>
+    </div>
+    <div class="net-warning-yellow" id="net-erc20-warning" style="display:none">
+      <span style="font-size:18px;flex-shrink:0">💡</span>
+      <div><strong>Ethereum ERC-20 has high gas fees.</strong> For small amounts, consider BEP-20 (BSC) or TRC-20 — same token, lower fees, faster confirmation.</div>
+    </div>
+
+    <!-- Quote mini preview -->
+    <div class="quote-mini" id="quote-mini" style="display:none">
+      <div style="font-size:22px">📊</div>
+      <div style="flex:1">
+        <div style="font-size:13px;color:#166534;font-weight:700">Live Rate Preview</div>
+        <div style="font-size:15px;font-weight:800;color:#1e293b;margin-top:2px" id="rate-preview-text"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:#64748b">Platform fee</div>
+        <div style="font-size:14px;font-weight:700;color:#1e293b" id="fee-preview-text"></div>
+      </div>
+    </div>
+
+    <div class="wizard-footer" style="margin-top:20px;padding:16px 0 0;border-top:1px solid #f1f5f9">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary btn-lg" id="continue-btn" onclick="proceedToOrder()" disabled style="opacity:0.5">
+        Preview Order →
+      </button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Below wizard content -->
+<div class="page-inner" style="margin-top:32px">
+
+  <!-- How It Works -->
+  <div style="background:white;border-radius:20px;border:1px solid #e2e8f0;padding:28px;margin-bottom:24px">
+    <div style="font-size:18px;font-weight:800;margin-bottom:20px;text-align:center">How Instant Buy Works</div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-icon">🪙</div>
+        <div class="how-num">1</div>
+        <div class="how-title">Choose Token &amp; Network</div>
+        <div class="how-sub">Select what you want to buy and which blockchain network to receive it on</div>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">💰</div>
+        <div class="how-num">2</div>
+        <div class="how-title">Enter Amount</div>
+        <div class="how-sub">Enter PKR or crypto amount. Live oracle rate locks for 10 minutes</div>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">📲</div>
+        <div class="how-num">3</div>
+        <div class="how-title">Make Payment</div>
+        <div class="how-sub">PKR: send via JazzCash/bank. Crypto: send to deposit address — auto verified on-chain</div>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">🔐</div>
+        <div class="how-num">4</div>
+        <div class="how-title">Verification</div>
+        <div class="how-sub">AI + human two-layer check (PKR) or automatic blockchain confirmation (Crypto)</div>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">🚀</div>
+        <div class="how-num">5</div>
+        <div class="how-title">Receive Crypto</div>
+        <div class="how-sub">Token sent directly to your wallet. Transaction hash provided for tracking</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supported Networks Info -->
+  <div style="background:white;border-radius:20px;border:1px solid #e2e8f0;padding:24px;margin-bottom:24px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px">Supported Networks</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#92400e">🟡 BSC / BEP-20 <span class="mvp-dot"></span></div>
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#991b1b">🔴 TRON / TRC-20 <span class="mvp-dot"></span></div>
+      <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#6d28d9">🟣 Solana <span class="mvp-dot"></span></div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#1d4ed8">🔷 Ethereum / ERC-20</div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#1d4ed8">💙 Arbitrum</div>
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#991b1b">🔴 Optimism</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#166534">🟢 Polygon</div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#1d4ed8">🔵 Base</div>
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#9a3412">🔺 Avalanche C-Chain</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#475569">⚔️ Ronin</div>
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#0369a1">💧 Sui</div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#1d4ed8">⚡ Aptos</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:#475569">🌐 NEAR Protocol</div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px">
+      <span class="mvp-dot"></span> MVP networks — live now. Others rolling out in Phase 2.
+    </div>
+  </div>
+
+  <!-- Provider Banner -->
+  <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:16px;padding:22px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:17px;font-weight:800;color:#166534">💼 Become a Liquidity Provider</div>
+      <div style="font-size:14px;color:#15803d;margin-top:4px">Earn by providing crypto inventory. 0.5% on every fulfilled order. 500+ orders/month for top providers.</div>
+    </div>
+    <a href="provider-apply.html" class="btn btn-success">Apply Now →</a>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// TOKEN / NETWORK DATA
+// ============================================================
+const ASSETS = {
+  USDT:  { name:'Tether USD',      sym:'USDT', emoji:'💵', cat:['popular','stable'],        price_pkr:280.5,  price_usd:1,      spread:0.5, networks:['TRC20','BEP20','ERC20','ARB','POLY','SOL','OP'] },
+  USDC:  { name:'USD Coin',        sym:'USDC', emoji:'🔵', cat:['stable'],                  price_pkr:280.2,  price_usd:1,      spread:0.5, networks:['BEP20','ERC20','ARB','POLY','SOL','OP'] },
+  BNB:   { name:'BNB',             sym:'BNB',  emoji:'🟡', cat:['popular','gas'],            price_pkr:168000, price_usd:598,    spread:2.5, networks:['BEP20'] },
+  ETH:   { name:'Ethereum',        sym:'ETH',  emoji:'🔷', cat:['popular','gas'],            price_pkr:885000, price_usd:3150,   spread:2.0, networks:['ERC20','BASE','ARB','POLY','OP'] },
+  SOL:   { name:'Solana',          sym:'SOL',  emoji:'🟣', cat:['popular','gas'],            price_pkr:41850,  price_usd:149,    spread:2.5, networks:['SOL'] },
+  BTC:   { name:'Bitcoin',         sym:'BTC',  emoji:'🟠', cat:['popular'],                  price_pkr:26600000,price_usd:94800, spread:1.5, networks:['BTC','BEP20'] },
+  TRX:   { name:'TRON',            sym:'TRX',  emoji:'🔴', cat:['gas'],                      price_pkr:76,     price_usd:0.27,   spread:2.5, networks:['TRC20'] },
+  AVAX:  { name:'Avalanche',       sym:'AVAX', emoji:'🔺', cat:['gas'],                      price_pkr:10700,  price_usd:38,     spread:3.0, networks:['AVAX'] },
+  APT:   { name:'Aptos',           sym:'APT',  emoji:'⚡', cat:['gas'],                      price_pkr:2670,   price_usd:9.5,    spread:3.5, networks:['APTOS'] },
+  NEAR:  { name:'NEAR Protocol',   sym:'NEAR', emoji:'🌐', cat:['gas'],                      price_pkr:2020,   price_usd:7.2,    spread:3.5, networks:['NEAR'] },
+  OP:    { name:'Optimism',        sym:'OP',   emoji:'🔴', cat:['gas'],                      price_pkr:590,    price_usd:2.1,    spread:3.5, networks:['OP'] },
+  ARB:   { name:'Arbitrum',        sym:'ARB',  emoji:'💙', cat:['gas'],                      price_pkr:310,    price_usd:1.1,    spread:3.5, networks:['ARB'] },
+  SUI:   { name:'Sui',             sym:'SUI',  emoji:'💧', cat:['gas'],                      price_pkr:1065,   price_usd:3.8,    spread:3.5, networks:['SUI'] },
+  RON:   { name:'Ronin',           sym:'RON',  emoji:'⚔️', cat:['gas'],                      price_pkr:898,    price_usd:3.2,    spread:3.5, networks:['RONIN'] },
+  TON:   { name:'TON',             sym:'TON',  emoji:'💎', cat:['popular','gas'],            price_pkr:1630,   price_usd:5.8,    spread:3.0, networks:['TON'] },
+  OPBNB: { name:'opBNB',           sym:'opBNB',emoji:'⚡', cat:['gas'],                      price_pkr:0.56,   price_usd:0.002,  spread:3.5, networks:['OPBNB'] },
+  PI:    { name:'Pi Network',      sym:'PI',   emoji:'π',  cat:['all'],                      price_pkr:505,    price_usd:1.8,    spread:4.0, networks:['PI'] },
+};
+
+const NETWORKS = {
+  TRC20:  { name:'TRON (TRC-20)',       short:'TRC-20', conf:20, speed:'fast',   mvp:true,  chain:'tron',    evm:false, warn:null },
+  BEP20:  { name:'BSC (BEP-20)',        short:'BEP-20', conf:15, speed:'fast',   mvp:true,  chain:'bsc',     evm:true,  warn:null },
+  ERC20:  { name:'Ethereum (ERC-20)',   short:'ERC-20', conf:12, speed:'medium', mvp:false, chain:'eth',     evm:true,  warn:'erc20' },
+  ARB:    { name:'Arbitrum One',        short:'ARB',    conf:10, speed:'fast',   mvp:false, chain:'arb',     evm:true,  warn:null },
+  POLY:   { name:'Polygon (MATIC)',     short:'MATIC',  conf:100,speed:'fast',   mvp:false, chain:'polygon', evm:true,  warn:null },
+  SOL:    { name:'Solana (SPL)',        short:'SOL',    conf:32, speed:'fast',   mvp:true,  chain:'solana',  evm:false, warn:null },
+  OP:     { name:'Optimism',           short:'OP',     conf:10, speed:'fast',   mvp:false, chain:'op',      evm:true,  warn:null },
+  BASE:   { name:'Base',               short:'BASE',   conf:10, speed:'fast',   mvp:false, chain:'base',    evm:true,  warn:null },
+  AVAX:   { name:'Avalanche C-Chain',  short:'C-Chain',conf:12, speed:'fast',   mvp:false, chain:'avax',    evm:true,  warn:null },
+  BTC:    { name:'Bitcoin',            short:'BTC',    conf:3,  speed:'slow',   mvp:false, chain:'bitcoin', evm:false, warn:null },
+  APTOS:  { name:'Aptos',              short:'APT',    conf:1,  speed:'fast',   mvp:false, chain:'aptos',   evm:false, warn:null },
+  NEAR:   { name:'NEAR Protocol',      short:'NEAR',   conf:1,  speed:'fast',   mvp:false, chain:'near',    evm:false, warn:null },
+  SUI:    { name:'Sui Network',        short:'SUI',    conf:1,  speed:'fast',   mvp:false, chain:'sui',     evm:false, warn:null },
+  TON:    { name:'TON Network',        short:'TON',    conf:1,  speed:'fast',   mvp:false, chain:'ton',     evm:false, warn:null },
+  RONIN:  { name:'Ronin Network',      short:'RON',    conf:5,  speed:'medium', mvp:false, chain:'ronin',   evm:true,  warn:null },
+  OPBNB:  { name:'opBNB Network',      short:'opBNB',  conf:10, speed:'fast',   mvp:false, chain:'opbnb',   evm:true,  warn:null },
+  PI:     { name:'Pi Network',         short:'PI',     conf:5,  speed:'medium', mvp:false, chain:'pi',      evm:false, warn:null },
+};
+
+const PKR_RATE = 280.5;
+
+let state = { payWith:'PKR', token:null, network:null, cat:'popular' };
+
+// ============================================================
+// STEP NAVIGATION
+// ============================================================
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).style.display = i===n ? 'block' : 'none';
+    const ws = document.getElementById('ws'+i);
+    ws.classList.remove('active','done');
+    if(i === n) ws.classList.add('active');
+    else if(i < n) ws.classList.add('done'), (ws.querySelector('.wstep-num').textContent = '✓');
+    else ws.querySelector('.wstep-num').textContent = i;
+  });
+  if(n===2) renderTokenGrid(state.cat);
+  if(n===3) renderNetworkGrid();
+  window.scrollTo({top:document.getElementById('wizard').offsetTop - 20, behavior:'smooth'});
+}
+
+// ============================================================
+// STEP 1: PAY WITH
+// ============================================================
+function selectPayWith(el, val) {
+  document.querySelectorAll('.pay-option').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.payWith = val;
+  const note = document.getElementById('pay-crypto-note');
+  note.style.display = val !== 'PKR' ? 'block' : 'none';
+}
+
+// ============================================================
+// STEP 2: TOKEN GRID
+// ============================================================
+function filterCat(cat, el) {
+  document.querySelectorAll('.cat-tab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  state.cat = cat;
+  renderTokenGrid(cat);
+}
+
+function renderTokenGrid(cat) {
+  const grid = document.getElementById('token-grid');
+  const payWith = state.payWith;
+  const entries = Object.entries(ASSETS).filter(([sym, a]) => {
+    if(sym === payWith) return false; // can't buy what you're paying with
+    if(cat === 'all' || cat === 'popular') return cat === 'all' || a.cat.includes('popular');
+    return a.cat.includes(cat);
+  });
+  document.getElementById('pay-with-label').textContent = 'Paying with: ' + payWith;
+  grid.innerHTML = entries.map(([sym,a]) => {
+    const priceStr = a.price_pkr >= 1000000 ? (a.price_pkr/1000000).toFixed(2)+'M PKR' :
+                     a.price_pkr >= 1000 ? (a.price_pkr/1000).toFixed(1)+'K PKR' :
+                     a.price_pkr.toFixed(2)+' PKR';
+    const mvpNets = a.networks.filter(n => NETWORKS[n]?.mvp).length;
+    const sel = state.token === sym ? ' selected' : '';
+    return `<div class="token-card${sel}" onclick="selectToken('${sym}',this)">
+      <div class="tc-icon">${a.emoji}</div>
+      <div class="tc-name">${a.name}</div>
+      <div class="tc-symbol">${sym}</div>
+      <div class="tc-nets">${a.networks.length} network${a.networks.length>1?'s':''}</div>
+      <div class="tc-price">${priceStr}</div>
+      ${mvpNets>0?'<span class="badge badge-green token-badge" style="font-size:9px">Live</span>':'<span class="badge badge-gray token-badge" style="font-size:9px">Soon</span>'}
+    </div>`;
+  }).join('');
+}
+
+function selectToken(sym, el) {
+  document.querySelectorAll('.token-card').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.token = sym;
+  state.network = null;
+  document.getElementById('token-hint').textContent = ASSETS[sym].emoji + ' ' + ASSETS[sym].name + ' selected — next: choose network';
+  setTimeout(()=>goStep(3), 250);
+}
+
+// ============================================================
+// STEP 3: NETWORK GRID
+// ============================================================
+function renderNetworkGrid() {
+  if(!state.token) return;
+  const a = ASSETS[state.token];
+  document.getElementById('sel-token-icon').textContent = a.emoji;
+  document.getElementById('sel-token-name').textContent = a.name + ' (' + a.sym + ')';
+  const pkr = a.price_pkr >= 1000000 ? 'PKR '+(a.price_pkr/1000000).toFixed(2)+'M' :
+               a.price_pkr >= 1000 ? 'PKR '+(a.price_pkr/1000).toFixed(1)+'K' :
+               'PKR '+a.price_pkr.toFixed(2);
+  document.getElementById('sel-token-price').textContent = pkr + ' per ' + a.sym + '  ·  Spread: ' + a.spread + '%';
+
+  const grid = document.getElementById('network-grid');
+  grid.innerHTML = a.networks.map(netId => {
+    const n = NETWORKS[netId];
+    if(!n) return '';
+    const speedClass = n.speed==='fast'?'speed-fast':n.speed==='medium'?'speed-med':'speed-slow';
+    const speedLabel = n.speed==='fast'?'⚡ Fast':n.speed==='medium'?'⏱ Medium':'🐢 Slow';
+    const sel = state.network === netId ? ' selected' : '';
+    const mvpTag = n.mvp ? '<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 4px;font-weight:700;margin-left:4px">Live</span>' : '';
+    return `<div class="net-option${sel}" onclick="selectNetwork('${netId}',this)">
+      <div style="flex:1">
+        <div class="no-name">${n.short}${mvpTag}</div>
+        <div class="no-sub">${n.name}</div>
+        <div class="${speedClass}" style="margin-top:3px">${speedLabel} · ${n.conf} confs</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectNetwork(netId, el) {
+  document.querySelectorAll('.net-option').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.network = netId;
+  const n = NETWORKS[netId];
+
+  // Warnings
+  document.getElementById('net-wrong-warning').style.display = 'flex';
+  document.getElementById('net-erc20-warning').style.display = (netId==='ERC20') ? 'flex' : 'none';
+
+  // Quote mini
+  const a = ASSETS[state.token];
+  const rateText = state.payWith==='PKR'
+    ? `1 ${a.sym} = PKR ${a.price_pkr.toLocaleString()} · spread ${a.spread}%`
+    : `1 ${a.sym} = $${a.price_usd.toLocaleString()} USD · spread ${a.spread}%`;
+  document.getElementById('rate-preview-text').textContent = rateText;
+  document.getElementById('fee-preview-text').textContent = a.spread + '% + ' + (n.mvp?'Low':'TBD') + ' net fee';
+  document.getElementById('quote-mini').style.display = 'flex';
+
+  // Enable continue button
+  const btn = document.getElementById('continue-btn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+}
+
+function proceedToOrder() {
+  if(!state.token || !state.network) return;
+  const params = new URLSearchParams({
+    token: state.token,
+    network: state.network,
+    payWith: state.payWith
+  });
+  window.location.href = 'instant-buy-order.html?' + params.toString();
+}
+
+// Init
+renderTokenGrid('popular');
+</script>
+</body>
+</html>
