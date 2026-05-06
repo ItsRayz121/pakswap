@@ -6,7 +6,7 @@ import { CheckCircle } from 'lucide-react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { useAuthStore } from '@/lib/store'
 import { toast } from '../components/ui/toaster'
-import axios from 'axios'
+import { merchantsApi } from '@/lib/api'
 
 const BENEFITS = [
   { icon: '🚀', title: 'Daily Limit: 5M PKR', desc: 'Regular users cap at 500K/day. Merchants get 5M PKR daily trade volume.' },
@@ -35,11 +35,9 @@ export default function MerchantApplyPage() {
   const toggleAgree = (i: number) => setAgrees(prev => prev.map((v, idx) => idx === i ? !v : v))
 
   const submitMutation = useMutation({
-    mutationFn: (body: any) => axios.post('/api/merchant/apply', body, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    }),
+    mutationFn: (body: any) => merchantsApi.apply(body),
     onSuccess: () => setSubmitted(true),
-    onError: (err: any) => toast({ type: 'error', title: 'Submission Failed', description: err.response?.data?.message })
+    onError: (err: any) => toast({ type: 'error', title: 'Submission Failed', description: err.response?.data?.message ?? 'Could not submit application' })
   })
 
   const handleSubmit = () => {
@@ -51,7 +49,8 @@ export default function MerchantApplyPage() {
       toast({ type: 'error', title: 'Statement Too Short', description: 'Please write at least 100 characters in your statement.' })
       return
     }
-    submitMutation.mutate({ city, whatsapp, coins: selectedCoins, monthlyVolume, experience, statement })
+    const businessName = `${useAuthStore.getState().user?.fullName ?? 'Merchant'} (${city})`
+    submitMutation.mutate({ businessName })
   }
 
   if (submitted) return (

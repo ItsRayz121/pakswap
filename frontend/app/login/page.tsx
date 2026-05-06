@@ -29,31 +29,55 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
+    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_API_URL
 
-    // Mock login — no backend required
-    const isAdmin = data.emailOrPhone.toLowerCase().includes('admin')
-    const mockUser = {
-      id: 'mock-' + Math.random().toString(36).slice(2),
-      email: data.emailOrPhone.includes('@') ? data.emailOrPhone : `${data.emailOrPhone}@pakswap.com`,
-      phone: '+923001234567',
-      fullName: isAdmin ? 'Admin User' : 'Demo User',
-      username: isAdmin ? 'admin' : 'demouser',
-      role: isAdmin ? 'admin' : 'user',
-      kycLevel: 'full',
-      kycStatus: 'approved',
-      twoFaEnabled: false,
-      referralCode: 'DEMO1234',
-    }
+    try {
+      if (useMock) {
+        await new Promise((r) => setTimeout(r, 400))
+        const isAdmin = data.emailOrPhone.toLowerCase().includes('admin')
+        const mockUser = {
+          id: 'mock-' + Math.random().toString(36).slice(2),
+          email: data.emailOrPhone.includes('@') ? data.emailOrPhone : `${data.emailOrPhone}@pakswap.com`,
+          phone: '+923001234567',
+          fullName: isAdmin ? 'Admin User' : 'Demo User',
+          username: isAdmin ? 'admin' : 'demouser',
+          role: isAdmin ? 'admin' : 'user',
+          kycLevel: 'full',
+          kycStatus: 'approved',
+          twoFaEnabled: false,
+          referralCode: 'DEMO1234',
+        }
+        setAuth(mockUser, 'mock-token-' + Date.now())
+        toast({ type: 'success', title: 'Welcome back!', description: `Logged in as ${mockUser.fullName}` })
+        router.push(isAdmin ? '/admin' : '/dashboard')
+        return
+      }
 
-    setAuth(mockUser, 'mock-token-' + Date.now())
-    toast({ type: 'success', title: 'Welcome back!', description: `Logged in as ${mockUser.fullName}` })
-    setLoading(false)
+      const res = await authApi.login(data)
+      const payload = res.data?.data ?? res.data
 
-    if (isAdmin) {
-      router.push('/admin')
-    } else {
-      router.push('/dashboard')
+      if (payload?.requiresTwoFa) {
+        sessionStorage.setItem('preAuthToken', payload.preAuthToken)
+        toast({ type: 'info', title: '2FA required', description: 'Enter your 6-digit code' })
+        router.push('/login/2fa')
+        return
+      }
+
+      const accessToken = payload.accessToken
+      if (payload.refreshToken) localStorage.setItem('refresh_token', payload.refreshToken)
+      localStorage.setItem('access_token', accessToken)
+
+      // Fetch the full user profile
+      const meRes = await authApi.me()
+      const user = meRes.data?.data ?? meRes.data
+      setAuth(user, accessToken)
+      toast({ type: 'success', title: 'Welcome back!', description: `Logged in as ${user.fullName}` })
+      router.push(user.role === 'admin' ? '/admin' : '/dashboard')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? 'Invalid credentials'
+      toast({ type: 'error', title: 'Login failed', description: msg })
+    } finally {
+      setLoading(false)
     }
   }
 

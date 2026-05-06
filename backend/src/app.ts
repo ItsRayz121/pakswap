@@ -21,6 +21,7 @@ import adminRoutes from './routes/admin'
 import webhookRoutes from './routes/webhooks'
 import instantBuyRoutes from './routes/instant-buy'
 import referralRoutes from './routes/referral'
+import merchantRoutes from './routes/merchants'
 
 export async function buildApp() {
   const app = Fastify({
@@ -116,6 +117,7 @@ export async function buildApp() {
   await app.register(webhookRoutes, { prefix: '/api/webhooks' })
   await app.register(instantBuyRoutes, { prefix: '/api/instant-buy' })
   await app.register(referralRoutes, { prefix: '/api/referral' })
+  await app.register(merchantRoutes, { prefix: '/api/merchants' })
 
   // Global error handler
   app.setErrorHandler((error, request, reply) => {

@@ -10,20 +10,28 @@ interface EmailOptions {
   dynamicTemplateData: Record<string, unknown>
 }
 
-export async function sendEmail(opts: EmailOptions): Promise<void> {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[EMAIL] To: ${opts.to} | Template: ${opts.templateId}`, opts.dynamicTemplateData)
+export async function sendEmail(opts: EmailOptions & { subject?: string; text?: string }): Promise<void> {
+  if (process.env.NODE_ENV === 'development' || !process.env.SENDGRID_API_KEY) {
+    console.log(`[EMAIL] To: ${opts.to} | Template: ${opts.templateId || '(plain)'}`, opts.dynamicTemplateData)
     return
   }
-  await sgMail.send({
-    to: opts.to,
-    from: {
-      email: process.env.SENDGRID_FROM_EMAIL ?? 'noreply@pakswap.com',
-      name: process.env.SENDGRID_FROM_NAME ?? 'PakSwap',
-    },
-    templateId: opts.templateId,
-    dynamicTemplateData: opts.dynamicTemplateData,
-  })
+  const from = {
+    email: process.env.SENDGRID_FROM_EMAIL ?? 'noreply@pakswap.com',
+    name: process.env.SENDGRID_FROM_NAME ?? 'PakSwap',
+  }
+  // If a templateId is configured, use the dynamic template; otherwise fall back to plain text
+  if (opts.templateId) {
+    await sgMail.send({
+      to: opts.to,
+      from,
+      templateId: opts.templateId,
+      dynamicTemplateData: opts.dynamicTemplateData,
+    })
+  } else {
+    const subject = opts.subject ?? (opts.dynamicTemplateData?.subject as string) ?? 'PakSwap notification'
+    const text = opts.text ?? JSON.stringify(opts.dynamicTemplateData)
+    await sgMail.send({ to: opts.to, from, subject, text })
+  }
 }
 
 export const TEMPLATES = {

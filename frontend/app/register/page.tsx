@@ -33,16 +33,39 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
+    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_API_URL
 
-    // Mock register — no backend required, go straight to login
-    toast({ type: 'success', title: 'Account Created!', description: 'You can now log in with your credentials.' })
-    setLoading(false)
-    router.push('/login')
+    try {
+      if (useMock) {
+        await new Promise((r) => setTimeout(r, 400))
+        toast({ type: 'success', title: 'Account Created!', description: 'You can now log in.' })
+        router.push('/login')
+        return
+      }
+      await authApi.register(data)
+      setPhone(data.phone)
+      toast({ type: 'success', title: 'Account created', description: 'Verify the OTP we sent to your phone.' })
+      setStep('otp')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? 'Registration failed'
+      toast({ type: 'error', title: 'Registration failed', description: msg })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const verifyOtp = async () => {
-    // kept for future use
+    setLoading(true)
+    try {
+      await authApi.verifyOtp(phone, otp)
+      toast({ type: 'success', title: 'Phone verified', description: 'You can now sign in.' })
+      router.push('/login')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Invalid OTP'
+      toast({ type: 'error', title: 'Verification failed', description: msg })
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (step === 'otp') {

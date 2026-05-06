@@ -101,6 +101,19 @@ export const notificationsApi = {
   markAllRead: () => api.patch('/notifications/read-all'),
 }
 
+export const merchantsApi = {
+  apply: (data: { businessName: string; spreadBps?: number }) => api.post('/merchants/apply', data),
+  me: () => api.get('/merchants/me'),
+  list: (params?: { coin?: string; network?: string }) => api.get('/merchants', { params }),
+  get: (id: string) => api.get(`/merchants/${id}`),
+  getInventory: () => api.get('/merchants/me/inventory'),
+  upsertInventory: (data: any) => api.post('/merchants/me/inventory', data),
+  removeInventory: (id: string) => api.delete(`/merchants/me/inventory/${id}`),
+  adminQueue: (params?: any) => api.get('/merchants/admin/queue', { params }),
+  adminApprove: (id: string) => api.post(`/merchants/admin/${id}/approve`),
+  adminReject: (id: string, reason: string) => api.post(`/merchants/admin/${id}/reject`, { reason }),
+}
+
 export const adminApi = {
   stats: () => api.get('/admin/dashboard/stats'),
   kycQueue: (params?: any) => api.get('/admin/kyc/queue', { params }),

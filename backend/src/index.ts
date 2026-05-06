@@ -1,7 +1,7 @@
 import { buildApp } from './app'
 import { logger } from './lib/logger'
 
-const PORT = parseInt(process.env.APP_PORT ?? '3000')
+const PORT = parseInt(process.env.PORT ?? process.env.APP_PORT ?? '3000')
 const HOST = '0.0.0.0'
 
 async function main() {

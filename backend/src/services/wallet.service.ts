@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import { depositQueue } from '../lib/queues'
 import { logger } from '../lib/logger'
+import { deriveDepositAddress, getNetworkFee } from '../lib/blockchain'
 
 const CONFIRMATION_THRESHOLDS: Record<string, Record<string, number>> = {
   USDT: { TRC20: 20, ERC20: 12, BEP20: 15 },
@@ -29,9 +30,7 @@ export async function getOrCreateWallet(userId: string, coin: string, network: s
 }
 
 async function generateDepositAddress(coin: string, network: string, index: number): Promise<string> {
-  // In production: call signing service to derive HD address at m/44'/{coin}'/{account}'/0/{index}
-  // For now return a placeholder that won't be used in dev
-  return `dev_${coin}_${network}_${index}_placeholder`
+  return deriveDepositAddress(coin, network, index)
 }
 
 export async function getUserWallets(userId: string) {
@@ -67,7 +66,7 @@ export async function requestWithdrawal(
   amount: number,
   toAddress: string,
 ) {
-  const networkFee = 0 // TODO: fetch from blockchain fee oracle
+  const networkFee = await getNetworkFee(coin, network)
   const total = amount + networkFee
 
   const wallet = await prisma.wallet.findFirst({ where: { userId, coin, network } })
