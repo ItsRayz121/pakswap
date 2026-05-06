@@ -1,209 +1,170 @@
 'use client'
-import { useParams, useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import axios from 'axios'
+import { useState } from 'react'
+import Link from 'next/link'
 
-type StepState = 'done' | 'active' | 'pending' | 'error'
+type State = 'verifying' | 'completed'
 
-function TimelineStep({ label, desc, state, time }: { label: string; desc: string; state: StepState; time?: string }) {
-  const dotClass = state === 'done' ? 'bg-green-500' : state === 'active' ? 'bg-blue-500 animate-pulse' : state === 'error' ? 'bg-red-500' : 'bg-gray-200'
-  const Icon = state === 'done' ? CheckCircle : state === 'active' ? Loader2 : state === 'error' ? XCircle : Clock
-  return (
-    <div className="flex gap-4">
-      <div className="flex flex-col items-center">
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${dotClass}`}>
-          <Icon size={16} className={`${state === 'done' || state === 'active' || state === 'error' ? 'text-white' : 'text-gray-400'} ${state === 'active' ? 'animate-spin' : ''}`} />
-        </div>
-        <div className="w-0.5 flex-1 bg-gray-200 mt-1 mb-1 min-h-[24px]" />
-      </div>
-      <div className="pb-6 pt-1">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className={`font-semibold text-sm ${state === 'done' ? 'text-green-700' : state === 'active' ? 'text-blue-700' : state === 'error' ? 'text-red-700' : 'text-gray-400'}`}>{label}</p>
-          {time && <span className="text-xs text-gray-400">{time}</span>}
-        </div>
-        <p className="text-xs text-gray-500">{desc}</p>
-      </div>
-    </div>
-  )
-}
+const timelineSteps = [
+  { title: 'Order Created', sub: 'Quote locked • 0.2348 SOL for 10,135 PKR', time: 'Today, 14:23:08', done: true, active: false },
+  { title: 'Payment Uploaded', sub: 'JazzCash screenshot submitted', time: 'Today, 14:31:45', done: true, active: false },
+  { title: 'AI Verifying Payment', sub: 'Checking amount, sender name, timestamp...', time: 'In progress...', done: false, active: true },
+  { title: 'Admin Human Review', sub: 'Mandatory admin verification before release', time: 'Pending (SLA: 30 min)', done: false, active: false, layer2: true },
+  { title: 'Token Release', sub: 'SOL will be sent to your wallet', time: 'Pending', done: false, active: false },
+  { title: 'Completed', sub: 'SOL confirmed in your wallet', time: 'Pending', done: false, active: false },
+]
 
-function AiCheckRow({ label, result, confidence }: { label: string; result: 'pass' | 'fail' | 'pending'; confidence?: number }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-600">{label}</span>
-      <div className="flex items-center gap-2">
-        {confidence !== undefined && (
-          <div className="w-16 bg-gray-100 rounded-full h-1.5">
-            <div className={`h-1.5 rounded-full ${confidence >= 80 ? 'bg-green-500' : confidence >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${confidence}%` }} />
-          </div>
-        )}
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${result === 'pass' ? 'bg-green-100 text-green-700' : result === 'fail' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
-          {result === 'pass' ? '✅ Pass' : result === 'fail' ? '❌ Fail' : '⏳ Pending'}
-        </span>
-      </div>
-    </div>
-  )
-}
+const aiChecks = [
+  { label: 'Amount Match', detail: 'PKR 10,135 detected → matches order' },
+  { label: 'Recipient Name', detail: '"PakSwap Pvt Ltd" → verified' },
+  { label: 'Sender Name', detail: '"Muhammad Usman" → matches KYC' },
+  { label: 'Timestamp Valid', detail: 'Payment time within order window' },
+  { label: 'Image Integrity', detail: 'No editing artifacts detected' },
+]
 
 export default function InstantBuyStatusPage() {
-  const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const { accessToken } = useAuthStore()
+  const [state, setState] = useState<State>('verifying')
+  const [copied, setCopied] = useState(false)
 
-  const headers = { Authorization: `Bearer ${accessToken}` }
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['ib-order-status', id],
-    queryFn: () => axios.get(`/api/instant-buy/orders/${id}`, { headers }),
-    refetchInterval: 15000,
-  })
-  const order = data?.data?.data
-  const status = order?.status ?? 'verifying'
-
-  const coin = order?.coin ?? 'USDT'
-  const coinAmount = order?.coinAmount ? parseFloat(order.coinAmount).toFixed(6) : '125.000000'
-  const fiatAmount = order?.fiatAmount ? parseFloat(order.fiatAmount).toLocaleString('en-PK') : '35,000'
-  const orderRef = order?.orderRef ?? `#IBO-${id}`
-  const network = order?.network ?? 'TRC-20'
-
-  const isCompleted = status === 'completed' || status === 'released'
-  const isFailed = status === 'failed' || status === 'cancelled'
-
-  const heroColor = isCompleted ? 'from-green-500 to-emerald-600' : isFailed ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-600'
-  const heroIcon = isCompleted ? '✅' : isFailed ? '❌' : '🔄'
-  const heroTitle = isCompleted ? 'Order Complete!' : isFailed ? 'Order Failed' : 'Verifying Payment...'
-  const heroSub = isCompleted ? `${coinAmount} ${coin} has been released to your wallet` : isFailed ? 'Your order could not be processed. Contact support.' : 'Our team is reviewing your payment'
-
-  const timelineSteps: { label: string; desc: string; state: StepState; time?: string }[] = [
-    { label: 'Order Created', desc: 'Instant buy order placed successfully', state: 'done', time: '10:05 AM' },
-    { label: 'Payment Received', desc: 'Payment proof uploaded by customer', state: 'done', time: '10:08 AM' },
-    { label: 'Layer 1 — AI Scan', desc: 'Automated payment verification completed', state: isCompleted || isFailed ? 'done' : 'done', time: '10:09 AM' },
-    { label: 'Layer 2 — Admin Review', desc: 'Human admin verifying and approving order', state: isCompleted ? 'done' : isFailed ? 'error' : 'active', time: isCompleted ? '10:22 AM' : undefined },
-    { label: 'Crypto Released', desc: `${coinAmount} ${coin} sent to destination wallet`, state: isCompleted ? 'done' : 'pending', time: isCompleted ? '10:23 AM' : undefined },
-    { label: 'Order Closed', desc: 'Transaction finalized and recorded', state: isCompleted ? 'done' : 'pending', time: isCompleted ? '10:23 AM' : undefined },
-  ]
+  const copy = (text: string) => {
+    navigator.clipboard.writeText(text).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
-      <div className={`bg-gradient-to-br ${heroColor} text-white py-12 px-6 text-center`}>
-        <div className="text-5xl mb-4">{heroIcon}</div>
-        <h1 className="text-2xl font-black mb-2">{heroTitle}</h1>
-        <p className="text-white/80 text-sm mb-3">{heroSub}</p>
-        <span className="inline-block bg-white/20 rounded-full px-4 py-1.5 text-sm font-mono font-bold">{orderRef}</span>
-      </div>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/instant-buy" style={{ fontSize: 16, color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>← Instant Buy</Link>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Order #IBO-2026-004521</div>
+        <Link href="/instant-buy/history"><button style={{ padding: '6px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'white' }}>View History</button></Link>
+      </nav>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Demo Toggle */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          {(['verifying', 'completed'] as State[]).map(s => (
+            <button key={s} onClick={() => setState(s)} style={{ padding: '6px 14px', border: `1.5px solid ${state === s ? '#2563eb' : '#e2e8f0'}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: state === s ? '#eff6ff' : 'white', color: state === s ? '#1d4ed8' : '#374151' }}>View: {s}</button>
+          ))}
+        </div>
 
-          {/* LEFT */}
-          <div>
-            {/* Timeline */}
-            <div className="card p-6 mb-5">
-              <h2 className="font-bold text-gray-800 mb-5">Order Timeline</h2>
-              <div>
-                {timelineSteps.map((step, i) => (
-                  <TimelineStep key={i} {...step} />
-                ))}
-              </div>
+        {/* Status Hero */}
+        {state === 'verifying' && (
+          <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 32, marginBottom: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🤖</div>
+            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Verifying Your Payment</h2>
+            <p style={{ color: '#64748b', fontSize: 15, maxWidth: 400, margin: '0 auto 20px' }}>Our AI is checking your payment screenshot. This usually takes 2–5 minutes.</p>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#eff6ff', borderRadius: 10, padding: '12px 20px' }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#2563eb', animation: 'pulse 1s infinite' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#1d4ed8' }}>AI Verification in Progress...</span>
             </div>
+          </div>
+        )}
 
-            {/* Two-layer verification */}
-            <div className="two-layer-box">
-              <h3 className="font-bold text-gray-800 mb-1">Verification Status</h3>
-              <p className="text-xs text-gray-500 mb-5">Two mandatory layers protect every transaction</p>
+        {state === 'completed' && (
+          <div style={{ background: 'linear-gradient(135deg,#059669,#10b981)', borderRadius: 16, padding: 24, color: 'white', marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
+            <h2 style={{ fontSize: 26, fontWeight: 900, marginBottom: 8, margin: '0 0 8px' }}>0.2348 SOL Sent!</h2>
+            <p style={{ opacity: 0.9, fontSize: 15 }}>Your Solana has been sent to your wallet successfully</p>
+            <div style={{ background: '#1e293b', borderRadius: 10, padding: '12px 16px', fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0', wordBreak: 'break-all', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ color: '#94a3b8', fontSize: 11, whiteSpace: 'nowrap' }}>TX HASH</span>
+              <span style={{ flex: 1 }}>4xKpZHjR2mN8vQwL9sT3uF5bYcDeXaGkPo7WiEs83Hs</span>
+              <button onClick={() => copy('4xKpZHjR2mN8vQwL9sT3uF5bYcDeXaGkPo7WiEs83Hs')} style={{ background: '#334155', border: '1px solid #475569', color: '#e2e8f0', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>{copied ? '✓' : 'Copy'}</button>
+              <a href="#" style={{ color: '#60a5fa', fontSize: 12, flexShrink: 0 }}>Explorer →</a>
+            </div>
+          </div>
+        )}
 
-              <div className="layer-ai-header rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-blue-700 uppercase">Layer 1 — AI Scan</p>
-                  <span className="ls-passed text-xs px-2 py-0.5 rounded-full font-semibold">Passed</span>
-                </div>
-                <div className="space-y-1">
-                  <AiCheckRow label="Screenshot authenticity" result="pass" confidence={96} />
-                  <AiCheckRow label="Amount matches order" result="pass" confidence={99} />
-                  <AiCheckRow label="Sender name KYC match" result="pass" confidence={88} />
-                  <AiCheckRow label="Date/time validity" result="pass" confidence={100} />
-                  <AiCheckRow label="Duplicate detection" result="pass" confidence={100} />
-                </div>
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-blue-700 font-medium">Overall Confidence</span>
-                    <span className="font-bold text-blue-800">96%</span>
+        {/* Timeline */}
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Order Timeline</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {timelineSteps.map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: s.active ? 16 : 14, flexShrink: 0, background: s.done ? '#059669' : s.active ? '#2563eb' : '#f1f5f9', color: s.done || s.active ? 'white' : '#94a3b8', border: `2px solid ${s.done ? '#059669' : s.active ? '#2563eb' : '#e2e8f0'}` }}>
+                    {s.done ? '✓' : s.active ? '🤖' : i + 1}
                   </div>
-                  <div className="w-full bg-blue-100 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '96%' }} />
+                  {i < timelineSteps.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 32, margin: '4px 0', background: s.done ? '#059669' : '#e2e8f0' }} />}
+                </div>
+                <div style={{ paddingBottom: 28, flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>
+                    {s.title}
+                    {s.layer2 && <span style={{ fontSize: 11, background: '#fef3c7', color: '#d97706', borderRadius: 4, padding: '1px 6px', marginLeft: 4, fontWeight: 700 }}>Layer 2</span>}
                   </div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>{s.sub}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, fontFamily: 'monospace' }}>{s.time}</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
 
-              <div className="layer-human-header rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-green-700 uppercase">Layer 2 — Admin Review</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${isCompleted ? 'ls-passed' : isFailed ? 'bg-red-100 text-red-700' : 'ls-required'}`}>
-                    {isCompleted ? 'Approved' : isFailed ? 'Rejected' : 'In Review'}
-                  </span>
+        {/* Two-Layer Panel */}
+        <div style={{ border: '2px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
+          <div style={{ background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>🔐 Mandatory Two-Layer Payment Verification</span>
+            <span style={{ background: '#ef4444', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>BOTH LAYERS REQUIRED</span>
+          </div>
+
+          {/* Layer 1 */}
+          <div style={{ background: '#f0f9ff', borderBottom: '1px solid #e2e8f0', padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12 }}>1</div>
+              <div><div style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f' }}>Layer 1 — AI Payment Scan</div><div style={{ fontSize: 12, color: '#3b82f6' }}>Automated OCR + manipulation analysis</div></div>
+              <span style={{ marginLeft: 'auto', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>⚙️ Running</span>
+            </div>
+            {aiChecks.map((c, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < aiChecks.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>✓</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{c.label}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>{c.detail}</div>
                 </div>
-                <p className="text-sm text-green-700">
-                  {isCompleted
-                    ? 'Admin has reviewed and approved this order. Crypto released successfully.'
-                    : isFailed
-                    ? 'Admin was unable to approve this transaction. Please contact support.'
-                    : 'An admin is currently reviewing your payment. This typically takes 10–30 minutes.'}
-                </p>
-                {!isCompleted && !isFailed && (
-                  <div className="flex items-center gap-2 mt-3 text-xs text-green-700">
-                    <Loader2 size={12} className="animate-spin" />
-                    <span>Review in progress...</span>
-                  </div>
-                )}
+                <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>PASS</span>
               </div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>AI Confidence</span>
+              <div style={{ flex: 1, background: '#e2e8f0', borderRadius: 4, height: 8 }}><div style={{ width: '94%', background: 'linear-gradient(90deg,#2563eb,#059669)', borderRadius: 4, height: 8 }} /></div>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>94%</span>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="space-y-4 sticky top-20">
-            <div className="card p-5">
-              <p className="text-sm font-bold text-gray-700 mb-3">Order Details</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Order ID', value: orderRef, mono: true },
-                  { label: 'Token', value: `${coin}` },
-                  { label: 'Network', value: network },
-                  { label: 'You receive', value: `${coinAmount} ${coin}`, green: true },
-                  { label: 'You paid', value: `₨${fiatAmount}` },
-                ].map(({ label, value, mono, green }) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span className="text-gray-500">{label}</span>
-                    <span className={`font-semibold ${green ? 'text-green-600' : ''} ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
-                  </div>
-                ))}
+          {/* Layer 2 */}
+          <div style={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f59e0b', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12 }}>2</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Layer 2 — Admin Human Review</div>
+                <div style={{ fontSize: 12, color: '#92400e' }}>Manual verification by PakSwap compliance team</div>
               </div>
+              <span style={{ marginLeft: 'auto', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>⏳ Queued</span>
             </div>
-
-            <div className="space-y-2">
-              {isCompleted && (
-                <button onClick={() => router.push('/wallet')} className="btn btn-primary btn-full rounded-xl">
-                  View Wallet
-                </button>
-              )}
-              <button onClick={() => router.push('/instant-buy')} className="btn btn-secondary btn-full rounded-xl">
-                New Order
-              </button>
-              <button onClick={() => router.push('/dashboard')} className="btn btn-ghost btn-full rounded-xl">
-                Dashboard
-              </button>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 leading-relaxed">
-              <strong className="text-gray-700">Need help?</strong><br />
-              Available 9AM–11PM PKT<br />
-              WhatsApp: +92-300-PAKSWAP<br />
-              Telegram: @PakSwapSupport
+            <div style={{ background: '#fffbeb', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#92400e' }}>
+              ⏱️ <strong>SLA: 30 minutes.</strong> An admin will manually verify your payment evidence. You'll be notified when approved. USDT will NOT be released without this step.
             </div>
           </div>
         </div>
+
+        {/* Order Details Grid */}
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 20 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Order Details</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[['Order ID', 'IBO-2026-004521'], ['Token', 'SOL — Solana'], ['Amount', '0.2348 SOL'], ['Paid', '10,135 PKR'], ['Rate', 'PKR 43,150 / SOL'], ['Method', 'JazzCash'], ['Wallet', '7EcDh...LtV'], ['Created', 'Today, 14:23']].map(([l, v]) => (
+              <div key={l} style={{ background: '#f8fafc', borderRadius: 12, padding: 14 }}>
+                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{l}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {state === 'completed' && (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Link href="/wallet" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>View Wallet</button></Link>
+            <Link href="/instant-buy" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>New Order</button></Link>
+          </div>
+        )}
       </div>
     </div>
   )

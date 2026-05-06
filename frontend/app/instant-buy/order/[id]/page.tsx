@@ -1,229 +1,200 @@
 'use client'
-import { useState, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { Upload, Loader2, CheckCircle, Clock, Shield, XCircle, AlertCircle, Copy, QrCode } from 'lucide-react'
-import { DashboardLayout } from '../../../components/layout/DashboardLayout'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../../../components/ui/toaster'
-import axios from 'axios'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any; desc: string }> = {
-  pending_payment: { label: 'Awaiting Payment', color: 'badge-yellow', icon: Clock, desc: 'Send your payment and upload the proof below.' },
-  pending_layer1: { label: 'AI Verifying', color: 'badge-blue', icon: Shield, desc: 'Our AI is scanning your payment proof. This takes 1–3 minutes.' },
-  pending_layer2: { label: 'Admin Review', color: 'badge-yellow', icon: Shield, desc: 'A compliance officer is reviewing your payment. Usually within 4 hours.' },
-  approved: { label: 'Completed', color: 'badge-green', icon: CheckCircle, desc: 'Your crypto has been credited to your wallet.' },
-  rejected: { label: 'Rejected', color: 'badge-red', icon: XCircle, desc: 'Your payment proof was rejected. Contact support if you believe this is an error.' },
-  expired: { label: 'Expired', color: 'badge-gray', icon: XCircle, desc: 'This order has expired. Please create a new order.' },
-}
-
-function CountdownTimer({ expiresAt }: { expiresAt: string }) {
-  const [remaining, setRemaining] = useState(0)
-  const ref = useRef<NodeJS.Timeout>()
-
-  useState(() => {
-    const calc = () => setRemaining(Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)))
-    calc()
-    ref.current = setInterval(calc, 1000)
-    return () => clearInterval(ref.current)
-  })
-
-  const mins = Math.floor(remaining / 60)
-  const secs = remaining % 60
-  const urgent = remaining < 300
-
-  return (
-    <div className={`font-mono text-2xl font-bold ${urgent ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>
-      {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-    </div>
-  )
-}
+const RATE = 43150
 
 export default function InstantBuyOrderPage() {
-  const { id } = useParams<{ id: string }>()
-  const { accessToken } = useAuthStore()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [txHash, setTxHash] = useState('')
-  const [uploading, setUploading] = useState(false)
+  const router = useRouter()
+  const [pkrAmount, setPkrAmount] = useState('10000')
+  const [solAmount, setSolAmount] = useState('0.2348')
+  const [payMethod, setPayMethod] = useState('JazzCash')
+  const [walletAddr, setWalletAddr] = useState('')
+  const [addrValid, setAddrValid] = useState<null | boolean>(null)
+  const [confirmed, setConfirmed] = useState(false)
+  const [timer, setTimer] = useState(598)
 
-  const headers = { Authorization: `Bearer ${accessToken}` }
+  useEffect(() => {
+    const t = setInterval(() => setTimer(p => Math.max(0, p - 1)), 1000)
+    return () => clearInterval(t)
+  }, [])
 
-  const { data, refetch } = useQuery({
-    queryKey: ['ib-order', id],
-    queryFn: () => axios.get(`/api/instant-buy/orders/${id}`, { headers }),
-    refetchInterval: 8000,
-  })
+  const timerDisplay = `${Math.floor(timer / 60).toString().padStart(2, '0')}:${(timer % 60).toString().padStart(2, '0')}`
 
-  const order = data?.data?.data
-  const conf = order ? (STATUS_CONFIG[order.verificationStatus] ?? STATUS_CONFIG.pending_payment) : null
-
-  const uploadProof = async (file: File) => {
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('proof', file)
-      await axios.post(`/api/instant-buy/orders/${id}/submit-payment`, fd, { headers })
-      toast({ type: 'success', title: 'Proof Submitted', description: 'Verification starting now.' })
-      refetch()
-    } catch (err: any) {
-      toast({ type: 'error', title: 'Upload Failed', description: err.response?.data?.message })
-    } finally {
-      setUploading(false)
-    }
+  const handlePkr = (v: string) => {
+    setPkrAmount(v)
+    setSolAmount(((parseFloat(v) || 0) / RATE).toFixed(4))
   }
-
-  const submitCryptoDeposit = async () => {
-    if (!txHash) return
-    try {
-      await axios.post(`/api/instant-buy/orders/${id}/confirm-deposit`, { txHash }, { headers })
-      toast({ type: 'success', title: 'TX Submitted', description: 'Blockchain confirmation in progress.' })
-      refetch()
-    } catch (err: any) {
-      toast({ type: 'error', title: 'Failed', description: err.response?.data?.message })
-    }
+  const handleSol = (v: string) => {
+    setSolAmount(v)
+    setPkrAmount(String(Math.round((parseFloat(v) || 0) * RATE)))
   }
-
-  if (!order) {
-    return <DashboardLayout><div className="animate-pulse space-y-4"><div className="h-40 bg-gray-200 rounded-xl" /><div className="h-60 bg-gray-200 rounded-xl" /></div></DashboardLayout>
+  const validateAddr = (v: string) => {
+    setWalletAddr(v)
+    if (v.length === 0) { setAddrValid(null); return }
+    const valid = v.length >= 32 && v.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(v)
+    setAddrValid(valid)
   }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-lg mx-auto space-y-6">
-        {/* Header */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{order.orderRef}</h1>
-              <p className="text-sm text-gray-500 mt-1">Instant Buy — {order.coin}</p>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/instant-buy" style={{ fontSize: 16, color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>← Back to Instant Buy</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px', cursor: 'pointer' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24, alignItems: 'start', maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Left */}
+        <div>
+          {/* Token Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px', background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', marginBottom: 20 }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>🟣</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>Solana <span style={{ color: '#64748b', fontSize: 16, fontWeight: 500 }}>SOL</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                <span style={{ fontSize: 15, fontWeight: 600 }}>PKR 41,850</span>
+                <span style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>↓ 0.6% today</span>
+              </div>
             </div>
-            {conf && (
-              <span className={`badge ${conf.color} flex items-center gap-1`}>
-                <conf.icon size={12} />
-                {conf.label}
-              </span>
-            )}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Oracle price</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginTop: 2 }}>$149.10 USDT</div>
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Binance · CoinGecko · CMC</div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-gray-500 text-xs">You Receive</p>
-              <p className="font-bold text-gray-900 text-lg">{parseFloat(order.coinAmount).toFixed(6)} {order.coin}</p>
+          {/* Network Info */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>🌐 Network & Wallet Info</div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 600, color: '#1d4ed8', marginBottom: 10 }}>🔵 Solana Network (Mainnet)</span>
+            <div style={{ fontSize: 14, color: '#374151', marginBottom: 12, lineHeight: 1.6 }}>
+              Your SOL will be sent to a <strong>Solana wallet address</strong>. Make sure you provide the correct address — transactions cannot be reversed.
             </div>
-            {order.paymentMode === 'pkr' && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-gray-500 text-xs">You Pay</p>
-                <p className="font-bold text-gray-900 text-lg">₨{parseFloat(order.fiatAmount).toLocaleString('en-PK')}</p>
-              </div>
-            )}
-            {order.paymentMode === 'crypto' && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-gray-500 text-xs">You Send</p>
-                <p className="font-bold text-gray-900 text-lg">{parseFloat(order.coinAmount).toFixed(6)} {order.fromCoin}</p>
-              </div>
-            )}
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: 12, fontSize: 13, color: '#92400e', marginBottom: 12 }}>
+              ⚠️ <strong>Do NOT enter a BNB (0x...) or TON (EQ...) address.</strong> Only Solana addresses are accepted here.
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Supported Wallets</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['Phantom', 'Solflare', 'Backpack', 'Exodus', 'Any Solana Wallet'].map(w => (
+                <span key={w} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>{w}</span>
+              ))}
+            </div>
           </div>
 
-          {conf && <p className="text-sm text-gray-500 mt-4">{conf.desc}</p>}
+          {/* What happens next */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>📋 What Happens After You Order</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[['1', '#eff6ff', '#2563eb', 'Send payment + upload proof', 'Pay via JazzCash, Easypaisa, or bank. Screenshot required.'], ['2', '#eff6ff', '#2563eb', 'AI verification (2–5 min)', 'Our AI checks your screenshot instantly. High confidence = auto-approved.'], ['3', '#d1fae5', '#059669', 'SOL arrives in your wallet', "Automatically sent. You'll get SMS + notification with the transaction hash."]].map(([n, bg, color, title, sub]) => (
+                <div key={n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <div style={{ width: 28, height: 28, background: bg as string, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: color as string, flexShrink: 0 }}>{n}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{title}</div>
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>{sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Timer */}
-        {order.verificationStatus === 'pending_payment' && order.expiresAt && (
-          <div className="card p-4 text-center">
-            <p className="text-xs text-gray-500 mb-1">Time remaining to pay</p>
-            <CountdownTimer expiresAt={order.expiresAt} />
-          </div>
-        )}
+        {/* Right: Order Form */}
+        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 28, position: 'sticky', top: 80 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Create Order</div>
 
-        {/* Two-Layer Status */}
-        {['pending_layer1', 'pending_layer2', 'approved', 'rejected'].includes(order.verificationStatus) && (
-          <div className="two-layer-box">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Verification Progress</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Layer 1 — AI Scan</span>
-                <span className={`badge ${
-                  order.verificationStatus === 'pending_layer1' ? 'badge-yellow' :
-                  ['pending_layer2', 'approved', 'rejected'].includes(order.verificationStatus) ? 'badge-green' : 'badge-gray'
-                }`}>
-                  {order.verificationStatus === 'pending_layer1' ? 'Processing...' : 'Done'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Layer 2 — Human Review</span>
-                <span className={`badge ${
-                  order.verificationStatus === 'approved' ? 'badge-green' :
-                  order.verificationStatus === 'rejected' ? 'badge-red' :
-                  order.verificationStatus === 'pending_layer2' ? 'badge-yellow' : 'badge-gray'
-                }`}>
-                  {order.verificationStatus === 'pending_layer2' ? 'Pending' :
-                   order.verificationStatus === 'approved' ? 'Approved' :
-                   order.verificationStatus === 'rejected' ? 'Rejected' : 'Waiting'}
-                </span>
-              </div>
+          {/* Amount Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ background: '#eff6ff', border: '2px solid #2563eb', borderRadius: 14, padding: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', marginBottom: 8 }}>You Pay</div>
+              <input type="number" value={pkrAmount} onChange={e => handlePkr(e.target.value)} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 22, fontWeight: 800, color: '#1e293b', outline: 'none' }} />
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#64748b', marginTop: 4 }}>PKR — Pakistani Rupee</div>
+            </div>
+            <div style={{ width: 36, height: 36, background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, flexShrink: 0 }}>⇄</div>
+            <div style={{ background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: 14, padding: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', marginBottom: 8 }}>You Receive</div>
+              <input type="number" value={solAmount} onChange={e => handleSol(e.target.value)} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 22, fontWeight: 800, color: '#1e293b', outline: 'none' }} />
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#64748b', marginTop: 4 }}>SOL — Solana</div>
             </div>
           </div>
-        )}
 
-        {/* PKR Payment — upload proof */}
-        {order.paymentMode === 'pkr' && order.verificationStatus === 'pending_payment' && (
-          <div className="card p-5 space-y-4">
-            <h2 className="font-semibold text-gray-900">Payment Instructions</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Amount to send</span>
-                <span className="font-bold text-green-600">₨{parseFloat(order.fiatAmount).toLocaleString('en-PK')}</span>
+          {/* Quote Box */}
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+            {[['Market rate', '1 SOL = PKR 41,850'], ['Platform spread (3%)', '+ PKR 1,255'], ['Network fee', '≈ PKR 45']].map(([l, v]) => (
+              <div key={l} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '5px 0' }}>
+                <span style={{ color: '#64748b' }}>{l}</span><span style={{ fontWeight: 600 }}>{v}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Payment method</span>
-                <span className="font-medium capitalize">JazzCash / Easypaisa / Bank</span>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 700, paddingTop: 8, borderTop: '1px solid #e2e8f0', marginTop: 8 }}>
+              <span>Your rate</span><span style={{ color: '#2563eb' }}>1 SOL = PKR 43,150</span>
+            </div>
+          </div>
+
+          {/* Timer */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fef3c7', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 16 }}>
+            ⏱️ Quote valid for: <span style={{ fontSize: 16, color: timer < 60 ? '#ef4444' : '#92400e' }}>{timerDisplay}</span>
+          </div>
+
+          {/* Payment Method */}
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Pay with</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+            {[['📱', 'JazzCash'], ['💚', 'Easypaisa'], ['🏦', 'Bank']].map(([icon, name]) => (
+              <div key={name} onClick={() => setPayMethod(name as string)} style={{ border: `2px solid ${payMethod === name ? '#2563eb' : '#e2e8f0'}`, borderRadius: 10, padding: '12px 8px', textAlign: 'center', cursor: 'pointer', background: payMethod === name ? '#eff6ff' : 'white', transition: 'all 0.15s' }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{name}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Provider */}
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Provider</div>
+          <div style={{ border: '2px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>P</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>PakSwap Official</div>
+                <div style={{ color: '#f59e0b', fontSize: 13 }}>★★★★★ <span style={{ color: '#64748b', fontSize: 12 }}>99.8% • 12,450 orders</span></div>
               </div>
             </div>
-            <div className="p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-              Send exactly ₨{parseFloat(order.fiatAmount).toLocaleString('en-PK')} to your designated PakSwap account. Contact support for payment details.
+            <div style={{ fontSize: 13, color: '#64748b' }}>▼</div>
+          </div>
+
+          {/* Wallet Address */}
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Your SOL Wallet Address <span style={{ color: '#ef4444' }}>*</span></label>
+            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '8px 10px' }}>
+              🟢 <strong>Solana format:</strong> Base58, 32–44 characters<br />
+              <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#15803d' }}>Example: 7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV</span>
             </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProof(f) }} />
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-lg btn-primary w-full">
-              {uploading ? <><Loader2 size={18} className="animate-spin" /> Uploading...</> : <><Upload size={18} /> Upload Payment Proof</>}
-            </button>
-          </div>
-        )}
-
-        {/* Crypto Payment — tx hash */}
-        {order.paymentMode === 'crypto' && order.verificationStatus === 'pending_payment' && (
-          <div className="card p-5 space-y-4">
-            <h2 className="font-semibold text-gray-900">Send {order.fromCoin}</h2>
-            <div className="flex items-center justify-center p-6 bg-gray-50 rounded-xl">
-              <QrCode size={80} className="text-gray-400" />
+            <div style={{ position: 'relative' }}>
+              <input type="text" placeholder="Enter your Solana wallet address" value={walletAddr} onChange={e => validateAddr(e.target.value)} style={{ width: '100%', padding: '10px 44px 10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 13, fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box' }} />
+              <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>{addrValid === null ? '·' : addrValid ? '✅' : '❌'}</span>
             </div>
-            <p className="text-sm text-gray-500 text-center">Send exactly {parseFloat(order.coinAmount).toFixed(6)} {order.fromCoin} to your PakSwap deposit address, then enter the transaction hash below.</p>
-            <input
-              value={txHash}
-              onChange={(e) => setTxHash(e.target.value)}
-              className="form-input font-mono text-sm"
-              placeholder="Transaction hash / TX ID"
-            />
-            <button onClick={submitCryptoDeposit} disabled={!txHash} className="btn-lg btn-primary w-full">
-              Confirm Deposit
-            </button>
+            {addrValid === false && walletAddr.length > 5 && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: 12, fontSize: 13, color: '#dc2626', marginTop: 10, display: 'flex', gap: 8 }}>
+                ⚠️ This does not look like a valid Solana address. Solana addresses are 32–44 characters in Base58 format.
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Completed */}
-        {order.verificationStatus === 'approved' && (
-          <div className="card p-6 text-center">
-            <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Order Complete!</h2>
-            <p className="text-gray-500 mb-4">{parseFloat(order.coinAmount).toFixed(6)} {order.coin} has been added to your wallet.</p>
-            <a href="/wallet" className="btn-md btn-primary">View Wallet</a>
+          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 10, padding: 12, fontSize: 12, color: '#dc2626', marginBottom: 16 }}>
+            ⚠️ <strong>Wrong address = permanent loss of funds.</strong> PakSwap cannot recover tokens sent to wrong addresses.
           </div>
-        )}
 
-        {/* History link */}
-        <div className="text-center">
-          <a href="/instant-buy/history" className="text-sm text-brand hover:underline">← All Instant Buy Orders</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#2563eb' }} />
+            <label style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>I have verified my wallet address and understand it cannot be changed after confirmation</label>
+          </div>
+
+          <button onClick={() => router.push('/instant-buy/payment/new')} disabled={!confirmed || addrValid !== true} style={{ width: '100%', padding: '14px', background: confirmed && addrValid ? '#2563eb' : '#94a3b8', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: confirmed && addrValid ? 'pointer' : 'not-allowed', opacity: confirmed && addrValid ? 1 : 0.7 }}>
+            Confirm & Proceed to Payment →
+          </button>
+          <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#94a3b8' }}>By continuing you agree to our Terms of Service</div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }

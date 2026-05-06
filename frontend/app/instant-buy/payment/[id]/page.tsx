@@ -1,271 +1,188 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { Copy, Upload, Loader2, Clock } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../../../components/ui/toaster'
-import axios from 'axios'
-
-function CountdownTimer({ expiresAt }: { expiresAt: string }) {
-  const [secs, setSecs] = useState(0)
-  useEffect(() => {
-    const calc = () => setSecs(Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)))
-    calc()
-    const t = setInterval(calc, 1000)
-    return () => clearInterval(t)
-  }, [expiresAt])
-  const m = String(Math.floor(secs / 60)).padStart(2, '0')
-  const s = String(secs % 60).padStart(2, '0')
-  const urgent = secs < 120
-  const danger = secs < 60
-  return (
-    <span className={`font-mono text-5xl font-black tracking-tighter ${danger ? 'timer-danger' : urgent ? 'timer-warning' : 'timer-normal'}`}>
-      {m}:{s}
-    </span>
-  )
-}
-
-function copyToClipboard(text: string, label: string) {
-  navigator.clipboard?.writeText(text).catch(() => {})
-  toast({ type: 'success', title: `${label} copied!` })
-}
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function InstantBuyPaymentPage() {
-  const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { accessToken } = useAuthStore()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [payTab, setPayTab] = useState<'pkr' | 'usdt'>('pkr')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [dragging, setDragging] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [tab, setTab] = useState<'pkr' | 'usdt'>('pkr')
+  const [uploaded, setUploaded] = useState(false)
+  const [fileName, setFileName] = useState('')
+  const [timer, setTimer] = useState(8 * 60 + 43)
+  const [usdtNet, setUsdtNet] = useState('TRC-20')
+  const [copied, setCopied] = useState<string | null>(null)
 
-  const headers = { Authorization: `Bearer ${accessToken}` }
+  useEffect(() => {
+    const t = setInterval(() => setTimer(p => Math.max(0, p - 1)), 1000)
+    return () => clearInterval(t)
+  }, [])
 
-  const { data } = useQuery({
-    queryKey: ['ib-order', id],
-    queryFn: () => axios.get(`/api/instant-buy/orders/${id}`, { headers }),
-    refetchInterval: 10000,
-  })
-  const order = data?.data?.data
+  const mins = Math.floor(timer / 60).toString().padStart(2, '0')
+  const secs = (timer % 60).toString().padStart(2, '0')
 
-  const submitMutation = useMutation({
-    mutationFn: (file: File) => {
-      const fd = new FormData()
-      fd.append('proof', file)
-      return axios.post(`/api/instant-buy/orders/${id}/submit-payment`, fd, { headers })
-    },
-    onSuccess: () => {
-      toast({ type: 'success', title: 'Payment Submitted', description: 'Moving to verification...' })
-      router.push(`/instant-buy/status/${id}`)
-    },
-    onError: (err: any) => toast({ type: 'error', title: 'Upload Failed', description: err.response?.data?.message })
-  })
-
-  const handleFile = (file: File) => setSelectedFile(file)
-
-  const handleMarkPaid = () => {
-    if (!selectedFile) { toast({ type: 'error', title: 'Upload Required', description: 'Please upload your payment screenshot first.' }); return }
-    submitMutation.mutate(selectedFile)
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => {})
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }
 
-  const coin = order?.coin ?? 'USDT'
-  const fiatAmount = order?.fiatAmount ? parseFloat(order.fiatAmount).toLocaleString('en-PK') : '—'
-  const coinAmount = order?.coinAmount ? parseFloat(order.coinAmount).toFixed(6) : '—'
-  const orderRef = order?.orderRef ?? `#IBO-${id}`
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="navbar">
-        <button onClick={() => router.back()} className="text-sm font-medium text-gray-500 hover:text-gray-800">← Edit Order</button>
-        <span className="font-bold text-gray-900 mx-auto">{orderRef}</span>
-        <span className="badge badge-yellow flex items-center gap-1"><Clock size={11} /> Awaiting Payment</span>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/instant-buy/order/new" style={{ fontSize: 16, color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>← Edit Order</Link>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b' }}>Order #IBO-2026-004521</div>
+        <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 8, padding: '4px 12px', fontSize: 13, fontWeight: 600 }}>⏳ Awaiting Payment</span>
       </nav>
 
-      <div className="grid lg:grid-cols-[1fr_380px] gap-6 max-w-5xl mx-auto px-6 py-8 items-start">
-
-        {/* LEFT: Instructions */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start', maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Left */}
         <div>
-          {/* Order summary */}
-          <div className="escrow-banner mb-6">
-            <div className="text-3xl">{coin === 'USDT' ? '💵' : coin === 'BTC' ? '₿' : coin === 'SOL' ? '🟣' : '🪙'}</div>
-            <div className="flex-1">
-              <p className="font-extrabold text-base">Buying {coinAmount} {coin}</p>
-              <p className="text-sm text-blue-500">{order?.network ?? 'TRC-20'}</p>
+          {/* Order Summary Bar */}
+          <div style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: '1.5px solid #93c5fd', borderRadius: 14, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🟣</div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 15 }}>Buying 0.2348 SOL</div>
+                <div style={{ fontSize: 13, color: '#3b82f6' }}>Solana Network</div>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-500">Total to pay</p>
-              <p className="text-xl font-extrabold text-brand">₨{fiatAmount}</p>
+            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+              <div style={{ fontSize: 13, color: '#64748b' }}>Total to pay</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#1d4ed8' }}>10,135 PKR</div>
             </div>
           </div>
 
-          {/* Payment mode tabs */}
-          <div className="tab-bar mb-5">
-            <button className={`tab flex-1 ${payTab === 'pkr' ? 'active' : ''}`} onClick={() => setPayTab('pkr')}>💳 Pay with PKR</button>
-            <button className={`tab flex-1 ${payTab === 'usdt' ? 'active' : ''}`} onClick={() => setPayTab('usdt')}>💵 Pay with USDT</button>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 12, padding: 4, marginBottom: 20 }}>
+            {(['pkr', 'usdt'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, textAlign: 'center', padding: 10, borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none', background: tab === t ? 'white' : 'transparent', color: tab === t ? '#1d4ed8' : '#64748b', boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>
+                {t === 'pkr' ? '💳 Pay with PKR' : '💵 Pay with USDT'}
+              </button>
+            ))}
           </div>
 
-          {payTab === 'pkr' && (
-            <div>
-              {/* Important notes */}
-              <div className="important-note bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-5">
-                <h4 className="text-sm font-bold text-orange-700 mb-2">⚠️ Important — Read before paying</h4>
-                <ul className="space-y-1.5">
-                  {[
-                    `Pay the exact amount shown — not more, not less`,
-                    `Your account name must match your KYC name`,
-                    `Include the order reference in payment note if your app supports it`,
-                    `Do NOT pay from a third-party account`,
-                    `Do NOT send via Raast — use JazzCash wallet-to-wallet or bank IBAN`,
-                  ].map((note, i) => (
-                    <li key={i} className="text-sm text-orange-800 flex gap-2">
-                      <span>{i < 3 ? '✅' : '❌'}</span> {note}
-                    </li>
+          {tab === 'pkr' && (
+            <>
+              <div style={{ background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#c2410c', marginBottom: 8 }}>⚠️ Important — Read before paying</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {['Pay the exact amount shown — not more, not less', 'Your payment account name must match your KYC name: Muhammad Usman', 'Include the order reference in payment note if your app supports it', 'Do NOT pay from a third-party account — your name must match', 'Do NOT send via Raast — use JazzCash wallet-to-wallet or bank IBAN'].map((item, i) => (
+                    <div key={i} style={{ fontSize: 13, color: '#9a3412', display: 'flex', gap: 8 }}><span>{i < 3 ? '✅' : '❌'}</span>{item}</div>
                   ))}
-                </ul>
+                </div>
               </div>
 
-              {/* Payment details */}
-              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 mb-5 bg-gray-50">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Payment Details</p>
-                <div className="text-center mb-5">
-                  <p className="text-sm text-gray-500 mb-1">Pay exactly this amount</p>
-                  <p className="text-5xl font-black text-gray-900 tracking-tight">₨{fiatAmount}</p>
-                  <p className="text-xs text-gray-400 mt-1">Do not round up or down</p>
+              <div style={{ background: '#f8fafc', border: '2px dashed #cbd5e1', borderRadius: 14, padding: 20, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', marginBottom: 16 }}>Payment Details</div>
+                <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>Pay exactly this amount</div>
+                  <div style={{ fontSize: 40, fontWeight: 900, color: '#1e293b', letterSpacing: -1 }}>10,135 <span style={{ fontSize: 22 }}>PKR</span></div>
                 </div>
-                {[
-                  { label: '📱 Send to (JazzCash)', value: order?.jazzcashNumber ?? '0300-1234567', copyable: true },
-                  { label: '👤 Account Name', value: 'PakSwap (Pvt) Ltd', copyable: false },
-                  { label: '🔖 Reference / Note', value: orderRef.replace('#', ''), copyable: true },
-                ].map(({ label, value, copyable }) => (
-                  <div key={label} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                    <span className="text-sm text-gray-500">{label}</span>
-                    <div className="flex items-center gap-2 font-bold text-sm">
-                      {value}
-                      {copyable && (
-                        <button onClick={() => copyToClipboard(value, label.split(' ').pop()!)}
-                          className="bg-blue-50 border border-blue-200 rounded-md px-2 py-0.5 text-xs font-semibold text-brand hover:bg-blue-100">
-                          Copy
-                        </button>
-                      )}
-                    </div>
+                {[['📱 Send to (JazzCash)', '0300-1234567', 'num'], ['👤 Account Name', 'PakSwap (Pvt) Ltd', null], ['🔖 Reference / Note', 'IBO-004521', 'ref']].map(([label, val, key]) => (
+                  <div key={label as string} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 12 }}>
+                    <span style={{ fontSize: 13, color: '#64748b' }}>{label}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {val}
+                      {key && <button onClick={() => copy(val as string, key as string)} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, color: '#2563eb', cursor: 'pointer' }}>{copied === key ? 'Copied!' : 'Copy'}</button>}
+                    </span>
                   </div>
                 ))}
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-2">Also accepted:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    <span className="pay-pill epay">Easypaisa: {order?.easypaisaNumber ?? '0300-1234567'}</span>
-                    <span className="pay-pill bank">IBAN: {order?.iban ?? 'PK36ALFH0110012345678901'}</span>
+                <div style={{ borderTop: '1px solid #e2e8f0', marginTop: 12, paddingTop: 12 }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Also accepted:</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>Easypaisa: 0300-1234567</span>
+                    <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>IBAN: PK36ALFH0110012345678901</span>
                   </div>
                 </div>
               </div>
 
-              {/* Upload */}
-              <h3 className="font-bold mb-3">Upload Payment Screenshot</h3>
-              <div
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all mb-4 ${dragging ? 'border-brand bg-blue-50' : 'border-gray-300 bg-gray-50 hover:border-brand hover:bg-blue-50'}`}
-                onClick={() => fileRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); setDragging(true) }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}>
-                <div className="text-4xl mb-3">📷</div>
-                <p className="font-bold mb-1">Click to upload or drag &amp; drop</p>
-                <p className="text-sm text-gray-500">JPG, PNG, PDF — max 10MB</p>
-                <p className="text-xs text-gray-400 mt-1">Your JazzCash / Easypaisa / Bank screenshot</p>
-                <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
-              </div>
-
-              {selectedFile && (
-                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
-                  <span className="text-2xl">📎</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{selectedFile.name}</p>
-                    <p className="text-xs text-gray-500">Ready for verification</p>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Upload Payment Screenshot</div>
+              {!uploaded ? (
+                <div onClick={() => { setUploaded(true); setFileName('jazzcash_payment.jpg') }} style={{ border: '2px dashed #cbd5e1', borderRadius: 14, padding: 32, textAlign: 'center', cursor: 'pointer', background: '#f8fafc', marginBottom: 16, transition: 'all 0.2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#2563eb'; (e.currentTarget as HTMLElement).style.background = '#eff6ff' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#cbd5e1'; (e.currentTarget as HTMLElement).style.background = '#f8fafc' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📷</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Click to upload or drag & drop</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>JPG, PNG, PDF — max 10MB</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>Your JazzCash / Easypaisa / Bank screenshot</div>
+                </div>
+              ) : (
+                <div style={{ border: '1.5px solid #86efac', background: '#f0fdf4', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <span style={{ fontSize: 24 }}>📎</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{fileName}</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>Ready for verification</div>
                   </div>
-                  <span className="text-green-500 text-xl">✅</span>
+                  <span style={{ fontSize: 20 }}>✅</span>
                 </div>
               )}
 
-              <button onClick={handleMarkPaid} disabled={submitMutation.isPending}
-                className="btn btn-primary btn-full btn-lg rounded-xl mb-3">
-                {submitMutation.isPending ? <><Loader2 size={18} className="animate-spin" /> Uploading...</> : '✅ I Have Made the Payment'}
-              </button>
-              <button onClick={() => { if (confirm('Cancel this order?')) router.push('/instant-buy') }}
-                className="btn btn-ghost btn-full">Cancel Order</button>
-            </div>
+              <button onClick={() => router.push('/instant-buy/status/new')} style={{ width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>✅ I Have Made the Payment</button>
+              <button style={{ width: '100%', padding: '12px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white', color: '#374151' }}>Cancel Order</button>
+            </>
           )}
 
-          {payTab === 'usdt' && (
-            <div>
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5 mb-5">
-                <h4 className="font-bold text-green-800 mb-2">⚡ USDT Payment — Blockchain Monitored</h4>
-                <p className="text-sm text-green-700 leading-relaxed">Send USDT to the address below. We monitor the blockchain automatically — no screenshot needed. Token is released after blockchain confirmation + admin review.</p>
+          {tab === 'usdt' && (
+            <>
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 14, padding: 20, marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#166534', marginBottom: 12 }}>⚡ USDT Payment — Fully Automatic</div>
+                <p style={{ fontSize: 13, color: '#15803d', lineHeight: 1.6, margin: 0 }}>Send USDT to the address below. We monitor the blockchain automatically — no screenshot needed. Token is released as soon as your transaction is confirmed.</p>
               </div>
-              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50">
-                <div className="text-center mb-5">
-                  <p className="text-sm text-gray-500 mb-1">Send exactly</p>
-                  <p className="text-4xl font-black text-gray-900">{coinAmount} <span className="text-xl font-bold text-gray-400">{coin}</span></p>
+
+              <div style={{ background: '#f8fafc', border: '2px dashed #cbd5e1', borderRadius: 14, padding: 20 }}>
+                <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>Send exactly</div>
+                  <div style={{ fontSize: 40, fontWeight: 900, color: '#1e293b', letterSpacing: -1 }}>36.12 <span style={{ fontSize: 22 }}>USDT</span></div>
                 </div>
-                <div className="mb-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Select Network</p>
-                  <div className="flex gap-2">
-                    <button className="btn btn-primary btn-sm">TRC-20 (TRON)</button>
-                    <button className="btn btn-secondary btn-sm">BEP-20 (BSC)</button>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 8 }}>SELECT NETWORK</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {['TRC-20', 'BEP-20'].map(n => (
+                      <button key={n} onClick={() => setUsdtNet(n)} style={{ padding: '6px 14px', background: usdtNet === n ? '#2563eb' : 'white', color: usdtNet === n ? 'white' : '#374151', border: `1.5px solid ${usdtNet === n ? '#2563eb' : '#e2e8f0'}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{n === 'TRC-20' ? 'TRC-20 (TRON)' : 'BEP-20 (BSC)'}</button>
+                    ))}
                   </div>
                 </div>
-                <div className="bg-gray-900 rounded-xl p-4 mb-3">
-                  <p className="text-xs text-gray-400 mb-2 font-bold">DEPOSIT ADDRESS (TRC-20)</p>
-                  <p className="font-mono text-sm text-gray-100 break-all leading-relaxed">{order?.depositAddress ?? 'TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7'}</p>
-                  <button onClick={() => copyToClipboard(order?.depositAddress ?? 'TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7', 'Address')}
-                    className="mt-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-md px-3 py-1 text-xs font-semibold hover:bg-gray-600">
-                    📋 Copy Address
-                  </button>
+                <div style={{ background: '#1e293b', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8, fontWeight: 600 }}>DEPOSIT ADDRESS ({usdtNet})</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0', wordBreak: 'break-all', lineHeight: 1.6 }}>TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7</div>
+                  <button onClick={() => copy('TLyKfp6RJWJ7P2ynkxS4Kd9FP8eJQvMBm7', 'usdt-addr')} style={{ marginTop: 10, background: '#334155', border: '1px solid #475569', color: '#e2e8f0', borderRadius: 6, padding: '4px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{copied === 'usdt-addr' ? '✓ Copied' : '📋 Copy Address'}</button>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-                  ⚠️ Send ONLY on the <strong>TRC-20 network</strong>. Sending on a different network will result in permanent loss of funds.
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: 10, fontSize: 12, color: '#92400e' }}>
+                  ⚠️ Send ONLY on the <strong>{usdtNet} network</strong>. Sending on a different network will result in permanent loss of funds.
                 </div>
               </div>
-              <p className="text-center text-sm text-gray-500 mt-3">⏳ We will detect your transaction automatically. Usually 1–3 minutes after sending.</p>
-            </div>
+              <div style={{ textAlign: 'center', fontSize: 13, color: '#64748b', marginTop: 12 }}>⏳ We will detect your transaction automatically. Usually 1–3 minutes after sending.</div>
+            </>
           )}
         </div>
 
-        {/* RIGHT: Timer + order info */}
-        <div className="card p-6 sticky top-20">
-          <h3 className="font-bold text-center mb-4">Order Expires In</h3>
-          <div className="text-center bg-gray-50 rounded-xl p-6 mb-5">
-            <p className="text-xs text-gray-500 mb-2">Quote locked — pay before time runs out</p>
-            {order?.expiresAt ? <CountdownTimer expiresAt={order.expiresAt} /> : <span className="text-5xl font-black text-gray-900">15:00</span>}
-            <p className="text-xs text-gray-400 mt-2">Order will be cancelled if not paid</p>
+        {/* Right */}
+        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 28, position: 'sticky', top: 80 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, textAlign: 'center' }}>Order Expires In</div>
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#64748b' }}>Quote locked — pay before time runs out</div>
+            <div style={{ fontSize: 48, fontWeight: 900, letterSpacing: -2, margin: '8px 0', color: timer < 60 ? '#ef4444' : timer < 180 ? '#f59e0b' : '#1e293b' }}>{mins}:{secs}</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>Order will be cancelled if not paid</div>
           </div>
 
-          <p className="text-sm font-bold text-gray-700 mb-3">Order Summary</p>
-          <div className="space-y-2 mb-5">
-            {[
-              { label: 'Order ID', value: orderRef, mono: true },
-              { label: 'Token', value: coin },
-              { label: 'You receive', value: `${coinAmount} ${coin}`, green: true },
-              { label: 'Rate', value: order?.rate ? `PKR ${parseFloat(order.rate).toLocaleString('en-PK')} / ${coin}` : '—' },
-            ].map(({ label, value, mono, green }) => (
-              <div key={label} className="flex justify-between text-sm">
-                <span className="text-gray-500">{label}</span>
-                <span className={`font-semibold ${green ? 'text-green-600' : ''} ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>Order Summary</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {[['Order ID', 'IBO-004521', true], ['Token', 'SOL (Solana)', false], ['You receive', '0.2348 SOL', false], ['Rate', 'PKR 43,150 / SOL', false], ['To wallet', '7EcDh...LtV', true]].map(([k, v, mono]) => (
+              <div key={k as string} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ color: '#64748b' }}>{k}</span>
+                <span style={{ fontWeight: k === 'You receive' ? 700 : 600, color: k === 'You receive' ? '#059669' : undefined, fontFamily: mono ? 'monospace' : undefined, fontSize: mono ? 12 : undefined }}>{v}</span>
               </div>
             ))}
-            <div className="flex justify-between text-base font-extrabold pt-2 border-t border-gray-100">
-              <span>Total</span>
-              <span className="text-brand">₨{fiatAmount}</span>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 10, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 800 }}>
+              <span>Total</span><span style={{ color: '#1d4ed8' }}>10,135 PKR</span>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 leading-relaxed">
-            <strong className="text-gray-700">Need help?</strong><br />
-            Available 9AM–11PM PKT<br />
-            WhatsApp: +92-300-PAKSWAP<br />
-            Telegram: @PakSwapSupport
+          <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, fontSize: 12, color: '#64748b', lineHeight: 1.7 }}>
+            <strong style={{ color: '#374151' }}>Need help?</strong><br />
+            WhatsApp: <a href="#" style={{ color: '#2563eb' }}>+92-300-PAKSWAP</a><br />
+            Telegram: <a href="#" style={{ color: '#2563eb' }}>@PakSwapSupport</a><br />
+            Available 9AM–11PM PKT
           </div>
         </div>
       </div>
