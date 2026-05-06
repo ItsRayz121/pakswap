@@ -234,8 +234,8 @@ export default async function authRoutes(app: FastifyInstance) {
     return { success: true, data: { secret, qrCodeUrl } }
   })
 
-  // POST /api/auth/2fa/verify — activate 2FA after scanning QR
-  app.post('/2fa/verify', { preHandler: [authenticate] }, async (req, reply) => {
+  // POST /api/auth/2fa/enable — activate 2FA after scanning QR
+  app.post('/2fa/enable', { preHandler: [authenticate] }, async (req, reply) => {
     const { code } = z.object({ code: z.string().length(6) }).parse(req.body)
     const twoFa = await prisma.userTwoFa.findUnique({ where: { userId: req.user!.sub } })
     if (!twoFa?.secret) return reply.status(400).send({ success: false, error: 'TWO_FA_NOT_SETUP' })
