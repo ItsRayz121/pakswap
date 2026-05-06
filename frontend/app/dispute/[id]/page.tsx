@@ -1,223 +1,150 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Shield, Lock, Clock, CheckCircle, Send, Paperclip, XCircle } from 'lucide-react'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../../components/ui/toaster'
-import axios from 'axios'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  open: { label: 'Open', color: 'badge-yellow', icon: Clock },
-  under_review: { label: 'Under Review', color: 'badge-red', icon: Shield },
-  resolved_buyer: { label: 'Resolved — Buyer', color: 'badge-green', icon: CheckCircle },
-  resolved_seller: { label: 'Resolved — Seller', color: 'badge-green', icon: CheckCircle },
-  closed: { label: 'Closed', color: 'badge-gray', icon: XCircle },
-}
-
-function SlaTimer({ createdAt }: { createdAt: string }) {
-  const [remaining, setRemaining] = useState(0)
-  useEffect(() => {
-    const slaMs = 4 * 60 * 60 * 1000
-    const calc = () => setRemaining(Math.max(0, Math.floor((new Date(createdAt).getTime() + slaMs - Date.now()) / 1000)))
-    calc()
-    const t = setInterval(calc, 1000)
-    return () => clearInterval(t)
-  }, [createdAt])
-  const h = Math.floor(remaining / 3600)
-  const m = Math.floor((remaining % 3600) / 60)
-  const s = remaining % 60
-  const urgent = remaining < 1800
-  return (
-    <span className={`font-mono font-bold ${urgent ? 'text-red-600' : 'text-amber-600'}`}>
-      {h}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')} remaining
-    </span>
-  )
-}
+const msgs = [
+  { from: 'agent', time: '3:45 PM', text: "Thank you for opening this dispute. We're reviewing your evidence. Could you please provide the JazzCash transaction ID?" },
+  { from: 'you', time: '3:47 PM', text: 'Transaction ID: JZ2026050500834' },
+  { from: 'agent', time: '3:52 PM', text: "Thank you! We've noted the transaction ID and are verifying with JazzCash records. Please allow up to 2 hours for verification." },
+]
 
 export default function DisputePage() {
-  const { id } = useParams<{ id: string }>()
-  const { accessToken, user } = useAuthStore()
-  const qc = useQueryClient()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [message, setMessage] = useState('')
+  const [timer, setTimer] = useState(3 * 60 + 22)
+  const [input, setInput] = useState('')
+  const [chat, setChat] = useState(msgs)
 
-  const headers = { Authorization: `Bearer ${accessToken}` }
+  useEffect(() => {
+    const t = setInterval(() => setTimer(p => p > 0 ? p - 1 : 0), 1000)
+    return () => clearInterval(t)
+  }, [])
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['dispute', id],
-    queryFn: () => axios.get(`/api/disputes/${id}`, { headers }),
-    refetchInterval: 10000,
-  })
-  const dispute = data?.data?.data
-  const conf = dispute ? (STATUS_CONFIG[dispute.status] ?? STATUS_CONFIG.open) : null
+  const timerStr = `${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')} remaining`
 
-  const sendMsgMutation = useMutation({
-    mutationFn: (text: string) => axios.post(`/api/disputes/${id}/messages`, { content: text }, { headers }),
-    onSuccess: () => { setMessage(''); qc.invalidateQueries({ queryKey: ['dispute', id] }) },
-    onError: (err: any) => toast({ type: 'error', title: 'Failed', description: err.response?.data?.message })
-  })
-
-  const uploadEvidenceMutation = useMutation({
-    mutationFn: (file: File) => {
-      const fd = new FormData()
-      fd.append('evidence', file)
-      return axios.post(`/api/disputes/${id}/evidence`, fd, { headers })
-    },
-    onSuccess: () => { toast({ type: 'success', title: 'Evidence Uploaded' }); qc.invalidateQueries({ queryKey: ['dispute', id] }) },
-    onError: (err: any) => toast({ type: 'error', title: 'Upload Failed', description: err.response?.data?.message })
-  })
-
-  const handleSend = () => {
-    if (!message.trim()) return
-    sendMsgMutation.mutate(message)
+  const send = () => {
+    if (!input.trim()) return
+    setChat([...chat, { from: 'you', time: 'Now', text: input }])
+    setInput('')
   }
 
-  if (isLoading) return <DashboardLayout><div className="animate-pulse space-y-4"><div className="h-40 bg-gray-200 rounded-xl" /><div className="h-60 bg-gray-200 rounded-xl" /></div></DashboardLayout>
-
-  if (!dispute) return (
-    <DashboardLayout>
-      <div className="text-center py-20 text-gray-400">Dispute not found.</div>
-    </DashboardLayout>
-  )
-
-  const isResolved = ['resolved_buyer', 'resolved_seller', 'closed'].includes(dispute.status)
-
   return (
-    <DashboardLayout>
-      <div className="max-w-3xl mx-auto space-y-5">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Link href="/marketplace" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
+          <Link href="/orders" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Orders</Link>
+          <Link href="/dispute-history" style={{ fontSize: 14, fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}>Disputes</Link>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Dispute Center</h1>
-            <p className="text-sm text-gray-500 mt-1">Track and manage your trade dispute</p>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Dispute Center</h1>
+            <p style={{ color: '#64748b', fontSize: 14, marginTop: 4, marginBottom: 0 }}>Track and manage your trade disputes</p>
           </div>
-          <a href="/dispute-history" className="text-sm text-brand hover:underline">← All Disputes</a>
         </div>
 
-        {/* Active dispute */}
-        <div className={`card p-6 ${!isResolved ? 'border-red-400' : 'border-green-400 bg-green-50/30'}`}>
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{isResolved ? '✅' : '⚖️'}</span>
+        {/* Active Dispute Card */}
+        <div style={{ background: 'white', border: '1.5px solid #ef4444', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 32 }}>⚖️</div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-lg font-extrabold">{dispute.ref ?? `#DIS-${id}`}</span>
-                  {conf && (
-                    <span className={`badge ${conf.color} flex items-center gap-1`}>
-                      <conf.icon size={12} />
-                      {conf.label}
-                    </span>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 18, fontWeight: 800 }}>Dispute #DIS-2026-00088</span>
+                  <span style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>🔴 Under Review</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Trade {dispute.trade?.ref} · Opened {new Date(dispute.createdAt).toLocaleDateString('en-PK')}
-                  {dispute.agentName ? ` · Agent: ${dispute.agentName}` : ''}
-                </p>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Trade #PKS-2026-00472 · Opened 05 May 2026 · Agent: Ali K.</div>
               </div>
             </div>
-            {!isResolved && (
-              <div className="text-right">
-                <p className="text-xs text-gray-500">SLA Response:</p>
-                <SlaTimer createdAt={dispute.createdAt} />
-              </div>
-            )}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 13, color: '#64748b' }}>SLA Response:</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b' }}>{timerStr}</div>
+            </div>
           </div>
 
-          {/* Escrow banner */}
-          <div className="escrow-banner mb-5">
-            <Lock size={18} className="text-brand flex-shrink-0" />
+          {/* Escrow Banner */}
+          <div style={{ background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+            <span style={{ fontSize: 24 }}>🔒</span>
             <div>
-              <p className="font-bold text-sm">{dispute.escrowAmount} {dispute.coin} Safely Locked in Escrow</p>
-              <p className="text-xs text-gray-500 mt-0.5">Funds are protected and cannot be moved until dispute is resolved</p>
+              <div style={{ color: 'white', fontWeight: 700 }}>17.82 USDT Safely Locked in Escrow</div>
+              <div style={{ color: '#93c5fd', fontSize: 13 }}>Funds are protected and cannot be moved until dispute is resolved</div>
             </div>
           </div>
 
-          {/* Summary grid */}
-          <div className="grid grid-cols-2 gap-4 mb-5">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Trade Summary</p>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Type</span><span className={`badge ${dispute.trade?.side === 'buy' ? 'badge-blue' : 'badge-green'}`}>{dispute.trade?.side?.toUpperCase()} {dispute.coin}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Amount</span><strong>{dispute.escrowAmount} {dispute.coin}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">PKR Paid</span><strong>₨{parseFloat(dispute.fiatAmount || '0').toLocaleString('en-PK')}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">Method</span><span className="pay-pill jcash">{dispute.paymentMethod}</span></div>
+          {/* Two-column info grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            {[
+              { title: 'Trade Summary', rows: [['Type', <span key="t" style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>BUY USDT</span>], ['Amount', '17.82 USDT'], ['Paid', '5,000 PKR'], ['Method', <span key="m" style={{ background: '#f0fdf4', color: '#065f46', border: '1px solid #86efac', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>JazzCash</span>], ['Seller', 'CryptoKing']] },
+              { title: 'Dispute Details', rows: [['Opened by', 'You (Buyer)'], ['Reason', 'Not released'], ['Agent', 'Ali K.'], ['Status', <span key="s" style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Reviewing</span>]] },
+            ].map(({ title, rows }) => (
+              <div key={title} style={{ background: '#f8fafc', borderRadius: 12, padding: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>{title}</div>
+                <div style={{ fontSize: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {rows.map(([l, v]) => (
+                    <div key={l as string} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748b' }}>{l}</span>
+                      <strong>{v}</strong>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-500 uppercase mb-2">Dispute Details</p>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Opened by</span><strong>{dispute.openedBy === user?.id ? 'You' : 'Counterparty'}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">Reason</span><strong>{dispute.reason ?? '—'}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">Agent</span><strong>{dispute.agentName ?? 'Unassigned'}</strong></div>
-                <div className="flex justify-between"><span className="text-gray-500">Status</span><span className={`badge ${conf?.color}`}>{conf?.label}</span></div>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Resolution banner */}
-          {isResolved && dispute.resolution && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-              <p className="font-bold text-green-800 mb-1">Decision</p>
-              <p className="text-sm text-green-700">{dispute.resolution}</p>
-            </div>
-          )}
 
           {/* Evidence */}
-          {!isResolved && (
-            <div className="mb-5">
-              <p className="text-sm font-bold mb-2">Your Evidence</p>
-              <div className="flex gap-2 flex-wrap">
-                {(dispute.evidence ?? []).map((e: any, i: number) => (
-                  <div key={i} className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-200 transition-colors"
-                    onClick={() => window.open(e.url, '_blank')}>
-                    <span>📸</span><span>{e.fileName ?? `file_${i + 1}`}</span>
-                  </div>
-                ))}
-                <button className="btn btn-outline btn-sm flex items-center gap-1"
-                  onClick={() => fileRef.current?.click()}>
-                  <Paperclip size={14} /> Add More
-                </button>
-                <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadEvidenceMutation.mutate(f) }} />
-              </div>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Your Evidence</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['📸 payment_proof.jpg', '💬 chat_screenshot.jpg'].map(f => (
+                <div key={f} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>{f}</div>
+              ))}
+              <button style={{ padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'white' }}>+ Add More</button>
             </div>
-          )}
+          </div>
 
-          {/* Support chat */}
+          {/* Chat */}
           <div>
-            <p className="text-sm font-bold mb-2">Communication with Support</p>
-            <div className="bg-gray-50 rounded-xl p-4 min-h-40 space-y-3 mb-3 max-h-72 overflow-y-auto">
-              {(dispute.messages ?? []).length === 0 && (
-                <p className="text-xs text-gray-400 text-center mt-8">No messages yet. A support agent will respond shortly.</p>
-              )}
-              {(dispute.messages ?? []).map((msg: any) => {
-                const isMe = msg.senderId === user?.id
-                return (
-                  <div key={msg.id} className={isMe ? 'text-right' : ''}>
-                    <p className="text-xs text-gray-400 mb-1">{isMe ? 'You' : (msg.senderName ?? 'Support Agent')} · {new Date(msg.createdAt).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' })}</p>
-                    <div className={`inline-block max-w-xs lg:max-w-sm rounded-xl px-4 py-2.5 text-sm ${isMe ? 'bg-brand text-white' : 'bg-white border border-gray-200 text-gray-800'}`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                )
-              })}
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Communication with Support</div>
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 160 }}>
+              {chat.map((m, i) => (
+                <div key={i} style={{ textAlign: m.from === 'you' ? 'right' : 'left' }}>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 4 }}>{m.from === 'agent' ? 'Support Agent' : 'You'} · {m.time}</div>
+                  <div style={{ background: m.from === 'you' ? '#2563eb' : 'white', color: m.from === 'you' ? 'white' : '#1e293b', border: m.from === 'you' ? 'none' : '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontSize: 14, display: 'inline-block', maxWidth: '80%', textAlign: 'left' }}>{m.text}</div>
+                </div>
+              ))}
             </div>
-            {!isResolved && (
-              <div className="flex gap-2">
-                <input className="form-input flex-1" type="text" placeholder="Type a message to support..."
-                  value={message} onChange={e => setMessage(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSend() }} />
-                <button onClick={handleSend} disabled={!message.trim() || sendMsgMutation.isPending}
-                  className="btn btn-primary btn-sm flex items-center gap-1">
-                  <Send size={14} /> Send
-                </button>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Type a message to support..." style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none' }} />
+              <button onClick={send} style={{ padding: '10px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Send</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Resolved */}
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 14, color: '#64748b' }}>Past Disputes</div>
+        <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#ffffff)', border: '1.5px solid #10b981', borderRadius: 16, padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 28 }}>✅</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>Dispute #DIS-2026-00044</span>
+                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✅ Resolved — In Your Favor</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Trade #PKS-2026-00310 · 10 Apr 2026 · Resolved in 2h 14min</div>
+                <div style={{ fontSize: 13, color: '#10b981', marginTop: 4, fontWeight: 600 }}>Decision: 22.50 USDT released to your wallet</div>
               </div>
-            )}
+            </div>
+            <button style={{ padding: '6px 12px', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b', fontSize: 13, fontWeight: 600 }}>View Details</button>
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
