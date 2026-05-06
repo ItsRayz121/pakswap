@@ -53,6 +53,8 @@ export async function buildApp() {
     redis,
     max: parseInt(process.env.RATE_LIMIT_GLOBAL_RPM ?? '300'),
     timeWindow: '1 minute',
+    skipOnError: true,
+    allowList: ['/health'],
     keyGenerator: (req) => {
       return (req.user as { sub?: string } | undefined)?.sub ?? req.ip
     },
