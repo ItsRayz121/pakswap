@@ -1,208 +1,197 @@
 'use client'
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, CreditCard, Smartphone, Building2, CheckCircle } from 'lucide-react'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { walletApi } from '@/lib/api'
-import { toast } from '../components/ui/toaster'
+import Link from 'next/link'
 
-const PM_TYPES = [
-  { value: 'jazzcash', label: 'JazzCash', icon: Smartphone, color: 'bg-red-500' },
-  { value: 'easypaisa', label: 'Easypaisa', icon: Smartphone, color: 'bg-green-600' },
-  { value: 'bank_transfer', label: 'Bank Transfer', icon: Building2, color: 'bg-blue-600' },
-]
-
-const jazzSchema = z.object({
-  type: z.literal('jazzcash'),
-  accountName: z.string().min(2, 'Account name required'),
-  mobileNumber: z.string().regex(/^03\d{9}$/, 'Format: 03XX-XXXXXXX'),
-})
-
-const easypaisaSchema = z.object({
-  type: z.literal('easypaisa'),
-  accountName: z.string().min(2),
-  mobileNumber: z.string().regex(/^03\d{9}$/, 'Format: 03XX-XXXXXXX'),
-})
-
-const bankSchema = z.object({
-  type: z.literal('bank_transfer'),
-  accountName: z.string().min(2),
-  accountNumber: z.string().min(10, 'Account number required'),
-  bankName: z.string().min(2),
-  ibanNumber: z.string().regex(/^PK\d{2}[A-Z]{4}\d{16}$/, 'IBAN: PK + 2 digits + 4 chars + 16 digits').optional().or(z.literal('')),
-})
-
-type PMForm = z.infer<typeof jazzSchema> | z.infer<typeof easypaisaSchema> | z.infer<typeof bankSchema>
-
-const BANKS = ['HBL', 'MCB', 'UBL', 'Meezan Bank', 'Bank Alfalah', 'Standard Chartered', 'Allied Bank', 'NBP', 'Faysal Bank', 'Habib Metro', 'Other']
+type PMType = 'jazzcash' | 'easypaisa' | 'bank' | 'nayapay'
 
 export default function PaymentMethodsPage() {
-  const qc = useQueryClient()
-  const [showForm, setShowForm] = useState(false)
-  const [selectedType, setSelectedType] = useState('jazzcash')
-
-  const { data } = useQuery({ queryKey: ['payment-methods'], queryFn: () => walletApi.getPaymentMethods() })
-  const methods: any[] = data?.data?.data ?? []
-
-  const getSchema = () => {
-    if (selectedType === 'bank_transfer') return bankSchema
-    if (selectedType === 'easypaisa') return easypaisaSchema
-    return jazzSchema
-  }
-
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<any>({
-    resolver: zodResolver(getSchema()),
-  })
-
-  const addMutation = useMutation({
-    mutationFn: (d: any) => walletApi.addPaymentMethod({ ...d, type: selectedType }),
-    onSuccess: () => {
-      toast({ type: 'success', title: 'Payment Method Added' })
-      qc.invalidateQueries({ queryKey: ['payment-methods'] })
-      setShowForm(false)
-      reset()
-    },
-    onError: (err: any) => toast({ type: 'error', title: 'Failed', description: err.response?.data?.message }),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => walletApi.deletePaymentMethod(id),
-    onSuccess: () => {
-      toast({ type: 'success', title: 'Removed' })
-      qc.invalidateQueries({ queryKey: ['payment-methods'] })
-    },
-  })
-
-  const getMethodIcon = (type: string) => {
-    const pm = PM_TYPES.find((p) => p.value === type)
-    return pm ? { Icon: pm.icon, color: pm.color, label: pm.label } : { Icon: CreditCard, color: 'bg-gray-500', label: type }
-  }
+  const [modal, setModal] = useState(false)
+  const [pmType, setPmType] = useState<PMType>('jazzcash')
 
   return (
-    <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Link href="/marketplace" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
+          <Link href="/wallet" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Wallet</Link>
+          <Link href="/settings" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Settings</Link>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Payment Methods</h1>
-            <p className="text-gray-500 text-sm mt-1">Manage your bank accounts and mobile wallets</p>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Payment Methods</h1>
+            <p style={{ color: '#64748b', fontSize: 14, marginTop: 4, marginBottom: 0 }}>Manage your verified payment accounts for P2P trading</p>
           </div>
-          <button onClick={() => setShowForm(true)} className="btn-md btn-primary">
-            <Plus size={16} /> Add Method
-          </button>
+          <button onClick={() => setModal(true)} style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add Method</button>
         </div>
 
-        {/* Add Form */}
-        {showForm && (
-          <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Add Payment Method</h2>
-            <div className="flex gap-2 mb-5">
-              {PM_TYPES.map((pm) => (
-                <button
-                  key={pm.value}
-                  type="button"
-                  onClick={() => { setSelectedType(pm.value); reset() }}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
-                    selectedType === pm.value ? 'border-brand bg-brand text-white' : 'border-gray-200 text-gray-700 hover:border-brand'
-                  }`}
-                >
-                  <pm.icon size={16} />
-                  {pm.label}
-                </button>
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1e40af', marginBottom: 20 }}>
+          🔒 <strong>Security Note:</strong> All payment account names must exactly match your KYC name. This protects both buyers and sellers from fraud.
+        </div>
+
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Active Methods</div>
+
+        {/* JazzCash */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderLeft: '4px solid #10b981', borderRadius: 14, padding: 20, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#92400e' }}>JCash</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>JazzCash</span>
+                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✓ Verified</span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', marginTop: 2, fontFamily: 'monospace' }}>0312-4567890</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>Account Name: <strong>Muhammad Usman</strong></div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Added 01 May 2026 · Used in 8 trades</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span style={{ background: '#dcfce7', color: '#166534', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Active</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={{ padding: '6px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Edit</button>
+                <button style={{ padding: '6px 12px', border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 12, fontWeight: 600 }}>Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* HBL */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderLeft: '4px solid #10b981', borderRadius: 14, padding: 20, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#5b21b6' }}>HBL</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>HBL Bank Transfer</span>
+                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✓ Verified</span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', marginTop: 2, fontFamily: 'monospace' }}>XXXX-XXXX-1234</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>IBAN: <strong>PK36HABB0000000100000000</strong></div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Account Title: Muhammad Usman · Added 28 Apr 2026 · Used in 3 trades</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span style={{ background: '#dcfce7', color: '#166534', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Active</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={{ padding: '6px 12px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Edit</button>
+                <button style={{ padding: '6px 12px', border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 12, fontWeight: 600 }}>Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Easypaisa pending */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderLeft: '4px solid #f59e0b', borderRadius: 14, padding: 20, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#065f46' }}>Easy</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>Easypaisa</span>
+                  <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>⏳ Under Review</span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', marginTop: 2, fontFamily: 'monospace' }}>0333-9876543</div>
+                <div style={{ fontSize: 13, color: '#64748b' }}>Account Name: <strong>Muhammad Usman</strong></div>
+                <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 2 }}>⏳ Verification in progress — usually 2–4 hours</div>
+              </div>
+            </div>
+            <button style={{ padding: '6px 12px', border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 12, fontWeight: 600 }}>Cancel</button>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Quick Add</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {['NayaPay', 'SadaPay', 'MCB Bank', 'UBL Bank', 'Meezan Bank', 'Bank Alfalah'].map(n => (
+            <button key={n} onClick={() => { setPmType('bank'); setModal(true) }} style={{ padding: '8px 16px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'white' }}>+ {n}</button>
+          ))}
+        </div>
+
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#92400e', marginTop: 20 }}>
+          ⚠️ You can have a maximum of <strong>5 active payment methods</strong>. Each must be verified before use in trades. Verification takes 2–4 hours.
+        </div>
+      </div>
+
+      {/* Modal */}
+      {modal && (
+        <div onClick={e => { if (e.target === e.currentTarget) setModal(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 24 }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 20, fontWeight: 800 }}>Add Payment Method</div>
+              <button onClick={() => setModal(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 18 }}>×</button>
+            </div>
+
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Select payment type:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              {[{ key: 'jazzcash', icon: '⚡', label: 'JazzCash' }, { key: 'easypaisa', icon: '💚', label: 'Easypaisa' }, { key: 'bank', icon: '🏦', label: 'Bank Transfer' }, { key: 'nayapay', icon: '💳', label: 'NayaPay' }].map(({ key, icon, label }) => (
+                <div key={key} onClick={() => setPmType(key as PMType)} style={{ border: `2px solid ${pmType === key ? '#2563eb' : '#e2e8f0'}`, borderRadius: 12, padding: 14, cursor: 'pointer', textAlign: 'center', background: pmType === key ? '#eff6ff' : 'white' }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>{icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{label}</div>
+                </div>
               ))}
             </div>
 
-            <form onSubmit={handleSubmit((d) => addMutation.mutate(d))} className="space-y-4">
-              <div>
-                <label className="form-label">Account Holder Name <span className="text-xs text-gray-400">(must match KYC name)</span></label>
-                <input {...register('accountName')} className="form-input" placeholder="Muhammad Ahmed Khan" />
-                {errors.accountName && <p className="form-error">{(errors.accountName as any).message}</p>}
-              </div>
-
-              {(selectedType === 'jazzcash' || selectedType === 'easypaisa') && (
-                <div>
-                  <label className="form-label">Mobile Number</label>
-                  <input {...register('mobileNumber')} className="form-input" placeholder="0300 1234567" />
-                  {errors.mobileNumber && <p className="form-error">{(errors.mobileNumber as any).message}</p>}
+            {pmType !== 'bank' ? (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Phone Number</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>🇵🇰 +92</div>
+                    <input type="tel" placeholder="0312-4567890" style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' as any }} />
+                  </div>
                 </div>
-              )}
-
-              {selectedType === 'bank_transfer' && (
-                <>
-                  <div>
-                    <label className="form-label">Bank Name</label>
-                    <select {...register('bankName')} className="form-input">
-                      <option value="">Select bank</option>
-                      {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                    {errors.bankName && <p className="form-error">{(errors.bankName as any).message}</p>}
-                  </div>
-                  <div>
-                    <label className="form-label">Account Number</label>
-                    <input {...register('accountNumber')} className="form-input font-mono" placeholder="0123-456789012" />
-                    {errors.accountNumber && <p className="form-error">{(errors.accountNumber as any).message}</p>}
-                  </div>
-                  <div>
-                    <label className="form-label">IBAN <span className="text-gray-400 text-xs">(optional)</span></label>
-                    <input {...register('ibanNumber')} className="form-input font-mono" placeholder="PK36SCBL0000001123456702" />
-                    {errors.ibanNumber && <p className="form-error">{(errors.ibanNumber as any).message}</p>}
-                  </div>
-                </>
-              )}
-
-              <div className="p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-                <strong>Important:</strong> Account name must exactly match your verified KYC name. Mismatched accounts will be rejected during trades.
-              </div>
-
-              <div className="flex gap-3">
-                <button type="button" onClick={() => { setShowForm(false); reset() }} className="btn-md btn-ghost flex-1">Cancel</button>
-                <button type="submit" disabled={addMutation.isPending} className="btn-md btn-primary flex-1">
-                  {addMutation.isPending ? 'Adding...' : 'Add Payment Method'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* List */}
-        {methods.length === 0 && !showForm ? (
-          <div className="card p-12 text-center">
-            <CreditCard size={40} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="font-semibold text-gray-700 mb-2">No payment methods</h3>
-            <p className="text-gray-500 text-sm mb-6">Add a JazzCash, Easypaisa, or bank account to start trading.</p>
-            <button onClick={() => setShowForm(true)} className="btn-md btn-primary"><Plus size={16} /> Add First Method</button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {methods.map((pm: any) => {
-              const { Icon, color, label } = getMethodIcon(pm.type)
-              return (
-                <div key={pm.id} className="card p-4 flex items-center gap-4">
-                  <div className={`w-11 h-11 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={20} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900">{label}</p>
-                      {pm.isVerified && <CheckCircle size={14} className="text-green-500" />}
-                    </div>
-                    <p className="text-sm text-gray-600">{pm.accountName}</p>
-                    <p className="text-xs text-gray-400 font-mono">{pm.mobileNumber ?? pm.accountNumber}</p>
-                  </div>
-                  <button
-                    onClick={() => { if (confirm('Remove this payment method?')) deleteMutation.mutate(pm.id) }}
-                    className="btn-sm btn-ghost text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Account Name (must match KYC)</label>
+                  <input type="text" value="Muhammad Usman" readOnly style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, background: '#f8fafc', outline: 'none', boxSizing: 'border-box' as any }} />
+                  <div style={{ fontSize: 12, color: '#10b981', marginTop: 4 }}>✓ Pre-filled from your KYC — cannot be changed</div>
                 </div>
-              )
-            })}
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Upload Account Screenshot</label>
+                  <div style={{ border: '2px dashed #cbd5e1', borderRadius: 10, padding: 20, textAlign: 'center', cursor: 'pointer', background: '#f8fafc' }}>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>📱</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>Upload screenshot showing account name and number</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>JPG, PNG · Max 5MB</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Bank Name</label>
+                  <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' as any }}>
+                    <option>Select bank...</option>
+                    <option>HBL — Habib Bank Limited</option>
+                    <option>MCB Bank</option>
+                    <option>UBL — United Bank Limited</option>
+                    <option>Meezan Bank</option>
+                    <option>Bank Alfalah</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Account Title</label>
+                  <input type="text" value="Muhammad Usman" readOnly style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, background: '#f8fafc', outline: 'none', boxSizing: 'border-box' as any }} />
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>IBAN</label>
+                  <input type="text" placeholder="PK36HABB0000000100000000" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' as any }} />
+                </div>
+              </>
+            )}
+
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1e40af', marginBottom: 16 }}>
+              ⏱ Verification takes <strong>2–4 hours</strong>. You'll receive an SMS when approved.
+            </div>
+            <button onClick={() => setModal(false)} style={{ width: '100%', padding: 13, background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Submit for Verification</button>
           </div>
-        )}
-      </div>
-    </DashboardLayout>
+        </div>
+      )}
+    </div>
   )
 }
