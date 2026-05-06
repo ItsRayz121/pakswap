@@ -1,344 +1,344 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, Clock, Send, Upload, Shield, CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { DashboardLayout } from '../../components/layout/DashboardLayout'
-import { tradesApi, disputesApi } from '@/lib/api'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../../components/ui/toaster'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
-function CountdownTimer({ expiresAt }: { expiresAt: string }) {
-  const [remaining, setRemaining] = useState(0)
-
-  useEffect(() => {
-    const calc = () => {
-      const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000))
-      setRemaining(diff)
-    }
-    calc()
-    const interval = setInterval(calc, 1000)
-    return () => clearInterval(interval)
-  }, [expiresAt])
-
-  const mins = Math.floor(remaining / 60)
-  const secs = remaining % 60
-  const isUrgent = remaining < 300
-
-  return (
-    <div className={`flex items-center gap-2 font-mono text-lg font-bold ${isUrgent ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>
-      <Clock size={18} className={isUrgent ? 'text-red-500' : 'text-gray-500'} />
-      {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-    </div>
-  )
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
-  created: { label: 'Trade Created', color: 'badge-blue', icon: Clock },
-  escrow_locked: { label: 'Waiting for Payment', color: 'badge-blue', icon: Clock },
-  payment_pending: { label: 'Payment Pending', color: 'badge-yellow', icon: Clock },
-  payment_claimed: { label: 'Payment Submitted — Under Review', color: 'badge-yellow', icon: Shield },
-  under_review: { label: 'Admin Reviewing', color: 'badge-yellow', icon: Shield },
-  releasing: { label: 'Releasing Crypto', color: 'badge-blue', icon: Loader2 },
-  completed: { label: 'Trade Completed', color: 'badge-green', icon: CheckCircle },
-  cancelled: { label: 'Trade Cancelled', color: 'badge-gray', icon: XCircle },
-  expired: { label: 'Trade Expired', color: 'badge-gray', icon: XCircle },
-  disputed: { label: 'Dispute Opened', color: 'badge-red', icon: AlertCircle },
-  resolved: { label: 'Dispute Resolved', color: 'badge-green', icon: CheckCircle },
-}
+type View = 'buyer' | 'seller-confirm' | 'completed' | 'dispute'
 
 export default function TradePage() {
-  const { id } = useParams<{ id: string }>()
-  const { user } = useAuthStore()
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const [message, setMessage] = useState('')
-  const [disputeOpen, setDisputeOpen] = useState(false)
-  const [disputeReason, setDisputeReason] = useState('')
-  const [disputeDesc, setDisputeDesc] = useState('')
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['trade', id],
-    queryFn: () => tradesApi.getById(id),
-    refetchInterval: 5000,
-  })
-
-  const trade = data?.data?.data
+  const [view, setView] = useState<View>('buyer')
+  const [timeLeft, setTimeLeft] = useState(14 * 60 + 32)
+  const [proofUploaded, setProofUploaded] = useState(false)
+  const [rating, setRating] = useState(0)
+  const [chatMsg, setChatMsg] = useState('')
+  const [messages, setMessages] = useState([
+    { sender: 'CryptoKing', text: 'Hi! Please send payment to my JazzCash. Amount must be exact — 5,000 PKR.', time: '3:02 PM', mine: false },
+    { sender: 'You', text: 'Okay, sending now via JazzCash.', time: '3:05 PM', mine: true },
+    { sender: 'CryptoKing', text: 'Great, I\'ll release as soon as I see the payment ✓', time: '3:06 PM', mine: false },
+  ])
+  const [copiedNum, setCopiedNum] = useState(false)
+  const [copiedAmt, setCopiedAmt] = useState(false)
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [trade?.messages])
+    if (view !== 'buyer' && view !== 'seller-confirm') return
+    const t = setInterval(() => setTimeLeft(p => Math.max(0, p - 1)), 1000)
+    return () => clearInterval(t)
+  }, [view])
 
-  const sendMsgMutation = useMutation({
-    mutationFn: () => tradesApi.sendMessage(id, message),
-    onSuccess: () => { setMessage(''); refetch() },
-  })
+  const mins = Math.floor(timeLeft / 60)
+  const secs = timeLeft % 60
+  const timerDisplay = `${mins}:${secs < 10 ? '0' : ''}${secs}`
+  const timerColor = timeLeft <= 120 ? '#ef4444' : timeLeft <= 300 ? '#f59e0b' : '#1d4ed8'
 
-  const uploadProofMutation = useMutation({
-    mutationFn: (file: File) => {
-      const fd = new FormData()
-      fd.append('proof', file)
-      return tradesApi.confirmPayment(id, fd)
-    },
-    onSuccess: () => {
-      toast({ type: 'success', title: 'Payment Proof Submitted', description: 'Our team will verify your payment shortly.' })
-      refetch()
-    },
-    onError: (err: any) => toast({ type: 'error', title: 'Upload Failed', description: err.response?.data?.message }),
-  })
+  const steps = [
+    { label: 'Trade Created', sub: 'USDT locked in escrow', done: true, active: false, time: '3:00 PM' },
+    { label: 'Escrow Locked', sub: '17.82 USDT secured', done: true, active: false, time: '3:01 PM' },
+    { label: 'Send Payment', sub: 'Send PKR via JazzCash now', done: view !== 'buyer', active: view === 'buyer', time: '' },
+    { label: 'Payment Confirmed by Seller', sub: '', done: view === 'completed', active: view === 'seller-confirm', time: '' },
+    { label: 'USDT Released to Your Wallet', sub: '', done: view === 'completed', active: false, time: '' },
+  ]
 
-  const cancelMutation = useMutation({
-    mutationFn: (reason: string) => tradesApi.cancel(id, reason),
-    onSuccess: () => {
-      toast({ type: 'success', title: 'Trade Cancelled' })
-      router.push('/orders')
-    },
-  })
-
-  const disputeMutation = useMutation({
-    mutationFn: () => disputesApi.open({ tradeId: id, reason: disputeReason, description: disputeDesc }),
-    onSuccess: () => {
-      toast({ type: 'info', title: 'Dispute Opened', description: 'Our team will respond within 4 hours.' })
-      setDisputeOpen(false)
-      refetch()
-    },
-  })
-
-  if (isLoading) {
-    return <DashboardLayout><div className="animate-pulse space-y-4"><div className="h-40 bg-gray-200 rounded-xl" /><div className="h-80 bg-gray-200 rounded-xl" /></div></DashboardLayout>
+  const copyText = (val: string, set: (v: boolean) => void) => {
+    navigator.clipboard.writeText(val).catch(() => { })
+    set(true)
+    setTimeout(() => set(false), 2000)
   }
 
-  if (!trade) return <DashboardLayout><p className="text-gray-500">Trade not found.</p></DashboardLayout>
-
-  const isBuyer = trade.buyerId === user?.id
-  const statusConfig = STATUS_CONFIG[trade.status] ?? { label: trade.status, color: 'badge-gray', icon: Clock }
-  const canUploadProof = isBuyer && (trade.status === 'escrow_locked' || trade.status === 'payment_pending')
-  const canCancel = (trade.status === 'created' || trade.status === 'escrow_locked') && !trade.paymentProofs?.length
-  const canDispute = ['escrow_locked', 'payment_claimed', 'under_review'].includes(trade.status)
-  const isComplete = trade.status === 'completed'
-  const isCancelled = ['cancelled', 'expired'].includes(trade.status)
+  const sendChat = () => {
+    if (!chatMsg.trim()) return
+    setMessages(m => [...m, { sender: 'You', text: chatMsg, time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), mine: true }])
+    setChatMsg('')
+  }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Trade Header */}
-        <div className="card p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-xl font-bold text-gray-900">{trade.orderRef}</h1>
-                <span className={`badge ${statusConfig.color}`}>{statusConfig.label}</span>
-              </div>
-              <p className="text-gray-600 text-sm">
-                {isBuyer ? 'You are buying' : 'You are selling'} <strong>{parseFloat(trade.coinAmount).toFixed(6)} {trade.coin}</strong> for <strong>₨{parseFloat(trade.fiatAmount).toLocaleString('en-PK')}</strong>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Rate: ₨{parseFloat(trade.rate).toLocaleString('en-PK')} per {trade.coin}</p>
-            </div>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      {/* Navbar */}
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/marketplace" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>← Back to Marketplace</Link>
+        <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>Trade Room</div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>Trade:</span>
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', background: '#f1f5f9', padding: '4px 10px', borderRadius: 6 }}>#PKS-2026-00472</span>
+        </div>
+      </nav>
 
-            {/* Timer */}
-            {!isComplete && !isCancelled && trade.expiresAt && (
-              <div className="text-center">
-                <p className="text-xs text-gray-500 mb-1">Payment Window</p>
-                <CountdownTimer expiresAt={trade.expiresAt} />
-              </div>
-            )}
+      {/* Status Bar */}
+      <div style={{ background: view === 'completed' ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)' : 'linear-gradient(135deg,#eff6ff,#dbeafe)', borderBottom: `2px solid ${view === 'completed' ? '#6ee7b7' : '#93c5fd'}`, padding: '14px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 24 }}>{view === 'completed' ? '✅' : '🔒'}</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: view === 'completed' ? '#065f46' : '#1d4ed8' }}>{view === 'completed' ? 'TRADE COMPLETE — 17.82 USDT CREDITED' : '17.82 USDT LOCKED IN ESCROW'}</div>
+              <div style={{ fontSize: 12, color: view === 'completed' ? '#34d399' : '#3b82f6' }}>{view === 'completed' ? 'USDT has been released to your wallet' : 'Your funds are protected — not accessible until trade completes'}</div>
+            </div>
           </div>
+          {view !== 'completed' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 28, fontWeight: 900, color: timerColor, fontFamily: 'monospace' }}>{timerDisplay}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Time remaining</div>
+              </div>
+              <span style={{ background: view === 'seller-confirm' ? '#fef3c7' : '#dbeafe', color: view === 'seller-confirm' ? '#92400e' : '#1e40af', border: `1px solid ${view === 'seller-confirm' ? '#fde68a' : '#bfdbfe'}`, borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600 }}>
+                {view === 'dispute' ? '⚖️ Dispute Active' : view === 'seller-confirm' ? '⏳ Waiting for Seller' : '⏳ Waiting for Payment'}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px', display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+        {/* Main Panel */}
+        <div>
+          {/* Step Tracker */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Trade Progress</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {steps.map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: s.done ? '#ecfdf5' : s.active ? '#eff6ff' : '#f8fafc', border: s.active ? '1.5px solid #93c5fd' : '1.5px solid transparent', opacity: !s.done && !s.active ? 0.5 : 1 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: s.done ? '#10b981' : s.active ? '#2563eb' : '#e2e8f0', color: s.done || s.active ? 'white' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{s.done ? '✓' : i + 1}</div>
+                  <div style={{ flex: 1, fontSize: 14 }}><strong>{s.label}</strong>{s.sub && ` — ${s.sub}`}</div>
+                  {s.time && <span style={{ fontSize: 12, color: '#64748b' }}>{s.time}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Buyer View */}
+          {view === 'buyer' && (
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <div style={{ fontSize: 28 }}>💳</div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>Send Payment Now</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>Complete your JazzCash transfer to the details below</div>
+                </div>
+              </div>
+
+              <div style={{ background: 'linear-gradient(135deg,#fef9c3,#fef3c7)', border: '1.5px solid #fde68a', borderRadius: 14, padding: 20, marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>⚡ Send via JazzCash</div>
+                {[['JazzCash Number', '0312-4567890', true], ['Account Name', 'Muhammad Ahmed', false], ['Amount to Send', '5,000 PKR', true]].map(([label, val, hasCopy], i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < 2 ? 10 : 0 }}>
+                    <span style={{ fontSize: 14, color: '#78350f' }}>{label}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: i === 2 ? 22 : 18, fontWeight: i === 2 ? 900 : 700, color: i === 2 ? '#dc2626' : '#1e293b', fontFamily: i === 0 ? 'monospace' : undefined }}>{val}</span>
+                      {hasCopy && <button onClick={() => copyText(val as string, i === 0 ? setCopiedNum : setCopiedAmt)} style={{ background: '#fff', border: '1px solid #fde68a', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer', color: '#92400e' }}>{i === 0 ? (copiedNum ? 'Copied ✓' : 'Copy') : (copiedAmt ? 'Copied ✓' : 'Copy')}</button>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#92400e' }}>
+                <strong>⚠️ Important Instructions:</strong>
+                <ul style={{ margin: '8px 0 0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <li>Send EXACTLY <strong>5,000 PKR</strong> — not more, not less</li>
+                  <li>Send from your <strong>own registered JazzCash account</strong></li>
+                  <li>Do <strong>NOT</strong> include any message or reference</li>
+                  <li>Do <strong>NOT</strong> click "I've Paid" until payment is actually sent</li>
+                </ul>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>Upload Payment Proof <span style={{ color: '#94a3b8', fontWeight: 400 }}>(recommended)</span></div>
+                <div onClick={() => setProofUploaded(true)} style={{ border: `2px ${proofUploaded ? 'solid' : 'dashed'} ${proofUploaded ? '#10b981' : '#cbd5e1'}`, borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer', background: proofUploaded ? '#ecfdf5' : 'white', transition: 'all 0.2s' }}>
+                  {proofUploaded ? <><div style={{ fontSize: 28, marginBottom: 8 }}>✅</div><div style={{ fontWeight: 700, color: '#065f46' }}>Screenshot Uploaded</div><div style={{ fontSize: 12, color: '#6ee7b7', marginTop: 4 }}>jazzcash_payment.jpg · 1.2MB</div></> : <><div style={{ fontSize: 32, marginBottom: 8 }}>📱</div><div style={{ fontWeight: 700, fontSize: 14 }}>Upload JazzCash Screenshot</div><div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Click to upload · PNG, JPG · Max 10MB</div></>}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => setView('dispute')} style={{ padding: '12px 20px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>⚖️ Open Dispute</button>
+                <button onClick={() => setView('seller-confirm')} style={{ flex: 1, padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>✅ I've Paid — Notify Seller</button>
+              </div>
+            </div>
+          )}
+
+          {/* Seller Confirm View */}
+          {view === 'seller-confirm' && (
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <div style={{ fontSize: 28 }}>🔔</div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#d97706' }}>Payment Claimed by Buyer</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>Both verification layers must pass before releasing USDT</div>
+                </div>
+              </div>
+
+              {/* Two-Layer Box */}
+              <div style={{ border: '2px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
+                <div style={{ background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>🔐 Payment Verification — Both Layers Required</span>
+                  <span style={{ marginLeft: 'auto', background: '#ef4444', color: 'white', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>MANDATORY</span>
+                </div>
+
+                {/* Layer 1 AI */}
+                <div style={{ background: '#f0f9ff', borderBottom: '1px solid #e2e8f0', padding: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12 }}>1</div>
+                    <div><div style={{ fontWeight: 800 }}>AI Payment Scan</div><div style={{ fontSize: 12, color: '#3b82f6' }}>Auto-scanned buyer's screenshot</div></div>
+                    <span style={{ marginLeft: 'auto', background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>✓ AI Passed</span>
+                  </div>
+                  {[['Amount', 'Detected: PKR 5,000 · Expected: PKR 5,000', 'MATCH'], ['Recipient', '"Muhammad Ahmed" matches your registered JazzCash name', 'MATCH'], ['Sender', "Buyer's registered account name detected", 'MATCH'], ['Timestamp', '3:12 PM · within active trade window', 'VALID'], ['Image manipulation', 'No editing artifacts or metadata anomalies', 'CLEAN']].map(([k, v, badge]) => (
+                    <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 13 }}>
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>✓</span>
+                      <div style={{ flex: 1 }}><strong>{k}</strong> — {v}</div>
+                      <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700 }}>{badge}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>AI Confidence</span>
+                    <div style={{ flex: 1, background: '#e2e8f0', borderRadius: 4, height: 8 }}><div style={{ width: '96%', background: 'linear-gradient(90deg,#10b981,#34d399)', borderRadius: 4, height: 8 }} /></div>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>96%</span>
+                  </div>
+                </div>
+
+                {/* Layer 2 Human */}
+                <div style={{ padding: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#f59e0b,#ef4444)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12 }}>2</div>
+                    <div>
+                      <div style={{ fontWeight: 800 }}>Your Manual Confirmation <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 4, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>YOU MUST DO THIS</span></div>
+                      <div style={{ fontSize: 12, color: '#92400e' }}>Open your JazzCash app and verify the payment yourself</div>
+                    </div>
+                    <span style={{ marginLeft: 'auto', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>⏳ Awaiting You</span>
+                  </div>
+                  <div style={{ background: '#fffbeb', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 13, color: '#92400e' }}>
+                    ⚠️ <strong>AI has passed this payment — but YOU must still verify independently.</strong><br />Open your JazzCash app right now and confirm PKR 5,000 has arrived.
+                  </div>
+                  <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>What to check in your JazzCash app:</div>
+                    {['Amount received = exactly 5,000 PKR', 'Transaction time is after 3:00 PM today', "Sender name matches the buyer's KYC name", 'Payment is NOT pending — it must be completed'].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13, marginBottom: 6 }}>
+                        <span style={{ width: 22, height: 22, background: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>{i + 1}</span>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: '#e2e8f0', borderRadius: 10, height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: 13, cursor: 'pointer', border: '1.5px solid #cbd5e1' }}>
+                    📸 payment_proof.jpg — Click to view full size
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => setView('dispute')} style={{ padding: '12px 20px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>⚖️ Not Received — Dispute</button>
+                <button onClick={() => setView('completed')} style={{ flex: 1, padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>✅ Verified in App — Release USDT</button>
+              </div>
+              <div style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 10 }}>By clicking Release, you confirm you have verified payment in your own JazzCash/bank app.</div>
+            </div>
+          )}
+
+          {/* Completed View */}
+          {view === 'completed' && (
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 32, textAlign: 'center' }}>
+              <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: '#10b981', marginBottom: 8 }}>Trade Complete!</div>
+              <div style={{ fontSize: 16, color: '#374151', marginBottom: 4 }}>17.82 USDT credited to your wallet</div>
+              <div style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>Trade completed in 14 minutes</div>
+
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'left' }}>
+                {[['Order ID', '#PKS-2026-00472'], ['Amount Received', '17.82 USDT'], ['Paid', '5,000 PKR'], ['Rate', '280.50 PKR/USDT'], ['Merchant', 'CryptoKing']].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14 }}>
+                    <span>{k}</span>
+                    <strong style={{ color: k === 'Amount Received' ? '#26a17b' : undefined }}>{v}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Rate Your Experience</div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', fontSize: 36 }}>
+                  {[1, 2, 3, 4, 5].map(n => <span key={n} onClick={() => setRating(n)} style={{ cursor: 'pointer', color: n <= rating ? '#f59e0b' : '#94a3b8' }}>{n <= rating ? '★' : '☆'}</span>)}
+                </div>
+                <input type="text" placeholder="Leave a comment for CryptoKing (optional)" style={{ marginTop: 12, width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Link href="/wallet" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>View Wallet</button></Link>
+                <Link href="/marketplace" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>New Trade</button></Link>
+              </div>
+
+              <div style={{ marginTop: 16, background: '#ecfdf5', borderRadius: 10, padding: 14, fontSize: 14 }}>
+                🎁 <strong>Refer a friend and earn 500 PKR!</strong>
+                <Link href="/referral"><button style={{ marginLeft: 8, padding: '6px 14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Share Link</button></Link>
+              </div>
+            </div>
+          )}
+
+          {/* Dispute View */}
+          {view === 'dispute' && (
+            <div style={{ background: 'white', borderRadius: 16, border: '1.5px solid #ef4444', padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <div style={{ fontSize: 28 }}>⚖️</div>
+                <div><div style={{ fontSize: 18, fontWeight: 800, color: '#dc2626' }}>Dispute Opened</div><div style={{ fontSize: 13, color: '#64748b' }}>Dispute ID: DIS-2026-00089 · Agent assigned</div></div>
+              </div>
+              <div style={{ background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#991b1b' }}>
+                🔒 USDT remains safely locked in escrow while dispute is under review. SLA: 4 hours.
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                {[['Status', '🔴 Under Review'], ['Agent', 'Support Agent Ali K.'], ['Expected Resolution', 'Within 4 hours']].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14 }}>
+                    <span style={{ color: '#64748b' }}>{k}</span><strong>{v}</strong>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>Your dispute agent will review evidence and contact both parties. Keep checking this chat.</div>
+              <button onClick={() => setView('buyer')} style={{ padding: '8px 16px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'white' }}>← Back to Trade</button>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left — Payment Instructions + Actions */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Two-Layer Status */}
-            {trade.proofVerifications?.[0] && (
-              <div className="two-layer-box">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Verification Status</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Layer 1 — AI Scan</span>
-                    <span className={`badge ${
-                      trade.proofVerifications[0].verificationStatus === 'pending_layer1' ? 'badge-yellow' :
-                      trade.proofVerifications[0].aiVerdict === 'verified' ? 'badge-green' :
-                      trade.proofVerifications[0].aiVerdict === 'suspicious' ? 'badge-red' : 'badge-blue'
-                    }`}>
-                      {trade.proofVerifications[0].verificationStatus === 'pending_layer1' ? 'Processing...' :
-                       trade.proofVerifications[0].aiVerdict ?? 'Checked'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Layer 2 — Human Review</span>
-                    <span className={`badge ${
-                      trade.proofVerifications[0].verificationStatus === 'approved' ? 'badge-green' :
-                      trade.proofVerifications[0].verificationStatus === 'rejected' ? 'badge-red' :
-                      trade.proofVerifications[0].verificationStatus === 'pending_layer2' ? 'badge-yellow' : 'badge-gray'
-                    }`}>
-                      {trade.proofVerifications[0].verificationStatus === 'pending_layer2' ? 'Pending' :
-                       trade.proofVerifications[0].verificationStatus}
-                    </span>
-                  </div>
-                </div>
+        {/* Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Trade Summary */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Trade Summary</div>
+            {[['Type', <span style={{ background: '#dbeafe', color: '#1e40af', border: '1px solid #bfdbfe', borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>BUY USDT</span>], ['Amount', <strong style={{ color: '#26a17b' }}>17.82 USDT</strong>], ['You Pay', <strong>5,000 PKR</strong>], ['Rate', <strong>280.50 PKR/USDT</strong>], ['Fee', <strong style={{ color: '#10b981' }}>0% (Free)</strong>], ['Method', <span style={{ background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 600 }}>⚡ JazzCash</span>]].map(([k, v], i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 5 ? '1px solid #f1f5f9' : 'none', fontSize: 14 }}>
+                <span style={{ color: '#64748b' }}>{k}</span>{v}
               </div>
-            )}
+            ))}
+          </div>
 
-            {/* Payment Details (for buyer) */}
-            {isBuyer && !isComplete && !isCancelled && (
-              <div className="card p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Payment Instructions</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Method</span>
-                    <span className="font-medium capitalize">{trade.paymentMethod?.replace('_', ' ')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Amount to Send</span>
-                    <span className="font-bold text-green-600">₨{parseFloat(trade.fiatAmount).toLocaleString('en-PK')}</span>
-                  </div>
-                  {trade.paymentDetails && (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Account Name</span>
-                        <span className="font-medium">{trade.paymentDetails.accountName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Account Number</span>
-                        <span className="font-mono text-sm">{trade.paymentDetails.accountNumber}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="mt-3 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-                  <strong>Important:</strong> Send exact amount. Your payment account name MUST match your KYC name.
-                </div>
+          {/* Merchant */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Trading With</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16 }}>C</div>
+              <div><div style={{ fontWeight: 800, fontSize: 16 }}>CryptoKing</div><div style={{ fontSize: 12, color: '#64748b' }}>👑 Verified Merchant</div></div>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} /><span style={{ fontSize: 12, color: '#64748b' }}>Online</span></span>
+            </div>
+            {[['Rating', '★★★★★ 4.9'], ['Total Trades', '1,240'], ['Completion', '99.2%'], ['Avg Release', '⚡ 4 min']].map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                <span style={{ color: '#64748b' }}>{k}</span><strong style={{ color: k === 'Completion' ? '#10b981' : undefined }}>{v}</strong>
               </div>
-            )}
+            ))}
+            <Link href="/merchant"><button style={{ width: '100%', marginTop: 12, padding: '8px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, cursor: 'pointer', background: 'white' }}>View Full Profile</button></Link>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-2">
-              {canUploadProof && (
-                <>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) uploadProofMutation.mutate(file)
-                    }}
-                  />
-                  <button
-                    onClick={() => fileRef.current?.click()}
-                    disabled={uploadProofMutation.isPending}
-                    className="btn-lg btn-primary w-full"
-                  >
-                    {uploadProofMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-                    Upload Payment Proof
-                  </button>
-                </>
-              )}
-
-              {canCancel && (
-                <button
-                  onClick={() => cancelMutation.mutate('Buyer cancelled before payment')}
-                  disabled={cancelMutation.isPending}
-                  className="btn-lg btn-secondary w-full"
-                >
-                  Cancel Trade
-                </button>
-              )}
-
-              {canDispute && !disputeOpen && (
-                <button onClick={() => setDisputeOpen(true)} className="btn-lg btn-danger w-full">
-                  <AlertCircle size={18} /> Open Dispute
-                </button>
-              )}
-
-              {disputeOpen && (
-                <div className="card p-4 border border-red-200">
-                  <h4 className="text-sm font-semibold text-red-900 mb-3">Open Dispute</h4>
-                  <input
-                    value={disputeReason}
-                    onChange={(e) => setDisputeReason(e.target.value)}
-                    className="form-input mb-2"
-                    placeholder="Reason (e.g. Payment sent but not released)"
-                  />
-                  <textarea
-                    value={disputeDesc}
-                    onChange={(e) => setDisputeDesc(e.target.value)}
-                    className="form-input mb-3 h-24 resize-none"
-                    placeholder="Describe the issue in detail..."
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={() => setDisputeOpen(false)} className="btn-md btn-ghost flex-1">Cancel</button>
-                    <button
-                      onClick={() => disputeMutation.mutate()}
-                      disabled={!disputeReason || !disputeDesc || disputeMutation.isPending}
-                      className="btn-md btn-danger flex-1"
-                    >
-                      Submit Dispute
-                    </button>
-                  </div>
+          {/* Chat */}
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid #e2e8f0', fontSize: 14, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              💬 Trade Chat<span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>All messages are recorded</span>
+            </div>
+            <div style={{ height: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, padding: 16, background: '#f8fafc' }}>
+              <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center' }}>Trade started · 3:00 PM</div>
+              {messages.map((m, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.mine ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ background: m.mine ? '#2563eb' : 'white', color: m.mine ? 'white' : '#1e293b', border: m.mine ? 'none' : '1px solid #e2e8f0', borderRadius: m.mine ? '12px 12px 4px 12px' : '12px 12px 12px 4px', padding: '8px 12px', fontSize: 13, maxWidth: '80%' }}>{m.text}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>{m.mine ? 'You' : m.sender} · {m.time}</div>
                 </div>
-              )}
+              ))}
+            </div>
+            <div style={{ padding: 10, borderTop: '1px solid #e2e8f0', display: 'flex', gap: 8 }}>
+              <input type="text" placeholder="Type a message..." value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChat()} style={{ flex: 1, padding: '8px 12px', fontSize: 13, border: '1.5px solid #e2e8f0', borderRadius: 8, outline: 'none' }} />
+              <button onClick={sendChat} style={{ padding: '8px 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Send</button>
             </div>
           </div>
 
-          {/* Right — Chat */}
-          <div className="lg:col-span-2 card flex flex-col h-[500px]">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Trade Chat</h3>
-              <p className="text-xs text-gray-400">Chat with {isBuyer ? trade.seller?.fullName : trade.buyer?.fullName}</p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {(trade.messages ?? []).map((msg: any) => {
-                const isMe = msg.senderId === user?.id
-                const isSystem = msg.messageType === 'system'
-
-                if (isSystem) {
-                  return (
-                    <div key={msg.id} className="text-center">
-                      <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{msg.message}</span>
-                    </div>
-                  )
-                }
-
-                return (
-                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${isMe ? 'bg-brand text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'}`}>
-                      {msg.message}
-                    </div>
-                  </div>
-                )
-              })}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Message input */}
-            {!isComplete && !isCancelled && (
-              <div className="p-4 border-t border-gray-100">
-                <div className="flex gap-2">
-                  <input
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMsgMutation.mutate()}
-                    className="form-input flex-1"
-                    placeholder="Type a message..."
-                  />
-                  <button
-                    onClick={() => sendMsgMutation.mutate()}
-                    disabled={!message || sendMsgMutation.isPending}
-                    className="btn-md btn-primary"
-                  >
-                    <Send size={16} />
-                  </button>
-                </div>
-              </div>
-            )}
+          {/* Security Notice */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
+            🛡️ <strong>Security reminder:</strong> PakSwap will NEVER ask for your password, 2FA code, or to cancel a trade. If someone is pressuring you, open a dispute immediately.
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
