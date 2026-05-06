@@ -1,283 +1,179 @@
 'use client'
 import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { Copy, Download, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle, XCircle, Loader2, QrCode } from 'lucide-react'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { walletApi } from '@/lib/api'
-import { toast } from '../components/ui/toaster'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import Link from 'next/link'
 
-const withdrawSchema = z.object({
-  coin: z.string().min(1),
-  network: z.string().min(1),
-  address: z.string().min(10, 'Invalid address'),
-  amount: z.string().refine((v) => parseFloat(v) > 0, 'Amount must be positive'),
-})
-type WithdrawForm = z.infer<typeof withdrawSchema>
+const coins = [
+  { id: 'USDT', name: 'Tether', symbol: '₮', bg: 'linear-gradient(135deg,#26a17b,#34d399)', balance: '35.50', pkr: '9,952', available: '35.50', escrow: '0.00' },
+  { id: 'BTC', name: 'Bitcoin', symbol: '₿', bg: 'linear-gradient(135deg,#f7931a,#fbbf24)', balance: '0.00142', pkr: '27,264', available: '0.00142', escrow: '0.00' },
+  { id: 'ETH', name: 'Ethereum', symbol: 'Ξ', bg: 'linear-gradient(135deg,#627eea,#a78bfa)', balance: '0.0821', pkr: '8,577', available: '0.0821', escrow: '0.00' },
+  { id: 'USDC', name: 'USD Coin', symbol: '$', bg: 'linear-gradient(135deg,#2775ca,#60a5fa)', balance: '0.00', pkr: '0', available: '0.00', escrow: null },
+]
 
-const TX_ICONS: Record<string, any> = {
-  deposit: ArrowDownLeft,
-  withdrawal: ArrowUpRight,
-  escrow_lock: Clock,
-  escrow_release: CheckCircle,
-  trade_fee: XCircle,
-}
-
-const TX_COLORS: Record<string, string> = {
-  deposit: 'text-green-600',
-  withdrawal: 'text-red-600',
-  escrow_lock: 'text-yellow-600',
-  escrow_release: 'text-blue-600',
-  trade_fee: 'text-gray-600',
-}
-
-const NETWORKS: Record<string, string[]> = {
-  USDT: ['TRC-20 (TRON)', 'ERC-20 (Ethereum)'],
-  BTC: ['Bitcoin'],
-  ETH: ['Ethereum'],
-  USDC: ['ERC-20 (Ethereum)'],
-}
+const txHistory = [
+  { icon: '↙', iconBg: '#d1fae5', title: 'P2P Buy — Received', sub: '#PKS-472 · JazzCash · 05 May', amount: '+17.82 USDT', amountColor: '#10b981', status: 'Completed' },
+  { icon: '↗', iconBg: '#fee2e2', title: 'P2P Sell — Sent', sub: '#PKS-441 · Bank HBL · 03 May', amount: '-20.00 USDT', amountColor: '#ef4444', status: 'Completed' },
+  { icon: '📥', iconBg: '#dbeafe', title: 'Deposit', sub: 'TRC-20 · 01 May · TX: QKx3...', amount: '+50.00 USDT', amountColor: '#10b981', status: 'Confirmed' },
+  { icon: '📤', iconBg: '#fee2e2', title: 'Withdrawal', sub: 'TRC-20 · 28 Apr · TX: TXn...', amount: '-30.00 USDT', amountColor: '#ef4444', status: 'Confirmed' },
+  { icon: '↙', iconBg: '#d1fae5', title: 'P2P Buy — Received', sub: '#PKS-402 · Easypaisa · 25 Apr', amount: '+35.00 USDT', amountColor: '#10b981', status: 'Completed' },
+]
 
 export default function WalletPage() {
-  const [activeTab, setActiveTab] = useState<'balances' | 'deposit' | 'withdraw' | 'history'>('balances')
   const [selectedCoin, setSelectedCoin] = useState('USDT')
-  const [withdrawLoading, setWithdrawLoading] = useState(false)
+  const [panel, setPanel] = useState<'deposit' | 'withdraw'>('deposit')
+  const [network, setNetwork] = useState('TRC-20')
+  const [copied, setCopied] = useState(false)
+  const [wdAmount, setWdAmount] = useState('')
 
-  const { data: walletsData, refetch } = useQuery({ queryKey: ['wallets'], queryFn: () => walletApi.getAll() })
-  const { data: txData } = useQuery({ queryKey: ['transactions'], queryFn: () => walletApi.getTransactions({ limit: 50 }) })
-  const { data: addressData } = useQuery({
-    queryKey: ['deposit-address', selectedCoin],
-    queryFn: () => walletApi.getDepositAddress(selectedCoin),
-    enabled: activeTab === 'deposit',
-  })
-
-  const wallets: any[] = walletsData?.data?.data ?? []
-  const transactions: any[] = txData?.data?.data ?? []
-  const depositAddress = addressData?.data?.data?.address ?? ''
-
-  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<WithdrawForm>({
-    resolver: zodResolver(withdrawSchema),
-    defaultValues: { coin: 'USDT', network: 'TRC-20 (TRON)' },
-  })
-
-  const watchCoin = watch('coin')
-  const selectedWallet = wallets.find((w: any) => w.coin === watchCoin)
-  const availableBalance = selectedWallet ? parseFloat(selectedWallet.balance) : 0
-
-  const onWithdraw = async (data: WithdrawForm) => {
-    setWithdrawLoading(true)
-    try {
-      await walletApi.withdraw(data)
-      toast({ type: 'success', title: 'Withdrawal Submitted', description: 'Your withdrawal is pending admin approval.' })
-      reset()
-      refetch()
-    } catch (err: any) {
-      toast({ type: 'error', title: 'Withdrawal Failed', description: err.response?.data?.message })
-    } finally {
-      setWithdrawLoading(false)
-    }
+  const handleCopy = () => {
+    navigator.clipboard.writeText('TQn8i7x7C4UQBVV5NpSRH9KVo4G7mJXi3')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const copyAddress = () => {
-    navigator.clipboard.writeText(depositAddress)
-    toast({ type: 'success', title: 'Address Copied' })
-  }
-
-  const tabs = [
-    { id: 'balances', label: 'Balances' },
-    { id: 'deposit', label: 'Deposit' },
-    { id: 'withdraw', label: 'Withdraw' },
-    { id: 'history', label: 'History' },
-  ]
+  const wdReceive = Math.max(0, (parseFloat(wdAmount) || 0) - 1).toFixed(2)
 
   return (
-    <DashboardLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Wallet</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your crypto balances, deposits, and withdrawals</p>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Link href="/marketplace" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
+          <Link href="/wallet" style={{ fontSize: 14, fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}>Wallet</Link>
+          <Link href="/orders" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Orders</Link>
+          <Link href="/create-ad" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>+ Create Ad</Link>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px', cursor: 'pointer' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>My Wallet</h1>
+            <div style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>Total value: <strong style={{ color: '#1e293b' }}>≈ 12,450 PKR</strong> · <strong style={{ color: '#1e293b' }}>≈ $44.25 USD</strong></div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setPanel('deposit')} style={{ padding: '10px 20px', border: `1.5px solid ${panel === 'deposit' ? '#2563eb' : '#e2e8f0'}`, borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: panel === 'deposit' ? '#eff6ff' : 'white', color: panel === 'deposit' ? '#1d4ed8' : '#374151' }}>📥 Deposit</button>
+            <button onClick={() => setPanel('withdraw')} style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>📤 Withdraw</button>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === t.id ? 'bg-white text-brand shadow-sm' : 'text-gray-600'
-              }`}
-            >
-              {t.label}
-            </button>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
+          {coins.map(c => (
+            <div key={c.id} onClick={() => setSelectedCoin(c.id)} style={{ background: 'white', border: `1.5px solid ${selectedCoin === c.id ? '#2563eb' : '#e2e8f0'}`, borderRadius: 16, padding: 20, cursor: 'pointer', boxShadow: selectedCoin === c.id ? '0 0 0 3px rgba(37,99,235,0.1)' : 'none', transition: 'all 0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700 }}>{c.symbol}</div>
+                <div><div style={{ fontWeight: 800, fontSize: 16 }}>{c.id}</div><div style={{ fontSize: 12, color: '#64748b' }}>{c.name}</div></div>
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 900 }}>{c.balance}</div>
+              <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>≈ {c.pkr} PKR</div>
+              {c.escrow !== null ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 12 }}>
+                  <span style={{ color: '#94a3b8' }}>Available: {c.available}</span>
+                  <span style={{ color: '#f59e0b' }}>Escrow: {c.escrow}</span>
+                </div>
+              ) : (
+                <div style={{ marginTop: 10 }}><button style={{ padding: '4px 12px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 11, cursor: 'pointer', background: 'white', color: '#374151' }}>Deposit to start</button></div>
+              )}
+            </div>
           ))}
         </div>
 
-        {/* Balances */}
-        {activeTab === 'balances' && (
-          <div className="space-y-3">
-            {wallets.length === 0 ? (
-              <div className="card p-8 text-center text-gray-400">No wallets found.</div>
-            ) : (
-              wallets.map((w: any) => (
-                <div key={w.id} className="card p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                        w.coin === 'USDT' ? 'bg-usdt' : w.coin === 'BTC' ? 'bg-btc' : 'bg-blue-500'
-                      }`}>
-                        {w.coin.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{w.coin}</p>
-                        <p className="text-xs text-gray-400">Available Balance</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900 text-lg">{parseFloat(w.balance).toFixed(6)}</p>
-                      {w.lockedBalance > 0 && (
-                        <p className="text-xs text-yellow-600">{parseFloat(w.lockedBalance).toFixed(6)} locked</p>
-                      )}
-                    </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
+          <div>
+            {panel === 'deposit' ? (
+              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 20 }}>📥 Deposit {selectedCoin}</div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Network</label>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                    {[['TRC-20', 'TRC-20 (Tron)'], ['ERC-20', 'ERC-20 (Ethereum)'], ['BEP-20', 'BEP-20 (BSC)']].map(([key, label]) => (
+                      <button key={key} onClick={() => setNetwork(key)} style={{ padding: '8px 16px', borderRadius: 8, border: `2px solid ${network === key ? '#2563eb' : '#e2e8f0'}`, background: network === key ? '#eff6ff' : 'white', color: network === key ? '#1d4ed8' : '#374151', fontWeight: network === key ? 700 : 600, fontSize: 13, cursor: 'pointer' }}>{label}</button>
+                    ))}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Deposit */}
-        {activeTab === 'deposit' && (
-          <div className="card p-6 space-y-5">
-            <h2 className="font-semibold text-gray-900">Deposit Crypto</h2>
-            <div>
-              <label className="form-label">Select Coin</label>
-              <div className="flex gap-2">
-                {['USDT', 'BTC', 'ETH', 'USDC'].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setSelectedCoin(c)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      selectedCoin === c ? 'border-brand bg-brand text-white' : 'border-gray-200 text-gray-700 hover:border-brand'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {depositAddress ? (
-              <>
-                <div className="flex items-center justify-center p-6 bg-gray-50 rounded-xl">
-                  <QrCode size={80} className="text-gray-400" />
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#92400e' }}>
+                  ⚠️ Only send <strong>{selectedCoin} ({network})</strong> to this address. Sending wrong coin or network will result in permanent loss.
                 </div>
-                <div>
-                  <label className="form-label">Deposit Address ({selectedCoin})</label>
-                  <div className="flex items-center gap-2">
-                    <input readOnly value={depositAddress} className="form-input font-mono text-sm" />
-                    <button onClick={copyAddress} className="btn-md btn-secondary flex-shrink-0">
-                      <Copy size={16} />
-                    </button>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Your {selectedCoin} Deposit Address ({network})</label>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 6 }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#1e293b', wordBreak: 'break-all' }}>TQn8i7x7C4UQBVV5NpSRH9KVo4G7mJXi3</span>
+                    <button onClick={handleCopy} style={{ background: copied ? '#d1fae5' : '#e0e7ff', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: copied ? '#065f46' : '#3730a3', flexShrink: 0 }}>{copied ? 'Copied ✓' : 'Copy'}</button>
                   </div>
                 </div>
-                <div className="p-4 bg-yellow-50 rounded-xl text-sm text-yellow-800 space-y-1">
-                  <p><strong>Warning:</strong> Send only {selectedCoin} to this address.</p>
-                  <p>Minimum deposit: 10 USDT. Deposits confirmed after 6 network confirmations.</p>
-                  <p>Wrong coin sends will result in permanent loss.</p>
+                <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, textAlign: 'center', marginBottom: 16 }}>
+                  <div style={{ width: 120, height: 120, background: 'white', border: '3px solid #e2e8f0', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>QR Code<br />{network}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>Scan QR code with your wallet app</div>
                 </div>
-              </>
+                <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, fontSize: 13, color: '#64748b' }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6, color: '#374151' }}>Deposit Info:</div>
+                  <div>• Minimum deposit: 1 {selectedCoin}</div>
+                  <div>• Network confirmations required: 1 ({network})</div>
+                  <div>• Credits usually within 5–10 minutes</div>
+                </div>
+              </div>
             ) : (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 size={24} className="animate-spin text-gray-400" />
+              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 20 }}>📤 Withdraw {selectedCoin}</div>
+                <div style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14, color: '#065f46' }}>Available Balance:</span>
+                  <strong style={{ fontSize: 16, color: '#065f46' }}>35.50 {selectedCoin}</strong>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Network</label>
+                  <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', background: 'white' }}>
+                    <option>TRC-20 (Tron) — Fee: 1 USDT</option>
+                    <option>ERC-20 (Ethereum) — Fee: 5 USDT</option>
+                    <option>BEP-20 (BSC) — Fee: 0.5 USDT</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Withdrawal Address</label>
+                  <input type="text" placeholder={`Enter ${selectedCoin} wallet address`} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Amount ({selectedCoin})</label>
+                  <div style={{ position: 'relative' }}>
+                    <input type="number" placeholder="0.00" value={wdAmount} onChange={e => setWdAmount(e.target.value)} style={{ width: '100%', padding: '10px 70px 10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                    <button onClick={() => setWdAmount('35.50')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: '#e0e7ff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#3730a3' }}>MAX</button>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 13 }}>
+                    <span style={{ color: '#64748b' }}>Network fee: <strong>1 {selectedCoin}</strong></span>
+                    <span style={{ color: '#64748b' }}>You receive: <strong>{wdAmount ? wdReceive + ' ' + selectedCoin : '—'}</strong></span>
+                  </div>
+                </div>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#92400e' }}>
+                  🔐 2FA verification required to withdraw. Ensure the address is correct — withdrawals are irreversible.
+                </div>
+                <button style={{ width: '100%', padding: '14px', background: '#dc2626', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Confirm Withdrawal →</button>
               </div>
             )}
           </div>
-        )}
 
-        {/* Withdraw */}
-        {activeTab === 'withdraw' && (
-          <div className="card p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">Withdraw Crypto</h2>
-            <form onSubmit={handleSubmit(onWithdraw)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="form-label">Coin</label>
-                  <select {...register('coin')} className="form-input">
-                    {['USDT', 'BTC', 'ETH', 'USDC'].map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Network</label>
-                  <select {...register('network')} className="form-input">
-                    {(NETWORKS[watchCoin] ?? []).map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="form-label">Withdrawal Address</label>
-                <input {...register('address')} className="form-input font-mono text-sm" placeholder="Paste recipient address..." />
-                {errors.address && <p className="form-error">{errors.address.message}</p>}
-              </div>
-              <div>
-                <label className="form-label">
-                  Amount
-                  <span className="text-xs text-gray-400 ml-2">Available: {availableBalance.toFixed(6)} {watchCoin}</span>
-                </label>
-                <input {...register('amount')} type="number" step="any" className="form-input" placeholder="0.00" />
-                {errors.amount && <p className="form-error">{errors.amount.message}</p>}
-              </div>
-              <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-800">
-                <strong>Note:</strong> Withdrawals require admin approval and are processed within 24 hours. Network fees apply.
-              </div>
-              <button type="submit" disabled={withdrawLoading} className="btn-lg btn-primary w-full">
-                {withdrawLoading ? <><Loader2 size={18} className="animate-spin" /> Processing...</> : <><ArrowUpRight size={18} /> Submit Withdrawal</>}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* History */}
-        {activeTab === 'history' && (
-          <div className="card overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Transaction History</h2>
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>Transaction History</div>
+              <Link href="/orders"><button style={{ padding: '6px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, cursor: 'pointer', background: 'white', color: '#374151' }}>View All</button></Link>
             </div>
-            {transactions.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">No transactions yet.</div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {transactions.map((tx: any) => {
-                  const Icon = TX_ICONS[tx.txType] ?? Clock
-                  const color = TX_COLORS[tx.txType] ?? 'text-gray-600'
-                  const isPositive = ['deposit', 'escrow_release'].includes(tx.txType)
-                  return (
-                    <div key={tx.id} className="flex items-center gap-4 p-4 hover:bg-gray-50">
-                      <div className={`w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center ${color}`}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 capitalize">{tx.txType.replace(/_/g, ' ')}</p>
-                        <p className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString('en-PK', { dateStyle: 'medium' })}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                          {isPositive ? '+' : '-'}{parseFloat(tx.amount).toFixed(6)} {tx.coin}
-                        </p>
-                        <p className={`text-xs badge ${tx.status === 'completed' ? 'badge-green' : tx.status === 'pending' ? 'badge-yellow' : 'badge-red'}`}>
-                          {tx.status}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
+            {txHistory.map((tx, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: i < txHistory.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: tx.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{tx.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{tx.title}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>{tx.sub}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 800, color: tx.amountColor }}>{tx.amount}</div>
+                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{tx.status}</span>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        )}
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
