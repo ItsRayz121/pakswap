@@ -736,7 +736,6 @@ model InstantBuyOrder {
 
   user     User                @relation(fields: [userId], references: [id])
   provider InstantBuyProvider? @relation(fields: [providerId], references: [id])
-  proofVerifications PaymentProofVerification[] @relation
 
   @@map("instant_buy_orders")
 }
