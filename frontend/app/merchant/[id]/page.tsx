@@ -1,203 +1,153 @@
 'use client'
-import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { Shield, Clock, TrendingUp, Star } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../../components/ui/toaster'
-import axios from 'axios'
+import Link from 'next/link'
 
-export default function MerchantProfilePage() {
-  const { id } = useParams<{ id: string }>()
-  const { accessToken } = useAuthStore()
-  const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['merchant', id],
-    queryFn: () => axios.get(`/api/users/${id}/profile`, { headers }),
-  })
-  const profile = data?.data?.data
-
-  const { data: adsData } = useQuery({
-    queryKey: ['merchant-ads', id],
-    queryFn: () => axios.get(`/api/ads?userId=${id}&status=active`, { headers }),
-  })
-  const ads: any[] = adsData?.data?.data ?? []
-
-  if (isLoading) return (
-    <div className="page-wrapper max-w-4xl animate-pulse space-y-4 py-8">
-      <div className="h-52 bg-gray-200 rounded-2xl" />
-      <div className="h-80 bg-gray-200 rounded-2xl" />
-    </div>
-  )
-
-  if (!profile) return (
-    <div className="page-wrapper text-center py-20 text-gray-400">Merchant not found.</div>
-  )
-
-  const stats = [
-    { value: profile.totalTrades?.toLocaleString() ?? '0', label: 'Total Trades' },
-    { value: `${profile.completionRate ?? 0}%`, label: 'Completion Rate', color: 'text-green-600' },
-    { value: `${profile.avgRating ?? '0'} ★`, label: 'Avg Rating', color: 'text-amber-500' },
-    { value: `⚡ ${profile.avgReleaseMinutes ?? '—'} min`, label: 'Avg Release', color: 'text-brand' },
+export default function MerchantPage() {
+  const ratings = [{ stars: '5★', pct: '88%', w: '88%', color: '#f59e0b' }, { stars: '4★', pct: '9%', w: '9%', color: '#fde68a' }, { stars: '3★', pct: '2%', w: '2%', color: '#fed7aa' }, { stars: '1★', pct: '1%', w: '1%', color: '#fca5a5' }]
+  const reviews = [
+    { init: 'A', bg: 'linear-gradient(135deg,#6366f1,#8b5cf6)', name: 'Asim K***', date: '04 May 2026', stars: 5, text: '"Fast release, highly recommended! Sent USDT within 3 minutes. Very professional."' },
+    { init: 'R', bg: 'linear-gradient(135deg,#059669,#34d399)', name: 'Raza M***', date: '02 May 2026', stars: 5, text: '"Smooth transaction from start to finish. Will trade again!"' },
+    { init: 'K', bg: 'linear-gradient(135deg,#dc2626,#f87171)', name: 'Khalid T***', date: '28 Apr 2026', stars: 4, text: '"Good merchant, slight delay one time but resolved it quickly."' },
   ]
 
   return (
-    <div className="page-wrapper max-w-4xl">
-      <a href="/marketplace" className="text-sm text-gray-500 hover:underline mb-6 inline-block">← Back to Marketplace</a>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/marketplace" style={{ fontSize: 14, fontWeight: 500, color: '#64748b', textDecoration: 'none' }}>← Back to Marketplace</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
 
-      {/* Merchant header */}
-      <div className="card p-6 mb-6 border-amber-300 bg-gradient-to-br from-amber-50 to-white">
-        <div className="flex items-start gap-5 flex-wrap">
-          <div className="relative">
-            <div className="merchant-avatar" style={{ width: 80, height: 80, fontSize: 32 }}>
-              {profile.displayName?.[0]?.toUpperCase() ?? 'M'}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Header Card */}
+        <div style={{ background: 'linear-gradient(135deg,#fffbeb,#ffffff)', border: '1.5px solid #d97706', borderRadius: 16, padding: 24, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800 }}>C</div>
+              <div style={{ position: 'absolute', bottom: -4, right: -4, background: '#d97706', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, border: '2px solid white' }}>👑</div>
             </div>
-            {profile.isMerchant && (
-              <div className="absolute -bottom-1 -right-1 bg-amber-600 rounded-full w-7 h-7 flex items-center justify-center text-base border-2 border-white">👑</div>
-            )}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap mb-2">
-              <span className="text-3xl font-extrabold text-gray-900">{profile.displayName}</span>
-              {profile.isMerchant && <span className="badge badge-gold text-sm px-3 py-1">👑 Verified Merchant</span>}
-              {profile.kycLevel === 'full' && <span className="kyc-badge full text-sm">✓ Full KYC</span>}
-              <span className="flex items-center gap-1.5 text-sm">
-                <span className={`dot ${profile.isOnline ? 'dot-green' : 'dot-gray'}`} />
-                <span className={profile.isOnline ? 'text-green-600 font-semibold' : 'text-gray-400'}>{profile.isOnline ? 'Online Now' : 'Offline'}</span>
-              </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+                <span style={{ fontSize: 28, fontWeight: 900 }}>CryptoKing</span>
+                <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>👑 Verified Merchant</span>
+                <span style={{ background: '#dcfce7', color: '#166534', borderRadius: 6, padding: '4px 10px', fontSize: 13, fontWeight: 700 }}>✓ Full KYC</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} /><span style={{ fontSize: 13, color: '#10b981', fontWeight: 600 }}>Online Now</span></span>
+              </div>
+              <div style={{ color: '#64748b', fontSize: 14, marginBottom: 14 }}>Member since January 2025 · Karachi, Pakistan</div>
+              <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+                {[['1,240', 'Total Trades', '#1e293b'], ['99.2%', 'Completion Rate', '#10b981'], ['4.9 ★', 'Avg Rating', '#f59e0b'], ['⚡ 4 min', 'Avg Release Time', '#2563eb']].map(([v, l, c]) => (
+                  <div key={l} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 28, fontWeight: 900, color: c }}>{v}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Member since {profile.memberSince ? new Date(profile.memberSince).toLocaleDateString('en-PK', { month: 'long', year: 'numeric' }) : '—'}
-              {profile.city ? ` · ${profile.city}, Pakistan` : ''}
-            </p>
-            <div className="flex gap-8 flex-wrap">
-              {stats.map(({ value, label, color }) => (
-                <div key={label} className="text-center">
-                  <div className={`text-2xl font-extrabold ${color ?? 'text-gray-900'}`}>{value}</div>
-                  <div className="text-xs text-gray-500 font-semibold">{label}</div>
-                </div>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button style={{ padding: '7px 14px', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b', fontSize: 13, fontWeight: 600 }}>Block Merchant</button>
+              <button style={{ padding: '7px 14px', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b', fontSize: 13, fontWeight: 600 }}>Report</button>
             </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <button onClick={() => toast({ type: 'info', title: 'Merchant Blocked' })} className="btn btn-ghost btn-sm">Block Merchant</button>
-            <button onClick={() => toast({ type: 'info', title: 'Reported' })} className="btn btn-ghost btn-sm">Report</button>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
-        <div className="space-y-5">
-          {/* About */}
-          {profile.bio && (
-            <div className="card p-5">
-              <h2 className="text-base font-extrabold mb-3">About</h2>
-              <p className="text-sm text-gray-700 leading-relaxed">{profile.bio}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
+          <div>
+            {/* About */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>About</div>
+              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7, margin: 0 }}>Fast and reliable P2P trader since 2023. I release USDT within 5 minutes of payment confirmation. I accept JazzCash and HBL bank transfers. Please send from your own registered account. Available 9AM–11PM PKT daily.</p>
             </div>
-          )}
 
-          {/* Active Offers */}
-          <div className="card p-5">
-            <h2 className="text-base font-extrabold mb-4">Active Offers</h2>
-            {ads.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No active offers right now.</p>
-            ) : (
-              <div className="space-y-3">
-                {ads.map((ad: any) => (
-                  <div key={ad.id} className="bg-gray-50 rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
+            {/* Active Offers */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Active Offers</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[{ rate: '280.50 PKR/USDT', diff: '▲ +0.16%', limits: '1,000–200,000 PKR', avail: '5,000 USDT', pills: ['⚡ JazzCash', '🏦 HBL'] }, { rate: '280.20 PKR/USDT', diff: '', limits: '500–50,000 PKR', avail: '', pills: ['🏦 HBL'] }].map(({ rate, diff, limits, avail, pills }) => (
+                  <div key={rate} style={{ background: '#f8fafc', borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`badge ${ad.side === 'sell' ? 'badge-blue' : 'badge-green'}`}>{ad.side.toUpperCase()} {ad.coin}</span>
-                        <span className="text-lg font-extrabold">{parseFloat(ad.fixedPrice ?? 0).toFixed(2)} PKR/{ad.coin}</span>
-                        {ad.marketPremium !== undefined && (
-                          <span className={`text-xs font-semibold ${ad.marketPremium >= 0 ? 'text-green-600' : 'text-amber-500'}`}>
-                            {ad.marketPremium >= 0 ? '▲ +' : '▼ '}{ad.marketPremium.toFixed(2)}%
-                          </span>
-                        )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ background: '#eff6ff', color: '#1d4ed8', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>SELL USDT</span>
+                        <span style={{ fontSize: 18, fontWeight: 900 }}>{rate}</span>
+                        {diff && <span style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>{diff}</span>}
                       </div>
-                      <p className="text-sm text-gray-500">Limits: {parseInt(ad.minOrderFiat).toLocaleString()}–{parseInt(ad.maxOrderFiat).toLocaleString()} PKR · Available: {ad.availableAmount} {ad.coin}</p>
-                      <div className="flex gap-2 mt-2">
-                        {(ad.paymentMethods ?? []).map((pm: string) => (
-                          <span key={pm} className="pay-pill jcash">{pm}</span>
-                        ))}
+                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Limits: {limits}{avail ? ` · Available: ${avail}` : ''}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                        {pills.map(p => <span key={p} style={{ background: p.includes('Jazz') ? '#f0fdf4' : '#eff6ff', color: p.includes('Jazz') ? '#065f46' : '#1d4ed8', border: `1px solid ${p.includes('Jazz') ? '#86efac' : '#bfdbfe'}`, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{p}</span>)}
                       </div>
                     </div>
-                    <a href={`/trade/new?adId=${ad.id}`} className="btn btn-primary btn-sm">
-                      {ad.side === 'sell' ? 'Buy' : 'Sell'} {ad.coin} →
-                    </a>
+                    <Link href="/trade/1"><button style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Buy USDT →</button></Link>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Reviews */}
-          <div className="card p-5">
-            <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
-              <h2 className="text-base font-extrabold">Reviews ({profile.totalReviews ?? 0})</h2>
-              {profile.avgRating && (
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl font-extrabold text-amber-500">{parseFloat(profile.avgRating).toFixed(1)}</span>
+            {/* Reviews */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>Reviews (1,240)</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#f59e0b' }}>4.9</div>
                   <div>
-                    <div className="stars text-lg">{'★'.repeat(Math.round(profile.avgRating))}</div>
-                    <p className="text-xs text-gray-500">{profile.totalReviews} ratings</p>
+                    <div style={{ color: '#f59e0b', fontSize: 18 }}>★★★★★</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>1,240 ratings</div>
                   </div>
                 </div>
-              )}
-            </div>
-            <div className="space-y-4">
-              {(profile.reviews ?? []).map((r: any) => (
-                <div key={r.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="merchant-avatar" style={{ width: 28, height: 28, fontSize: 12 }}>{r.reviewerName?.[0] ?? 'U'}</div>
-                      <span className="font-semibold text-sm">{r.reviewerName ?? 'Anonymous'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-500">{'★'.repeat(r.rating)}</span>
-                      <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString('en-PK')}</span>
-                    </div>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                {ratings.map(({ stars, pct, w, color }) => (
+                  <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, color: '#64748b', width: 20 }}>{stars}</span>
+                    <div style={{ flex: 1, background: '#e2e8f0', borderRadius: 4, height: 8 }}><div style={{ width: w, background: color, height: '100%', borderRadius: 4 }} /></div>
+                    <span style={{ fontSize: 12, color: '#64748b', width: 30 }}>{pct}</span>
                   </div>
-                  {r.comment && <p className="text-sm text-gray-700">{r.comment}</p>}
-                </div>
-              ))}
-            </div>
-            {(profile.totalReviews ?? 0) > 3 && (
-              <button className="btn btn-ghost w-full mt-4">View All {profile.totalReviews} Reviews</button>
-            )}
-          </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div className="space-y-4">
-          <div className="card p-4">
-            <h3 className="text-sm font-bold mb-3">Detailed Stats</h3>
-            <div className="space-y-2.5 text-sm">
-              {[
-                { label: 'Total Volume', value: profile.totalVolumePkr ? `~${(profile.totalVolumePkr / 1e6).toFixed(1)}M PKR` : '—' },
-                { label: 'Buy Trades', value: profile.buyTrades ?? '—' },
-                { label: 'Sell Trades', value: profile.sellTrades ?? '—' },
-                { label: 'First Trade', value: profile.firstTradeDate ? new Date(profile.firstTradeDate).toLocaleDateString('en-PK', { month: 'short', year: 'numeric' }) : '—' },
-                { label: 'Response Time', value: profile.avgResponseMinutes ? `⚡ ~${profile.avgResponseMinutes} min` : '—' },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex justify-between"><span className="text-gray-500">{label}</span><strong>{value}</strong></div>
-              ))}
+                ))}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {reviews.map(({ init, bg, name, date, stars, text }, i) => (
+                  <div key={name} style={{ borderBottom: i < reviews.length - 1 ? '1px solid #f1f5f9' : 'none', paddingBottom: i < reviews.length - 1 ? 14 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{init}</div>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{name}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: '#f59e0b' }}>{'★'.repeat(stars)}{'☆'.repeat(5 - stars)}</span>
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>{date}</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 14, color: '#374151', margin: 0 }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+              <button style={{ width: '100%', padding: '10px', border: 'none', background: 'none', cursor: 'pointer', color: '#64748b', fontSize: 14, marginTop: 16, fontWeight: 600 }}>View All 1,240 Reviews</button>
             </div>
           </div>
 
-          {profile.paymentMethods?.length > 0 && (
-            <div className="card p-4">
-              <h3 className="text-sm font-bold mb-3">Payment Methods</h3>
-              <div className="space-y-2">
-                {profile.paymentMethods.map((pm: string) => (
-                  <span key={pm} className="pay-pill jcash block py-2 px-3 text-sm">{pm}</span>
+          {/* Sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Detailed Stats</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
+                {[['Total Volume', '~18.5M PKR'], ['Buy Trades', '420'], ['Sell Trades', '820'], ['Disputes Won', '4/5 (80%)'], ['First Trade', 'Jan 2025'], ['Response Time', '⚡ Usually instant']].map(([l, v]) => (
+                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748b' }}>{l}</span>
+                    <strong style={{ color: l === 'Disputes Won' ? '#10b981' : undefined }}>{v}</strong>
+                  </div>
                 ))}
               </div>
             </div>
-          )}
-
-          <div className="alert alert-info text-sm">
-            🛡️ <strong>Trading Safety:</strong> Always verify payment in your own account before releasing. Never trust screenshots alone.
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12 }}>Payment Methods</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {['⚡ JazzCash', '🏦 HBL Bank Transfer'].map(p => (
+                  <span key={p} style={{ background: p.includes('Jazz') ? '#f0fdf4' : '#eff6ff', color: p.includes('Jazz') ? '#065f46' : '#1d4ed8', border: `1px solid ${p.includes('Jazz') ? '#86efac' : '#bfdbfe'}`, borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, display: 'block' }}>{p}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1e40af' }}>
+              🛡️ <strong>Trading Safety:</strong> Always verify payment in your own account before releasing. Never trust screenshots alone.
+            </div>
           </div>
         </div>
       </div>
