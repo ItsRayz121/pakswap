@@ -1,231 +1,205 @@
 'use client'
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../components/ui/toaster'
-import axios from 'axios'
+import Link from 'next/link'
 
-const BENEFITS = [
-  { icon: '💸', title: 'Competitive Revenue', desc: 'Set your own spread. Platform only takes 0.5% per fulfilled order.' },
-  { icon: '🤖', title: 'Automated Orders', desc: 'PKR orders are AI-verified. Crypto orders trigger automatic releases.' },
-  { icon: '🛡️', title: 'Platform Protection', desc: 'Escrow and fraud detection built in. Only verified payments trigger releases.' },
-  { icon: '📈', title: 'Scale Your Volume', desc: 'Tap into PakSwap\'s user base. Top providers fulfill 500+ orders monthly.' },
+const tokens = [
+  { id: 'bnb', label: '🟡 BNB' },
+  { id: 'eth', label: '🔷 ETH' },
+  { id: 'sol', label: '🟣 SOL' },
+  { id: 'ton', label: '💎 TON' },
+  { id: 'btc', label: '🟠 BTC' },
+  { id: 'usdt', label: '💵 USDT' },
 ]
 
-const TOKENS = ['BNB', 'ETH', 'SOL', 'TON', 'BTC', 'USDT', 'USDC', 'MATIC', 'ADA', 'XRP']
+const benefits = [
+  { icon: '💸', title: 'Competitive Revenue', text: 'Set your own spread. Platform only takes 0.5% per fulfilled order.' },
+  { icon: '🤖', title: 'Automated Orders', text: 'PKR orders are AI-verified. USDT orders are 100% automatic — no manual work.' },
+  { icon: '🛡️', title: 'Platform Protection', text: 'Escrow and fraud detection built in. Only verified payments trigger releases.' },
+  { icon: '📈', title: 'Scale Your Volume', text: "Tap into PakSwap's user base. Top providers fulfill 500+ orders monthly." },
+]
 
 export default function ProviderApplyPage() {
-  const { accessToken } = useAuthStore()
-  const [submitted, setSubmitted] = useState(false)
-  const [appRef, setAppRef] = useState('')
-
-  const [fullName, setFullName] = useState('')
-  const [cnic, setCnic] = useState('')
-  const [businessName, setBusinessName] = useState('')
-  const [city, setCity] = useState('')
-  const [selectedTokens, setSelectedTokens] = useState<string[]>([])
-  const [dailyVolume, setDailyVolume] = useState('')
-  const [tradeExp, setTradeExp] = useState('')
-  const [platforms, setPlatforms] = useState('')
-  const [telegram, setTelegram] = useState('')
-  const [phone, setPhone] = useState('')
-  const [whyJoin, setWhyJoin] = useState('')
-  const [comments, setComments] = useState('')
+  const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set())
   const [agreed, setAgreed] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
-  const toggleToken = (t: string) => setSelectedTokens(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
-
-  const submitMutation = useMutation({
-    mutationFn: (body: any) => axios.post('/api/instant-buy/provider-apply', body, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    }),
-    onSuccess: (res) => {
-      setAppRef(res.data?.data?.ref ?? `#APP-${Date.now()}`)
-      setSubmitted(true)
-    },
-    onError: (err: any) => toast({ type: 'error', title: 'Submission Failed', description: err.response?.data?.message })
-  })
-
-  const handleSubmit = () => {
-    if (!agreed) { toast({ type: 'error', title: 'Agreement Required', description: 'Please agree to the Provider Terms of Service.' }); return }
-    if (!fullName || !cnic || !city || !selectedTokens.length || !dailyVolume || !telegram || !whyJoin) {
-      toast({ type: 'error', title: 'Required Fields', description: 'Please fill all required fields.' })
-      return
-    }
-    submitMutation.mutate({ fullName, cnic, businessName, city, tokens: selectedTokens, dailyVolume, tradeExp, platforms, telegram, phone, whyJoin, comments })
+  const toggleToken = (id: string) => {
+    const s = new Set(selectedTokens)
+    s.has(id) ? s.delete(id) : s.add(id)
+    setSelectedTokens(s)
   }
 
-  if (submitted) return (
-    <DashboardLayout>
-      <div className="max-w-md mx-auto text-center py-20">
-        <div className="text-6xl mb-5">🎉</div>
-        <h1 className="text-2xl font-extrabold mb-3">Application Submitted!</h1>
-        <p className="text-gray-500 mb-5">Thank you for applying. We'll review your application and contact you via Telegram within 3–5 business days.</p>
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-sm text-green-700">
-          📋 Application Reference: <strong>{appRef}</strong>
+  if (submitted) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: 40, maxWidth: 460, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+          <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 10 }}>Application Submitted!</h2>
+          <p style={{ color: '#64748b', fontSize: 15, marginBottom: 24 }}>Thank you for applying to become a PakSwap liquidity provider. We'll review your application and contact you via Telegram within 3–5 business days.</p>
+          <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginBottom: 24, fontSize: 14, color: '#166534' }}>
+            📋 Application Reference: <strong>#APP-2026-001847</strong>
+          </div>
+          <Link href="/instant-buy"><button style={{ width: '100%', padding: 13, background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Back to Instant Buy</button></Link>
         </div>
-        <a href="/instant-buy" className="btn btn-primary btn-lg rounded-xl">Back to Instant Buy</a>
       </div>
-    </DashboardLayout>
-  )
+    )
+  }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-2xl mx-auto">
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/instant-buy" style={{ fontSize: 16, color: '#64748b', fontWeight: 500, textDecoration: 'none' }}>← Instant Buy</Link>
+        <span style={{ background: '#d1fae5', color: '#065f46', borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>🔓 Open Applications</span>
+        <div />
+      </nav>
+
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 24px' }}>
         {/* Hero */}
-        <div className="rounded-2xl p-10 text-center text-white mb-8" style={{ background: 'linear-gradient(135deg, #166534, #15803d, #16a34a)' }}>
-          <div className="text-5xl mb-3">💼</div>
-          <h1 className="text-3xl font-extrabold mb-3">Become a Liquidity Provider</h1>
-          <p className="text-sm opacity-90 max-w-md mx-auto mb-5">Earn by providing crypto inventory for PakSwap Instant Buy orders. Join our trusted provider network and earn on every fulfilled order.</p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            {['💰 Earn on every order', '🏅 Verified badge', '📊 Provider dashboard'].map(tag => (
-              <div key={tag} className="bg-white/20 rounded-xl px-4 py-2 text-sm font-semibold">{tag}</div>
+        <div style={{ background: 'linear-gradient(135deg,#166534,#15803d,#16a34a)', borderRadius: 20, padding: 40, color: 'white', textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>💼</div>
+          <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 12 }}>Become a Liquidity Provider</h1>
+          <p style={{ fontSize: 16, opacity: 0.9, maxWidth: 500, margin: '0 auto' }}>Earn by providing crypto inventory for PakSwap Instant Buy orders. Join our trusted provider network and earn on every fulfilled order.</p>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+            {['💰 Earn on every order', '🏅 Verified badge', '📊 Provider dashboard'].map(t => (
+              <div key={t} style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 600 }}>{t}</div>
             ))}
           </div>
         </div>
 
         {/* Benefits */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {BENEFITS.map(({ icon, title, desc }) => (
-            <div key={title} className="card p-4 text-center">
-              <div className="text-3xl mb-2">{icon}</div>
-              <h3 className="text-sm font-bold mb-1">{title}</h3>
-              <p className="text-xs text-gray-500">{desc}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 32 }}>
+          {benefits.map(({ icon, title, text }) => (
+            <div key={title} style={{ background: 'white', borderRadius: 14, border: '1px solid #e2e8f0', padding: 20, textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>{icon}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{title}</div>
+              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{text}</div>
             </div>
           ))}
         </div>
 
         {/* Requirements */}
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 mb-6">
-          <h3 className="text-sm font-bold text-amber-800 mb-3">📋 Provider Requirements</h3>
-          <ul className="space-y-2">
+        <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 14, padding: 20, marginBottom: 24 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#92400e', marginBottom: 12 }}>📋 Provider Requirements</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              'Full KYC verified on PakSwap (CNIC + selfie)',
-              'Minimum 500 USDT equivalent inventory to start',
-              'Maintain dispute rate below 2%',
-              'Respond to manual orders within 30 minutes (SLA)',
+              '✅ Full KYC verified on PakSwap (CNIC + selfie)',
+              '✅ Minimum 500 USDT equivalent inventory to start',
+              '✅ Complete 100 test orders successfully before public listing',
+              '✅ Maintain dispute rate below 2%',
+              '✅ Respond to manual orders within 30 minutes (SLA)',
               '⚠️ Applications are for Phase 2 — we will contact you when ready',
-            ].map((req, i) => (
-              <li key={i} className="text-sm text-amber-900 flex gap-2">
-                <span>{i < 4 ? '✅' : '⚠️'}</span> {req.replace(/^(✅|⚠️)\s*/, '')}
-              </li>
+            ].map(t => (
+              <div key={t} style={{ fontSize: 14, color: '#78350f' }}>{t}</div>
             ))}
-          </ul>
+          </div>
         </div>
 
-        {/* Application form */}
-        <div className="card p-6 space-y-5">
-          <div>
-            <h2 className="text-xl font-extrabold mb-1">Provider Application</h2>
-            <p className="text-sm text-gray-500">Fill this form to join the waitlist. We review applications and contact approved providers directly.</p>
+        {/* Form */}
+        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 32 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Provider Application</h2>
+          <p style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>Fill this form to join the waitlist. We review applications and contact approved providers directly.</p>
+
+          {/* Personal Info */}
+          <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', margin: '24px 0 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            Personal Information <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
           </div>
-
-          <hr className="border-gray-100" />
-          <p className="text-xs font-bold text-gray-500 uppercase">Personal Information</p>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="form-group">
-              <label className="form-label">Full Name <span className="text-red-500">*</span></label>
-              <input className="form-input mt-1.5" type="text" placeholder="As on your CNIC" value={fullName} onChange={e => setFullName(e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Full Name <span style={{ color: '#ef4444' }}>*</span></label>
+              <input type="text" placeholder="As on your CNIC" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">CNIC Number <span className="text-red-500">*</span></label>
-              <input className="form-input mt-1.5" type="text" placeholder="35201-1234567-1" maxLength={15} value={cnic} onChange={e => setCnic(e.target.value)} />
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>CNIC Number <span style={{ color: '#ef4444' }}>*</span></label>
+              <input type="text" placeholder="35201-1234567-1" maxLength={15} style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Business Name <span className="text-gray-400">(optional)</span></label>
-              <input className="form-input mt-1.5" type="text" placeholder="Your company or brand name" value={businessName} onChange={e => setBusinessName(e.target.value)} />
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Business Name <span style={{ color: '#94a3b8' }}>(optional)</span></label>
+              <input type="text" placeholder="Your company or brand name" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">City <span className="text-red-500">*</span></label>
-              <select className="form-input mt-1.5" value={city} onChange={e => setCity(e.target.value)}>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>City <span style={{ color: '#ef4444' }}>*</span></label>
+              <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
                 <option value="">Select your city</option>
                 {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Other'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
 
-          <hr className="border-gray-100" />
-          <p className="text-xs font-bold text-gray-500 uppercase">Trading Capacity</p>
-
-          <div className="form-group">
-            <label className="form-label">Which tokens do you want to provide? <span className="text-red-500">*</span></label>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
-              {TOKENS.map(t => (
-                <div key={t} onClick={() => toggleToken(t)}
-                  className={`border-2 rounded-xl p-3 flex items-center gap-2 cursor-pointer transition-all ${selectedTokens.includes(t) ? 'border-brand bg-blue-50' : 'border-gray-200 hover:border-brand/50'}`}>
-                  <span className="text-sm font-semibold">{t}</span>
+          {/* Trading Capacity */}
+          <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', margin: '24px 0 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            Trading Capacity <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Which tokens do you want to provide? <span style={{ color: '#ef4444' }}>*</span></label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 10 }}>
+              {tokens.map(({ id, label }) => (
+                <div key={id} onClick={() => toggleToken(id)} style={{ border: `2px solid ${selectedTokens.has(id) ? '#2563eb' : '#e2e8f0'}`, borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', background: selectedTokens.has(id) ? '#eff6ff' : 'white' }}>
+                  <input type="checkbox" checked={selectedTokens.has(id)} readOnly style={{ accentColor: '#2563eb', width: 16, height: 16 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="form-group">
-              <label className="form-label">Estimated daily volume (PKR) <span className="text-red-500">*</span></label>
-              <select className="form-input mt-1.5" value={dailyVolume} onChange={e => setDailyVolume(e.target.value)}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Estimated daily volume (PKR) <span style={{ color: '#ef4444' }}>*</span></label>
+              <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
                 <option value="">Select range</option>
-                {['Under 50,000 PKR/day', '50,000 – 200,000 PKR/day', '200,000 – 500,000 PKR/day', '500,000 – 1,000,000 PKR/day', 'Over 1,000,000 PKR/day'].map(v => <option key={v}>{v}</option>)}
+                {['Under 50,000 PKR/day', '50,000 – 200,000 PKR/day', '200,000 – 500,000 PKR/day', '500,000 – 1,000,000 PKR/day', 'Over 1,000,000 PKR/day'].map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Trading experience <span className="text-red-500">*</span></label>
-              <select className="form-input mt-1.5" value={tradeExp} onChange={e => setTradeExp(e.target.value)}>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Trading experience <span style={{ color: '#ef4444' }}>*</span></label>
+              <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
                 <option value="">Select</option>
-                {['Less than 6 months', '6 months – 1 year', '1–2 years', '2–5 years', '5+ years'].map(v => <option key={v}>{v}</option>)}
+                {['Less than 6 months', '6 months – 1 year', '1–2 years', '2–5 years', '5+ years'].map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Platforms you currently use</label>
-            <input className="form-input mt-1.5" type="text" placeholder="e.g. Binance, Bybit, local exchanges..." value={platforms} onChange={e => setPlatforms(e.target.value)} />
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Platforms you currently use</label>
+            <input type="text" placeholder="e.g. Binance, Bybit, local exchanges..." style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
           </div>
 
-          <hr className="border-gray-100" />
-          <p className="text-xs font-bold text-gray-500 uppercase">Contact &amp; Intent</p>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="form-group">
-              <label className="form-label">Telegram Username <span className="text-red-500">*</span></label>
-              <input className="form-input mt-1.5" type="text" placeholder="@yourusername" value={telegram} onChange={e => setTelegram(e.target.value)} />
+          {/* Contact */}
+          <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', margin: '24px 0 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            Contact & Intent <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Telegram Username <span style={{ color: '#ef4444' }}>*</span></label>
+              <input type="text" placeholder="@yourusername" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <input className="form-input mt-1.5" type="tel" placeholder="03XX-XXXXXXX" value={phone} onChange={e => setPhone(e.target.value)} />
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Phone Number</label>
+              <input type="tel" placeholder="03XX-XXXXXXX" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Why do you want to become a provider? <span className="text-red-500">*</span></label>
-            <textarea className="form-input mt-1.5 resize-y" rows={4}
-              placeholder="Tell us about your experience, why you're a good fit, and what you can bring to the PakSwap provider network..."
-              value={whyJoin} onChange={e => setWhyJoin(e.target.value)} />
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Why do you want to become a provider? <span style={{ color: '#ef4444' }}>*</span></label>
+            <textarea rows={4} placeholder="Tell us about your experience, why you're a good fit, and what you can bring to the PakSwap provider network..." style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Any questions or comments?</label>
+            <textarea rows={3} placeholder="Anything else you'd like to tell us..." style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Any questions or comments?</label>
-            <textarea className="form-input mt-1.5 resize-y" rows={3} placeholder="Anything else you'd like to tell us..."
-              value={comments} onChange={e => setComments(e.target.value)} />
-          </div>
-
-          <label className="flex items-start gap-3 cursor-pointer text-sm">
-            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
-              className="mt-0.5 flex-shrink-0" style={{ accentColor: '#2563eb', width: 16, height: 16 }} />
-            <span className="text-gray-700">
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 24 }}>
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#2563eb', marginTop: 2, flexShrink: 0 }} />
+            <label style={{ fontSize: 13, color: '#374151', cursor: 'pointer' }}>
               I understand that this is a waitlist application. Approval is subject to review and PakSwap reserves the right to approve or reject any application. I agree to the{' '}
-              <a href="/terms" className="text-brand hover:underline">Provider Terms of Service</a>.
-            </span>
-          </label>
+              <Link href="#" style={{ color: '#2563eb' }}>Provider Terms of Service</Link>.
+            </label>
+          </div>
 
-          <button onClick={handleSubmit} disabled={submitMutation.isPending}
-            className="btn btn-success btn-lg w-full rounded-xl">
-            {submitMutation.isPending ? 'Submitting...' : 'Submit Application →'}
+          <button onClick={() => agreed && setSubmitted(true)} disabled={!agreed} style={{ width: '100%', padding: 14, background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5 }}>
+            Submit Application →
           </button>
-          <p className="text-center text-sm text-gray-500">We review applications within 3–5 business days and contact you via Telegram.</p>
+          <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#64748b' }}>
+            We review applications within 3–5 business days and contact you via Telegram.
+          </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
