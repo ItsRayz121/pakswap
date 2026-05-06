@@ -1,147 +1,99 @@
 'use client'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { authApi } from '@/lib/api'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../components/ui/toaster'
-
-const schema = z.object({
-  emailOrPhone: z.string().min(1, 'Email or phone required'),
-  password: z.string().min(1, 'Password required'),
-})
-
-type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const { setAuth } = useAuthStore()
+  const [step, setStep] = useState<'login' | 'otp'>('login')
+  const [showPwd, setShowPwd] = useState(false)
+  const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  })
-
-  const onSubmit = async (data: FormData) => {
-    setLoading(true)
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true' || !process.env.NEXT_PUBLIC_API_URL
-
-    try {
-      if (useMock) {
-        await new Promise((r) => setTimeout(r, 400))
-        const isAdmin = data.emailOrPhone.toLowerCase().includes('admin')
-        const mockUser = {
-          id: 'mock-' + Math.random().toString(36).slice(2),
-          email: data.emailOrPhone.includes('@') ? data.emailOrPhone : `${data.emailOrPhone}@pakswap.com`,
-          phone: '+923001234567',
-          fullName: isAdmin ? 'Admin User' : 'Demo User',
-          username: isAdmin ? 'admin' : 'demouser',
-          role: isAdmin ? 'admin' : 'user',
-          kycLevel: 'full',
-          kycStatus: 'approved',
-          twoFaEnabled: false,
-          referralCode: 'DEMO1234',
-        }
-        setAuth(mockUser, 'mock-token-' + Date.now())
-        toast({ type: 'success', title: 'Welcome back!', description: `Logged in as ${mockUser.fullName}` })
-        router.push(isAdmin ? '/admin' : '/dashboard')
-        return
-      }
-
-      const res = await authApi.login(data)
-      const payload = res.data?.data ?? res.data
-
-      if (payload?.requiresTwoFa) {
-        sessionStorage.setItem('preAuthToken', payload.preAuthToken)
-        toast({ type: 'info', title: '2FA required', description: 'Enter your 6-digit code' })
-        router.push('/login/2fa')
-        return
-      }
-
-      const accessToken = payload.accessToken
-      if (payload.refreshToken) localStorage.setItem('refresh_token', payload.refreshToken)
-      localStorage.setItem('access_token', accessToken)
-
-      // Fetch the full user profile
-      const meRes = await authApi.me()
-      const user = meRes.data?.data ?? meRes.data
-      setAuth(user, accessToken)
-      toast({ type: 'success', title: 'Welcome back!', description: `Logged in as ${user.fullName}` })
-      router.push(user.role === 'admin' ? '/admin' : '/dashboard')
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? 'Invalid credentials'
-      toast({ type: 'error', title: 'Login failed', description: msg })
-    } finally {
-      setLoading(false)
-    }
+  const handleOtpChange = (i: number, val: string) => {
+    if (!/^\d?$/.test(val)) return
+    const next = [...otp]
+    next[i] = val
+    setOtp(next)
+    if (val && i < 5) otpRefs.current[i + 1]?.focus()
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 font-bold text-2xl text-brand mb-4">
-            <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold">P</span>
-            </div>
-            PakSwap
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 mt-1">Sign in to your account</p>
-        </div>
+    <div style={{ background: 'linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',sans-serif" }}>
+      <div style={{ background: 'white', borderRadius: 20, padding: 40, width: '100%', maxWidth: 420, boxShadow: '0 32px 80px rgba(0,0,0,0.3)' }}>
+        <div style={{ fontSize: 26, fontWeight: 800, color: '#2563eb', textAlign: 'center', marginBottom: 8 }}>Pak<span style={{ color: '#1e293b' }}>Swap</span></div>
+        <div style={{ textAlign: 'center', color: '#64748b', fontSize: 15, marginBottom: 32 }}>Welcome back! Sign in to your account</div>
 
-        <div className="card p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label className="form-label">Email or Phone</label>
-              <input
-                {...register('emailOrPhone')}
-                type="text"
-                className="form-input"
-                placeholder="email@example.com or +923001234567"
-                autoComplete="username"
-              />
-              {errors.emailOrPhone && <p className="form-error">{errors.emailOrPhone.message}</p>}
+        {step === 'login' && (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Email or Phone Number</label>
+              <input type="text" placeholder="e.g. m.usman@gmail.com or 0312-4567890" style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="form-label mb-0">Password</label>
-                <Link href="/forgot-password" className="text-xs text-brand hover:underline">Forgot password?</Link>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showPwd ? 'text' : 'password'} placeholder="Enter your password" style={{ width: '100%', padding: '10px 44px 10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                <button onClick={() => setShowPwd(!showPwd)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18 }}>👁</button>
               </div>
-              <div className="relative">
-                <input
-                  {...register('password')}
-                  type={showPassword ? 'text' : 'password'}
-                  className="form-input pr-10"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+              <div style={{ textAlign: 'right', marginTop: 4 }}>
+                <Link href="/forgot-password" style={{ fontSize: 13, color: '#2563eb', fontWeight: 500, textDecoration: 'none' }}>Forgot Password?</Link>
               </div>
-              {errors.password && <p className="form-error">{errors.password.message}</p>}
             </div>
 
-            <button type="submit" disabled={loading} className="btn-lg btn-primary w-full">
-              {loading ? <><Loader2 size={18} className="animate-spin" /> Signing in...</> : 'Sign In'}
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400e', marginBottom: 16 }}>
+              🔒 PakSwap will NEVER ask for your 2FA code or password via phone or chat.
+            </div>
+
+            <button onClick={() => setStep('otp')} style={{ width: '100%', padding: '13px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 20 }}>Sign In</button>
+
+            <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 14, marginBottom: 16, position: 'relative' }}>
+              <span style={{ background: 'white', padding: '0 12px', position: 'relative', zIndex: 1 }}>or continue with</span>
+              <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 1, background: '#e2e8f0', zIndex: 0 }} />
+            </div>
+
+            <button style={{ width: '100%', padding: 12, border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'white' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Continue with Google
             </button>
-          </form>
+          </>
+        )}
 
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-brand font-medium hover:underline">Create one</Link>
-          </p>
+        {step === 'otp' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>Enter Verification Code</div>
+              <div style={{ color: '#64748b', fontSize: 14, marginTop: 8 }}>We sent a 6-digit code to your phone +92-312-XXXXXXX</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 24 }}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={el => { otpRefs.current[i] = el }}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={e => handleOtpChange(i, e.target.value)}
+                  style={{ width: 48, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 700, border: '2px solid #e2e8f0', borderRadius: 10, outline: 'none' }}
+                />
+              ))}
+            </div>
+
+            <Link href="/marketplace">
+              <button style={{ width: '100%', padding: '13px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}>Verify & Login</button>
+            </Link>
+
+            <div style={{ textAlign: 'center', fontSize: 13, color: '#64748b', marginBottom: 8 }}>
+              Didn't receive it? <a href="#" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>Resend in 0:45</a>
+            </div>
+
+            <button onClick={() => setStep('login')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: 13, width: '100%' }}>← Back</button>
+          </>
+        )}
+
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: '#64748b' }}>
+          Don't have an account? <Link href="/register" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>Create Account</Link>
         </div>
       </div>
     </div>
