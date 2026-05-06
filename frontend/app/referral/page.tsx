@@ -1,126 +1,158 @@
 'use client'
-import { useQuery } from '@tanstack/react-query'
-import { Copy, Gift, Users, TrendingUp, Share2 } from 'lucide-react'
-import { DashboardLayout } from '../components/layout/DashboardLayout'
-import { useAuthStore } from '@/lib/store'
-import { toast } from '../components/ui/toaster'
-import axios from 'axios'
+import { useState } from 'react'
+import Link from 'next/link'
+
+const referredUsers = [
+  { initial: 'A', color: 'linear-gradient(135deg,#1e3a5f,#2563eb)', name: 'Asim K***', joined: '01 May 2026', status: 'Traded', reward: '+500 PKR' },
+  { initial: 'R', color: 'linear-gradient(135deg,#059669,#34d399)', name: 'Raza M***', joined: '03 May 2026', status: 'Pending', reward: 'Pending' },
+  { initial: 'F', color: 'linear-gradient(135deg,#7c3aed,#a78bfa)', name: 'Fatima K***', joined: '29 Apr 2026', status: 'Traded', reward: '+500 PKR' },
+  { initial: 'H', color: 'linear-gradient(135deg,#dc2626,#f87171)', name: 'Hassan T***', joined: '25 Apr 2026', status: 'Traded', reward: '+500 PKR' },
+  { initial: 'Z', color: 'linear-gradient(135deg,#0284c7,#38bdf8)', name: 'Zara N***', joined: '20 Apr 2026', status: 'Traded', reward: '+500 PKR' },
+]
 
 export default function ReferralPage() {
-  const { user, accessToken } = useAuthStore()
+  const [copied, setCopied] = useState(false)
 
-  const { data } = useQuery({
-    queryKey: ['referral'],
-    queryFn: () => axios.get('/api/referral', { headers: { Authorization: `Bearer ${accessToken}` } }),
-  })
-
-  const referral = data?.data?.data
-  const referralCode = user?.referralCode ?? '—'
-  const referralLink = typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${referralCode}` : ''
-
-  const copy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-    toast({ type: 'success', title: `${label} Copied` })
+  const copy = () => {
+    navigator.clipboard.writeText('https://pakswap.pk/r/USM42').catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const stats = [
-    { label: 'Total Referrals', value: referral?.totalReferrals ?? 0, icon: Users, color: 'text-brand' },
-    { label: 'Active Traders', value: referral?.activeReferrals ?? 0, icon: TrendingUp, color: 'text-green-600' },
-    { label: 'Total Earned', value: `${referral?.totalEarned ?? '0.00'} USDT`, icon: Gift, color: 'text-yellow-600' },
-  ]
-
   return (
-    <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Referral Program</h1>
-          <p className="text-gray-500 text-sm mt-1">Invite friends and earn 10% of their trading fees for life.</p>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Link href="/marketplace" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
+          <Link href="/wallet" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Wallet</Link>
+          <Link href="/referral" style={{ fontSize: 14, fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}>Referral</Link>
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {stats.map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="stat-card text-center">
-              <Icon size={24} className={`${color} mx-auto mb-2`} />
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="stat-label mt-1">{label}</p>
-            </div>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
         </div>
+      </nav>
 
-        {/* Referral Code */}
-        <div className="card p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Your Referral Code</h2>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-mono text-2xl font-bold text-brand tracking-widest text-center">
-              {referralCode}
-            </div>
-            <button onClick={() => copy(referralCode, 'Code')} className="btn-md btn-secondary">
-              <Copy size={16} />
-            </button>
-          </div>
-
-          <div>
-            <label className="form-label">Referral Link</label>
-            <div className="flex items-center gap-2">
-              <input readOnly value={referralLink} className="form-input text-sm font-mono" />
-              <button onClick={() => copy(referralLink, 'Link')} className="btn-md btn-secondary flex-shrink-0">
-                <Copy size={16} />
-              </button>
-              {typeof navigator !== 'undefined' && navigator.share && (
-                <button
-                  onClick={() => navigator.share({ title: 'PakSwap Referral', url: referralLink })}
-                  className="btn-md btn-primary flex-shrink-0"
-                >
-                  <Share2 size={16} />
-                </button>
-              )}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Hero */}
+        <div style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb,#3b82f6)', borderRadius: 20, padding: 40, color: 'white', textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🎁</div>
+          <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, margin: '0 0 8px' }}>Refer Friends & Earn PKR</h1>
+          <p style={{ fontSize: 16, color: '#93c5fd', marginBottom: 28 }}>Share your link. Both you and your friend earn <strong style={{ color: 'white' }}>500 PKR bonus</strong> after their first trade!</p>
+          <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 14, padding: 20, maxWidth: 500, margin: '0 auto' }}>
+            <div style={{ fontSize: 12, color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Your Referral Code</div>
+            <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 3, marginBottom: 16 }}>PAKSWAP-USM42</div>
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#bfdbfe', marginBottom: 14, wordBreak: 'break-all', fontFamily: 'monospace' }}>pakswap.pk/r/USM42</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button onClick={copy} style={{ padding: '7px 14px', background: 'white', color: '#1d4ed8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{copied ? '✓ Copied!' : '📋 Copy Link'}</button>
+              <button style={{ padding: '7px 14px', background: '#25d366', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>💬 WhatsApp</button>
+              <button style={{ padding: '7px 14px', background: '#0088cc', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>✈️ Telegram</button>
+              <button style={{ padding: '7px 14px', background: '#1877f2', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📘 Facebook</button>
             </div>
           </div>
         </div>
 
-        {/* How it works */}
-        <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">How It Works</h2>
-          <div className="space-y-4">
-            {[
-              { step: '1', title: 'Share your code', desc: 'Send your referral link or code to friends and family.' },
-              { step: '2', title: 'They sign up & trade', desc: 'Your referral registers and completes their first trade.' },
-              { step: '3', title: 'You earn 10%', desc: 'You receive 10% of their taker fees credited to your wallet every month.' },
-            ].map(({ step, title, desc }) => (
-              <div key={step} className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {step}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{title}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{desc}</p>
-                </div>
+        {/* How It Works */}
+        <div style={{ marginBottom: 28 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>How It Works</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+            {[['🔗', '1. Share Your Link', 'Share your unique referral link or code with friends, family, or social media.', '#e2e8f0', '#1e293b'], ['👤', '2. Friend Registers', 'Your friend signs up using your code and completes KYC verification.', '#bfdbfe', '#1e40af'], ['💰', '3. Both Earn Bonus', 'After their first completed trade, you both earn 500 PKR credited to your wallet!', '#e2e8f0', '#1e293b']].map(([icon, title, sub, borderColor, titleColor]) => (
+              <div key={title as string} style={{ background: 'white', border: `1.5px solid ${borderColor}`, borderRadius: 14, padding: 20, textAlign: 'center', background: borderColor === '#bfdbfe' ? '#f0f9ff' : 'white' } as any}>
+                <div style={{ fontSize: 40, marginBottom: 10 }}>{icon}</div>
+                <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6, color: titleColor as string }}>{title}</div>
+                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{sub}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Recent Referrals */}
-        {referral?.rewards?.length > 0 && (
-          <div className="card overflow-hidden">
-            <div className="p-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Recent Rewards</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {referral.rewards.map((r: any) => (
-                <div key={r.id} className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{r.referee?.username ?? 'Referred User'}</p>
-                    <p className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString('en-PK', { dateStyle: 'medium' })}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
+          <div>
+            {/* Earnings Summary */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Your Earnings Summary</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+                {[['12', 'Total Referred', '#f0f9ff', '#1d4ed8'], ['8', 'Traded', '#f0fdf4', '#10b981'], ['4,000', 'PKR Earned', '#fffbeb', '#d97706'], ['2,000', 'PKR Pending', '#fef2f2', '#ef4444']].map(([v, label, bg, color]) => (
+                  <div key={label as string} style={{ background: bg as string, borderRadius: 12, padding: 14, textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: color as string }}>{v}</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>{label}</div>
                   </div>
-                  <span className="text-green-600 font-semibold">+{r.amount} USDT</span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ padding: '10px 20px', background: '#10b981', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>💰 Withdraw 4,000 PKR to Wallet</button>
+                <button style={{ padding: '10px 16px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>📊 View History</button>
+              </div>
+            </div>
+
+            {/* Referred Users */}
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Referred Users</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    {['User', 'Joined', 'Status', 'Reward'].map(h => (
+                      <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {referredUsers.map((u, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: u.color, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{u.initial}</div>
+                        {u.name}
+                      </td>
+                      <td style={{ padding: '12px', fontSize: 13, color: '#64748b' }}>{u.joined}</td>
+                      <td style={{ padding: '12px' }}>
+                        {u.status === 'Traded' ? <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>✅ Traded</span> : <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>⏳ Pending</span>}
+                      </td>
+                      <td style={{ padding: '12px', fontWeight: 700, color: u.reward.startsWith('+') ? '#10b981' : '#94a3b8', fontSize: 14 }}>{u.reward}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ textAlign: 'center', marginTop: 12, fontSize: 13, color: '#64748b' }}>Showing 5 of 12 referrals</div>
             </div>
           </div>
-        )}
+
+          {/* Right */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'linear-gradient(135deg,#1e3a8a,#2563eb)', color: 'white', borderRadius: 16, padding: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 14 }}>Reward Structure</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[['YOU EARN', '500 PKR', 'Per referral who completes first trade'], ['FRIEND EARNS', '500 PKR', 'Bonus on their first trade']].map(([label, amt, sub]) => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: '#93c5fd', fontWeight: 600, marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 900 }}>{amt}</div>
+                    <div style={{ fontSize: 12, color: '#bfdbfe' }}>{sub}</div>
+                  </div>
+                ))}
+                <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: 12, fontSize: 13, color: '#93c5fd' }}>💡 Paid as USDT to your wallet after 7-day holding period</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>Leaderboard 🏆</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>Top referrers this month</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[['🥇', 'CryptoGuru', '34 referrals', '17,000 PKR', '#fef3c7', '#d97706'], ['🥈', 'TradeMaster', '28 referrals', '14,000 PKR', '#f1f5f9', '#64748b'], ['🥉', 'PKR_King', '19 referrals', '9,500 PKR', '#fef9f0', '#9a3412'], ['4️⃣', 'Muhammad U. (You)', '12 referrals', '6,000 PKR', '#eff6ff', '#2563eb']].map(([medal, name, refs, earned, bg, color]) => (
+                  <div key={name as string} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, background: bg as string, borderRadius: 8, border: name === 'Muhammad U. (You)' ? '1.5px solid #2563eb' : 'none' }}>
+                    <span style={{ fontSize: 18 }}>{medal}</span>
+                    <div style={{ flex: 1 }}><div style={{ fontWeight: 700, fontSize: 13 }}>{name}</div><div style={{ fontSize: 11, color: '#64748b' }}>{refs}</div></div>
+                    <strong style={{ color: color as string }}>{earned}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#1e40af' }}>
+              📅 Rewards paid 7 days after referral completes first trade. Minimum 1 completed trade required.
+            </div>
+          </div>
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
