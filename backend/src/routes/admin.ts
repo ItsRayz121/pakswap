@@ -459,7 +459,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       prisma.instantBuyOrder.findMany({
         where: { verificationStatus: 'pending_layer2' },
         include: { user: { select: { fullName: true, email: true, kycLevel: true } } },
-        orderBy: { submittedAt: 'asc' },
+        orderBy: { createdAt: 'asc' },
         skip,
         take: limit,
       }),
@@ -480,11 +480,11 @@ export default async function adminRoutes(app: FastifyInstance) {
       if (!wallet) throw new Error('Buyer wallet not found')
       await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: order.coinAmount } } })
       await tx.walletTransaction.create({
-        data: { walletId: wallet.id, txType: 'deposit', amount: order.coinAmount, coin: order.coin, status: 'completed', reference: `IB-${id}`, metadata: { orderId: id } },
+        data: { walletId: wallet.id, userId: order.userId, type: 'deposit', amount: order.coinAmount, coin: order.coin, network: order.network, status: 'confirmed', metadata: { orderId: id } },
       })
       await tx.instantBuyOrder.update({ where: { id }, data: { verificationStatus: 'approved', completedAt: new Date() } })
       await tx.adminAuditLog.create({
-        data: { adminId: req.user!.sub, action: 'approve_instant_buy', targetId: id, targetType: 'instant_buy_order', metadata: { coinAmount: order.coinAmount.toString(), coin: order.coin } },
+        data: { adminId: req.user!.sub, actionType: 'approve_instant_buy', resourceId: id, resourceType: 'instant_buy_order', metadata: { coinAmount: order.coinAmount.toString(), coin: order.coin } },
       })
     })
 
@@ -498,7 +498,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { reason } = z.object({ reason: z.string().min(5) }).parse(req.body)
     const order = await prisma.instantBuyOrder.update({ where: { id }, data: { verificationStatus: 'rejected' } })
     await prisma.adminAuditLog.create({
-      data: { adminId: req.user!.sub, action: 'reject_instant_buy', targetId: id, targetType: 'instant_buy_order', metadata: { reason } },
+      data: { adminId: req.user!.sub, actionType: 'reject_instant_buy', resourceId: id, resourceType: 'instant_buy_order', metadata: { reason } },
     })
     const { notificationService } = await import('../services/notification.service')
     await notificationService.send({ userId: order.userId, title: 'Instant Buy Rejected', body: `Your order was rejected: ${reason}`, type: 'ib_rejected', data: { orderId: id } })

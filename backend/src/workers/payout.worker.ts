@@ -13,22 +13,16 @@ const SIGNING_SERVICE_URL = process.env.SIGNING_SERVICE_URL ?? 'http://localhost
 async function processPayout(job: Job<PayoutJob>) {
   const { withdrawalId } = job.data
 
-  const withdrawal = await prisma.withdrawal.findUniqueOrThrow({
-    where: { id: withdrawalId },
-    include: { user: true, wallet: true },
-  })
+  // Withdrawal has no wallet relation — load separately
+  const withdrawal = await prisma.withdrawal.findUniqueOrThrow({ where: { id: withdrawalId } })
 
   if (withdrawal.status !== 'approved') {
     throw new Error(`Withdrawal ${withdrawalId} is not in approved state`)
   }
 
-  await prisma.withdrawal.update({
-    where: { id: withdrawalId },
-    data: { status: 'processing' },
-  })
+  await prisma.withdrawal.update({ where: { id: withdrawalId }, data: { status: 'processing' } })
 
   try {
-    // Call isolated signing service — private keys never in this process
     const sigRes = await axios.post(`${SIGNING_SERVICE_URL}/sign-and-broadcast`, {
       coin: withdrawal.coin,
       network: withdrawal.network,
@@ -42,14 +36,20 @@ async function processPayout(job: Job<PayoutJob>) {
 
     const { txHash } = sigRes.data
 
+    // Find the user's wallet for this coin/network to record the tx
+    const wallet = await prisma.wallet.findFirst({
+      where: { userId: withdrawal.userId, coin: withdrawal.coin, network: withdrawal.network },
+    })
+
     await prisma.$transaction([
       prisma.withdrawal.update({
         where: { id: withdrawalId },
-        data: { status: 'completed', txHash, completedAt: new Date() },
+        // confirmedAt is the completion timestamp; use adminNotes for any notes
+        data: { status: 'completed', txHash, confirmedAt: new Date() },
       }),
-      prisma.walletTransaction.create({
+      ...(wallet ? [prisma.walletTransaction.create({
         data: {
-          walletId: withdrawal.walletId,
+          walletId: wallet.id,
           userId: withdrawal.userId,
           type: 'withdrawal',
           amount: withdrawal.amount,
@@ -57,22 +57,22 @@ async function processPayout(job: Job<PayoutJob>) {
           network: withdrawal.network,
           txHash,
           status: 'confirmed',
-          metadata: { withdrawalId },
+          metadata: { withdrawalId } as any,
         },
-      }),
+      })] : []),
     ])
 
     await notificationService.send({
       userId: withdrawal.userId,
       title: 'Withdrawal Sent',
-      body: `${withdrawal.amount} ${withdrawal.coin} has been sent to your wallet. TX: ${txHash.slice(0, 16)}...`,
+      body: `${withdrawal.amount} ${withdrawal.coin} sent. TX: ${txHash.slice(0, 16)}...`,
       type: 'withdrawal_completed',
       data: { withdrawalId, txHash },
     })
   } catch (err: any) {
     await prisma.withdrawal.update({
       where: { id: withdrawalId },
-      data: { status: 'failed', failureReason: err.message },
+      data: { status: 'failed', adminNotes: err.message },
     })
 
     await notificationService.send({
@@ -93,7 +93,7 @@ export const payoutWorker = new Worker<PayoutJob>(
   {
     connection: redis,
     concurrency: 2,
-    limiter: { max: 10, duration: 60_000 }, // 10 payouts per minute max
+    limiter: { max: 10, duration: 60_000 },
   }
 )
 

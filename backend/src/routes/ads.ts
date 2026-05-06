@@ -57,7 +57,7 @@ export default async function adsRoutes(app: FastifyInstance) {
         userId,
         ...body,
         availableAmount: body.totalAmount,
-      },
+      } as any,
     })
     return reply.status(201).send({ success: true, data: ad })
   })

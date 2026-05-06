@@ -10,13 +10,13 @@ export default async function referralRoutes(app: FastifyInstance) {
     const [rewards, totalEarned, totalReferrals] = await Promise.all([
       prisma.referralReward.findMany({
         where: { referrerId: userId },
-        include: { referee: { select: { username: true, fullName: true } } },
+        include: { referred: { select: { username: true, fullName: true } } },
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
       prisma.referralReward.aggregate({
         where: { referrerId: userId, status: 'paid' },
-        _sum: { amount: true },
+        _sum: { rewardAmount: true },
       }),
       prisma.referralReward.count({ where: { referrerId: userId } }),
     ])
@@ -32,7 +32,7 @@ export default async function referralRoutes(app: FastifyInstance) {
       success: true,
       data: {
         rewards,
-        totalEarned: totalEarned._sum.amount ?? 0,
+        totalEarned: totalEarned._sum.rewardAmount ?? 0,
         totalReferrals,
         activeReferrals,
       },

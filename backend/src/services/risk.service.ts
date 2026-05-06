@@ -20,7 +20,7 @@ function calculateScore(factors: RiskFactors): number {
   if (factors.largeVolumeSpike) score += 20
   if (factors.newAccount) score += 10
   if (factors.ipMismatch) score += 15
-  if (factors.multipleDevices && factors.multipleDevices) score += 10
+  if (factors.multipleDevices) score += 10
   return Math.min(score, 100)
 }
 
@@ -35,32 +35,25 @@ export async function recalculateUserRisk(userId: string): Promise<void> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
     include: {
-      kyc: { orderBy: { createdAt: 'desc' } },
+      kycSubmissions: { orderBy: { submittedAt: 'desc' } },
       tradeStats: true,
       sessions: { orderBy: { createdAt: 'desc' }, take: 10 },
     },
   })
 
   const stats = user.tradeStats
-  const kycAttempts = user.kyc.length
+  const kycAttempts = user.kycSubmissions.length
   const failedTrades = stats ? Number(stats.cancelledTrades) + Number(stats.disputedTrades) : 0
   const totalTrades = stats ? Number(stats.totalTrades) : 0
   const disputeRate = totalTrades > 0 ? Number(stats?.disputedTrades ?? 0) / totalTrades : 0
 
   const accountAgeMs = Date.now() - user.createdAt.getTime()
-  const newAccount = accountAgeMs < 7 * 24 * 60 * 60 * 1000 // less than 7 days
+  const newAccount = accountAgeMs < 7 * 24 * 60 * 60 * 1000
 
-  const uniqueIps = new Set(user.sessions.map((s: any) => s.ipAddress)).size
+  const uniqueIps = new Set(user.sessions.map((s) => s.ipAddress)).size
   const multipleDevices = uniqueIps > 5
 
-  const factors: RiskFactors = {
-    kycAttempts,
-    failedTrades,
-    disputeRate,
-    newAccount,
-    multipleDevices,
-  }
-
+  const factors: RiskFactors = { kycAttempts, failedTrades, disputeRate, newAccount, multipleDevices }
   const score = calculateScore(factors)
   const level = scoreToLevel(score)
 
@@ -68,29 +61,28 @@ export async function recalculateUserRisk(userId: string): Promise<void> {
     where: { userId },
     create: {
       userId,
-      score,
-      riskLevel: level,
+      currentScore: score,
+      level: level as any,
       factors: factors as any,
+      lastCalculated: new Date(),
     },
     update: {
-      score,
-      riskLevel: level,
+      currentScore: score,
+      level: level as any,
       factors: factors as any,
-      calculatedAt: new Date(),
+      lastCalculated: new Date(),
     },
   })
 
-  // Auto-flag critical risk users
   if (level === 'critical') {
     await prisma.riskFlag.create({
       data: {
         userId,
         flagType: 'auto_risk_score',
         severity: 'critical',
-        reason: `Automated risk score reached ${score}/100`,
-        metadata: factors as any,
+        details: { reason: `Automated risk score reached ${score}/100`, ...factors } as any,
       },
-    }).catch(() => {}) // ignore duplicate
+    }).catch(() => {})
   }
 }
 
@@ -102,7 +94,7 @@ export async function flagUserForReview(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   await prisma.riskFlag.create({
-    data: { userId, flagType, reason, severity, metadata: metadata ?? {} },
+    data: { userId, flagType, severity, details: { reason, ...(metadata ?? {}) } as any },
   })
   await recalculateUserRisk(userId)
 }

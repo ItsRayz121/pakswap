@@ -228,8 +228,8 @@ export default async function authRoutes(app: FastifyInstance) {
     // Store temp secret (not activated until verified)
     await prisma.userTwoFa.upsert({
       where: { userId: req.user!.sub },
-      create: { userId: req.user!.sub, secret, isEnabled: false },
-      update: { secret, isEnabled: false },
+      create: { userId: req.user!.sub, secret, enabled: false },
+      update: { secret, enabled: false },
     })
     return { success: true, data: { secret, qrCodeUrl } }
   })
@@ -245,7 +245,7 @@ export default async function authRoutes(app: FastifyInstance) {
     if (!valid) return reply.status(401).send({ success: false, error: 'INVALID_TOTP', message: 'Invalid code' })
 
     await prisma.$transaction([
-      prisma.userTwoFa.update({ where: { userId: req.user!.sub }, data: { isEnabled: true } }),
+      prisma.userTwoFa.update({ where: { userId: req.user!.sub }, data: { enabled: true } }),
       prisma.user.update({ where: { id: req.user!.sub }, data: { twoFaEnabled: true } }),
     ])
     return { success: true, message: '2FA enabled' }
@@ -255,14 +255,14 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/2fa/disable', { preHandler: [authenticate] }, async (req, reply) => {
     const { code } = z.object({ code: z.string().length(6) }).parse(req.body)
     const twoFa = await prisma.userTwoFa.findUnique({ where: { userId: req.user!.sub } })
-    if (!twoFa?.secret || !twoFa.isEnabled) return reply.status(400).send({ success: false, error: 'TWO_FA_NOT_ENABLED' })
+    if (!twoFa?.secret || !twoFa.enabled) return reply.status(400).send({ success: false, error: 'TWO_FA_NOT_ENABLED' })
 
     const { authenticator } = await import('otplib')
     const valid = authenticator.verify({ token: code, secret: twoFa.secret })
     if (!valid) return reply.status(401).send({ success: false, error: 'INVALID_TOTP', message: 'Invalid code' })
 
     await prisma.$transaction([
-      prisma.userTwoFa.update({ where: { userId: req.user!.sub }, data: { isEnabled: false } }),
+      prisma.userTwoFa.update({ where: { userId: req.user!.sub }, data: { enabled: false } }),
       prisma.user.update({ where: { id: req.user!.sub }, data: { twoFaEnabled: false } }),
     ])
     return { success: true, message: '2FA disabled' }

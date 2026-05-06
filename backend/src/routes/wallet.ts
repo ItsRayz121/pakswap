@@ -54,7 +54,7 @@ export default async function walletRoutes(app: FastifyInstance) {
     }).parse(req.body)
 
     const method = await prisma.paymentMethod.create({
-      data: { userId: req.user!.sub, ...body },
+      data: { userId: req.user!.sub, displayName: body.accountName, ...body } as any,
     })
     return reply.status(201).send({ success: true, data: method })
   })
