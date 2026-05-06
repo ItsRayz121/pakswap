@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma'
-import { RiskLevel } from '@prisma/client'
+
+type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
 interface RiskFactors {
   kycAttempts?: number

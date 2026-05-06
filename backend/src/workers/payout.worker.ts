@@ -1,7 +1,7 @@
 import { Worker, Job } from 'bullmq'
 import { redis } from '../lib/redis'
 import { prisma } from '../lib/prisma'
-import { notifyUser } from '../services/notification.service'
+import { notificationService } from '../services/notification.service'
 import axios from 'axios'
 
 interface PayoutJob {
@@ -50,17 +50,20 @@ async function processPayout(job: Job<PayoutJob>) {
       prisma.walletTransaction.create({
         data: {
           walletId: withdrawal.walletId,
-          txType: 'withdrawal',
+          userId: withdrawal.userId,
+          type: 'withdrawal',
           amount: withdrawal.amount,
           coin: withdrawal.coin,
-          status: 'completed',
-          reference: txHash,
-          metadata: { withdrawalId, network: withdrawal.network },
+          network: withdrawal.network,
+          txHash,
+          status: 'confirmed',
+          metadata: { withdrawalId },
         },
       }),
     ])
 
-    await notifyUser(withdrawal.userId, {
+    await notificationService.send({
+      userId: withdrawal.userId,
       title: 'Withdrawal Sent',
       body: `${withdrawal.amount} ${withdrawal.coin} has been sent to your wallet. TX: ${txHash.slice(0, 16)}...`,
       type: 'withdrawal_completed',
@@ -72,7 +75,8 @@ async function processPayout(job: Job<PayoutJob>) {
       data: { status: 'failed', failureReason: err.message },
     })
 
-    await notifyUser(withdrawal.userId, {
+    await notificationService.send({
+      userId: withdrawal.userId,
       title: 'Withdrawal Failed',
       body: `Your withdrawal of ${withdrawal.amount} ${withdrawal.coin} could not be processed. Please contact support.`,
       type: 'withdrawal_failed',

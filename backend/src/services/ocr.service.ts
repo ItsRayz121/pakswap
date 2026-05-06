@@ -37,6 +37,7 @@ export async function extractPaymentScreenshot(imageUrl: string, paymentMethod: 
 }
 
 async function runGoogleVision(imageUrl: string): Promise<OcrResult> {
+  // @ts-ignore — optional peer dep; runtime no-op if not installed
   const { ImageAnnotatorClient } = await import('@google-cloud/vision').catch(() => ({ ImageAnnotatorClient: null }))
   if (!ImageAnnotatorClient) throw new Error('Google Vision not available')
 

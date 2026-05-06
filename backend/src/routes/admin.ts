@@ -488,8 +488,8 @@ export default async function adminRoutes(app: FastifyInstance) {
       })
     })
 
-    const { notifyUser } = await import('../services/notification.service')
-    await notifyUser(order.userId, { title: 'Instant Buy Complete!', body: `${order.coinAmount} ${order.coin} credited to your wallet.`, type: 'ib_approved', data: { orderId: id } })
+    const { notificationService } = await import('../services/notification.service')
+    await notificationService.send({ userId: order.userId, title: 'Instant Buy Complete!', body: `${order.coinAmount} ${order.coin} credited to your wallet.`, type: 'ib_approved', data: { orderId: id } })
     return { success: true }
   })
 
@@ -500,8 +500,8 @@ export default async function adminRoutes(app: FastifyInstance) {
     await prisma.adminAuditLog.create({
       data: { adminId: req.user!.sub, action: 'reject_instant_buy', targetId: id, targetType: 'instant_buy_order', metadata: { reason } },
     })
-    const { notifyUser } = await import('../services/notification.service')
-    await notifyUser(order.userId, { title: 'Instant Buy Rejected', body: `Your order was rejected: ${reason}`, type: 'ib_rejected', data: { orderId: id } })
+    const { notificationService } = await import('../services/notification.service')
+    await notificationService.send({ userId: order.userId, title: 'Instant Buy Rejected', body: `Your order was rejected: ${reason}`, type: 'ib_rejected', data: { orderId: id } })
     return { success: true }
   })
 }

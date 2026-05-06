@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { authenticate } from '../middleware/authenticate'
 import { prisma } from '../lib/prisma'
 import { ocrQueue } from '../lib/queues'
-import { notifyUser } from '../services/notification.service'
-import { uploadToS3 } from '../lib/s3'
+import { notificationService } from '../services/notification.service'
+import { uploadFile, SCREENSHOTS_BUCKET } from '../lib/s3'
 import { nanoid } from 'nanoid'
 
 const createOrderSchema = z.object({
@@ -105,7 +105,7 @@ export default async function instantBuyRoutes(app: FastifyInstance) {
 
     const buffer = await data.toBuffer()
     const key = `instant-buy/${id}/proof_${Date.now()}.${data.mimetype.split('/')[1] ?? 'jpg'}`
-    const proofUrl = await uploadToS3(buffer, key, data.mimetype)
+    const proofUrl = await uploadFile(SCREENSHOTS_BUCKET, `instant-buy/${id}`, buffer, data.mimetype)
 
     await prisma.instantBuyOrder.update({
       where: { id },

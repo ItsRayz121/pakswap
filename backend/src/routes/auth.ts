@@ -27,7 +27,9 @@ const loginSchema = z.object({
 export default async function authRoutes(app: FastifyInstance) {
   // POST /api/auth/register
   app.post('/register', async (req, reply) => {
-    const body = registerSchema.parse(req.body)
+    const body = registerSchema.parse(req.body) as {
+      email: string; phone: string; fullName: string; password: string; referralCode?: string
+    }
     const result = await registerUser(body)
     return reply.status(201).send({ success: true, data: result })
   })
@@ -50,8 +52,9 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /api/auth/login
   app.post('/login', async (req, reply) => {
     const body = loginSchema.parse(req.body)
+    const loginBody = body as { emailOrPhone: string; password: string }
     const result = await loginUser({
-      ...body,
+      ...loginBody,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     })

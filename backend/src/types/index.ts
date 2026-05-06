@@ -3,6 +3,7 @@ import { FastifyRequest } from 'fastify'
 export interface JwtPayload {
   sub: string
   role: string
+  type?: string
   iat?: number
   exp?: number
 }
@@ -31,8 +32,10 @@ export interface TradeRoom {
   participants: Set<string>
 }
 
-declare module 'fastify' {
-  interface FastifyRequest {
-    user?: JwtPayload
+// Augment @fastify/jwt so request.user is typed correctly everywhere
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    payload: JwtPayload
+    user: JwtPayload
   }
 }
