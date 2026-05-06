@@ -2,236 +2,319 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-type Step = 1 | 2 | 3 | 4 | 5
+type Step = 1 | 2 | 3 | 4 | 'submitted'
 
-const steps = [
-  { n: 1, title: 'Step 1: CNIC Upload', sub: 'Completed', status: 'done' },
-  { n: 2, title: 'Step 2: Selfie Check', sub: 'In Progress', status: 'active' },
-  { n: 3, title: 'Step 3: Address Proof', sub: 'For higher limits', status: 'pending' },
-  { n: 4, title: 'Step 4: Review', sub: 'Awaiting submission', status: 'pending' },
-]
+export default function KYCPage() {
+  const [step, setStep] = useState<Step>(2)
+  const [livenessStep, setLivenessStep] = useState(0)
+  const [selfieCapt, setSelfieCapt] = useState(false)
 
-export default function KycPage() {
-  const [activeStep, setActiveStep] = useState<Step>(2)
-  const [selfieDone, setSelfieDone] = useState(false)
-  const [addrUploaded, setAddrUploaded] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const startLiveness = () => {
+    let i = 0
+    const go = () => {
+      if (i >= 4) { setSelfieCapt(true); return }
+      setLivenessStep(i + 1)
+      i++
+      setTimeout(go, 700)
+    }
+    go()
+  }
+
+  const steps = [
+    { n: 1, label: 'Step 1: CNIC Upload', sub: 'Completed', done: true },
+    { n: 2, label: 'Step 2: Selfie Check', sub: 'In Progress', active: step === 2 },
+    { n: 3, label: 'Step 3: Address Proof', sub: 'For higher limits', locked: step < 3 },
+    { n: 4, label: 'Step 4: Review', sub: 'Awaiting submission', locked: step < 4 },
+  ]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
-      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, color: '#92400e' }}>⚠️ Verification Required</div>
-          <Link href="/marketplace"><button style={{ padding: '6px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, cursor: 'pointer', background: 'white' }}>Skip for now</button></Link>
+    <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f8fafc', minHeight: '100vh' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', background: 'white', borderBottom: '1px solid #e2e8f0' }}>
+        <Link href="/" style={{ fontWeight: 800, fontSize: '20px', textDecoration: 'none', color: '#1e293b' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, color: '#92400e' }}>⚠️ Verification Required</div>
+          <Link href="/marketplace"><button style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: '13px' }}>Skip for now</button></Link>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 32, alignItems: 'start' }}>
-          {/* Left Sidebar */}
-          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Identity Verification</div>
-            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Complete all steps to unlock full trading</div>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px', display: 'grid', gridTemplateColumns: '300px 1fr', gap: '32px', alignItems: 'start' }}>
+        {/* Left: Steps */}
+        <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '4px' }}>Identity Verification</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Complete all steps to unlock full trading</div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {steps.map(s => {
-                const isDone = s.status === 'done' || (s.n === 2 && selfieDone && activeStep > 2) || (s.n === 3 && addrUploaded && activeStep > 3)
-                const isActive = activeStep === s.n
-                return (
-                  <div key={s.n} onClick={() => setActiveStep(s.n as Step)} style={{ background: 'white', border: `1.5px solid ${isDone ? '#10b981' : isActive ? '#3b82f6' : '#e2e8f0'}`, borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', background: isDone ? '#ecfdf5' : isActive ? '#eff6ff' : 'white', boxShadow: isActive ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none' } as any}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: isDone ? '#10b981' : isActive ? '#2563eb' : '#e2e8f0', color: isDone || isActive ? 'white' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{isDone ? '✓' : s.n}</div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: isDone || isActive ? '#1e293b' : '#94a3b8' }}>{s.title}</div>
-                      <div style={{ fontSize: 12, color: isDone ? '#10b981' : isActive ? '#2563eb' : '#94a3b8' }}>{isDone ? 'Completed' : s.sub}</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '20px 0' }} />
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Why verify?</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#64748b' }}>
-              <div>✅ Trade up to 500,000 PKR/day</div>
-              <div>✅ Access all payment methods</div>
-              <div>✅ Merchant eligibility</div>
-              <div>✅ Dispute protection</div>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+            {steps.map(s => (
+              <div key={s.n} onClick={() => setStep(s.n as Step)} style={{
+                background: s.done ? '#ecfdf5' : s.active ? '#eff6ff' : 'white',
+                border: `1.5px solid ${s.done ? '#10b981' : s.active ? '#3b82f6' : '#e2e8f0'}`,
+                borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer',
+                boxShadow: s.active ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none',
+              }}>
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                  background: s.done ? '#10b981' : s.active ? '#2563eb' : '#e2e8f0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: s.done || s.active ? 'white' : '#94a3b8', fontWeight: 700, fontSize: s.done ? '16px' : '14px',
+                }}>{s.done ? '✓' : s.n}</div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: s.locked ? '#94a3b8' : '#1e293b' }}>{s.label}</div>
+                  <div style={{ fontSize: '12px', color: s.done ? '#10b981' : s.active ? '#2563eb' : '#94a3b8' }}>{s.sub}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Right Panel */}
-          <div>
-            {/* Step 1: CNIC */}
-            {activeStep === 1 && (
-              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✓</div>
-                  <div><div style={{ fontSize: 18, fontWeight: 800 }}>CNIC Upload</div><div style={{ color: '#10b981', fontSize: 13, fontWeight: 600 }}>Completed successfully</div></div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  {['Front', 'Back'].map(side => (
-                    <div key={side} style={{ border: '2px solid #10b981', borderRadius: 14, padding: '36px 24px', textAlign: 'center', background: '#ecfdf5' }}>
-                      <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#065f46' }}>CNIC {side} Uploaded</div>
-                      <div style={{ fontSize: 12, color: '#6ee7b7', marginTop: 4 }}>cnic_{side.toLowerCase()}.jpg</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: 10, padding: '12px 16px', marginTop: 16, fontSize: 13, color: '#065f46' }}>✓ OCR extracted: Name matches account. CNIC number detected. No issues found.</div>
-                <button onClick={() => setActiveStep(2)} style={{ marginTop: 16, padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Continue to Selfie →</button>
+          <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '0 0 16px' }} />
+          <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px' }}>Why verify?</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#64748b' }}>
+            <div>✅ Trade up to 500,000 PKR/day</div>
+            <div>✅ Access all payment methods</div>
+            <div>✅ Merchant eligibility</div>
+            <div>✅ Dispute protection</div>
+          </div>
+        </div>
+
+        {/* Right: Active step content */}
+        <div>
+          {/* Step 1: CNIC */}
+          {step === 1 && (
+            <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>✓</div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>CNIC Upload</div><div style={{ color: '#10b981', fontSize: '13px', fontWeight: 600 }}>Completed successfully</div></div>
               </div>
-            )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                {['Front', 'Back'].map(side => (
+                  <div key={side} style={{ border: '2px solid #10b981', borderRadius: '14px', padding: '36px 24px', textAlign: 'center', background: '#ecfdf5' }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#065f46' }}>CNIC {side} Uploaded</div>
+                    <div style={{ fontSize: '12px', color: '#6ee7b7', marginTop: '4px' }}>cnic_{side.toLowerCase()}.jpg</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#d1fae5', border: '1px solid #6ee7b7', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', color: '#065f46', marginBottom: '16px' }}>✓ OCR extracted: Name matches account. CNIC number detected. No issues found.</div>
+              <button onClick={() => setStep(2)} style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>Continue to Selfie →</button>
+            </div>
+          )}
 
-            {/* Step 2: Selfie */}
-            {activeStep === 2 && (
-              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700 }}>2</div>
-                  <div><div style={{ fontSize: 18, fontWeight: 800 }}>Selfie Verification</div><div style={{ color: '#2563eb', fontSize: 13 }}>Live face match — quick and easy</div></div>
-                </div>
+          {/* Step 2: Selfie */}
+          {step === 2 && (
+            <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700 }}>2</div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>Selfie Verification</div><div style={{ color: '#2563eb', fontSize: '13px' }}>Live face match — quick and easy</div></div>
+              </div>
 
-                <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                  {!selfieDone ? (
-                    <div onClick={() => setSelfieDone(true)} style={{ width: 240, height: 300, borderRadius: 20, background: 'linear-gradient(135deg,#1e293b,#334155)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
-                      <div style={{ width: 120, height: 150, borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', background: 'rgba(255,255,255,0.1)', border: '3px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>👤</div>
-                      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 600 }}>Click to Start Camera</div>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Liveness detection enabled</div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div style={{ width: 240, height: 300, borderRadius: 20, background: 'linear-gradient(135deg,#d1fae5,#a7f3d0)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 80 }}>😊</div>
-                      <div style={{ marginTop: 12, color: '#10b981', fontWeight: 700, fontSize: 15 }}>✓ Selfie Captured Successfully</div>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: '#92400e', marginBottom: 20 }}>
-                  <strong>Tips for a good selfie:</strong>
-                  <ul style={{ margin: '8px 0 0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <li>Face should be fully visible, no glasses</li>
-                    <li>Good lighting — avoid shadows and glare</li>
-                    <li>Look directly at the camera</li>
-                  </ul>
-                </div>
-
-                <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 20 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: '#374151' }}>Liveness Check Steps:</div>
-                  {['Look straight at camera', 'Slowly turn left', 'Slowly turn right', 'Smile naturally'].map((item, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, marginBottom: 8 }}>
-                      <span style={{ width: 24, height: 24, borderRadius: '50%', background: selfieDone ? '#d1fae5' : '#e2e8f0', color: selfieDone ? '#059669' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{selfieDone ? '✓' : i + 1}</span>
-                      {item}
-                    </div>
-                  ))}
-                </div>
-
-                {!selfieDone ? (
-                  <button onClick={() => setSelfieDone(true)} style={{ width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>📷 Start Liveness Check</button>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                {!selfieCapt ? (
+                  <div onClick={startLiveness} style={{ width: '240px', height: '300px', borderRadius: '20px', background: 'linear-gradient(135deg,#1e293b,#334155)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', cursor: 'pointer' }}>
+                    <div style={{ width: '120px', height: '150px', borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', background: 'rgba(255,255,255,0.1)', border: '3px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>👤</div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', fontWeight: 600 }}>Click to Start Camera</div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>Liveness detection enabled</div>
+                  </div>
                 ) : (
-                  <button onClick={() => setActiveStep(3)} style={{ width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Continue to Address Proof →</button>
+                  <div>
+                    <div style={{ width: '240px', height: '300px', borderRadius: '20px', background: 'linear-gradient(135deg,#d1fae5,#a7f3d0)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '80px' }}>😊</div>
+                    <div style={{ marginTop: '12px', color: '#10b981', fontWeight: 700, fontSize: '15px' }}>✓ Selfie Captured Successfully</div>
+                  </div>
                 )}
               </div>
-            )}
 
-            {/* Step 3: Address */}
-            {activeStep === 3 && (
-              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#94a3b8' }}>3</div>
-                  <div><div style={{ fontSize: 18, fontWeight: 800 }}>Address Proof</div><div style={{ color: '#64748b', fontSize: 13 }}>For higher trading limits (optional)</div></div>
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', color: '#92400e', marginBottom: '20px' }}>
+                <strong>Tips for a good selfie:</strong>
+                <ul style={{ margin: '8px 0 0 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li>Face should be fully visible, no glasses</li>
+                  <li>Good lighting — avoid shadows and glare</li>
+                  <li>Look directly at the camera</li>
+                  <li>Remove hat, hijab can stay on</li>
+                </ul>
+              </div>
+
+              <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: '#374151' }}>Liveness Check Steps:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {['Look straight at camera', 'Slowly turn left', 'Slowly turn right', 'Smile naturally'].map((label, i) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: livenessStep > i ? '#065f46' : '#374151' }}>
+                      <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: livenessStep > i ? '#10b981' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: livenessStep > i ? 'white' : '#94a3b8', flexShrink: 0 }}>{livenessStep > i ? '✓' : i + 1}</span>
+                      {label}
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Upload one of the following:</div>
-                  {['Utility Bill', 'Bank Statement', 'NADRA Certificate'].map((doc, i) => (
-                    <label key={doc} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 14, border: '1.5px solid #e2e8f0', borderRadius: 10, cursor: 'pointer', marginBottom: 8 }}>
+              {!selfieCapt ? (
+                <button onClick={startLiveness} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '15px' }}>📷 Start Liveness Check</button>
+              ) : (
+                <button onClick={() => setStep(3)} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#059669', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '15px' }}>Continue to Address Proof →</button>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Address */}
+          {step === 3 && (
+            <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#94a3b8', fontWeight: 700 }}>3</div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>Address Proof</div><div style={{ color: '#64748b', fontSize: '13px' }}>For higher trading limits (optional)</div></div>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>Upload one of the following:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { label: 'Utility Bill', note: 'Not older than 3 months' },
+                    { label: 'Bank Statement', note: 'Last 90 days' },
+                    { label: 'NADRA Certificate', note: 'Current' },
+                  ].map((opt, i) => (
+                    <label key={opt.label} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer' }}>
                       <input type="radio" name="addr" defaultChecked={i === 0} style={{ accentColor: '#2563eb' }} />
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{doc}</div>
-                      <div style={{ fontSize: 12, color: '#64748b', marginLeft: 'auto' }}>{['Not older than 3 months', 'Last 90 days', 'Current'][i]}</div>
+                      <div style={{ fontWeight: 600, fontSize: '14px' }}>{opt.label}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginLeft: 'auto' }}>{opt.note}</div>
                     </label>
                   ))}
                 </div>
-
-                {!addrUploaded ? (
-                  <div onClick={() => setAddrUploaded(true)} style={{ border: '2px dashed #cbd5e1', borderRadius: 14, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: '#f8fafc', transition: 'all 0.2s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#3b82f6'; (e.currentTarget as HTMLElement).style.background = '#eff6ff' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#cbd5e1'; (e.currentTarget as HTMLElement).style.background = '#f8fafc' }}>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>Click to Upload Document</div>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>PDF, JPG, PNG — max 10MB</div>
-                  </div>
-                ) : (
-                  <div style={{ border: '2px solid #10b981', borderRadius: 14, padding: '36px 24px', textAlign: 'center', background: '#ecfdf5' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-                    <div style={{ fontWeight: 700, color: '#065f46' }}>Document Uploaded</div>
-                    <div style={{ fontSize: 12, color: '#6ee7b7', marginTop: 4 }}>utility_bill.pdf (2.1MB)</div>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                  <button onClick={() => setActiveStep(2)} style={{ padding: '12px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>← Back</button>
-                  <button onClick={() => setActiveStep(4)} style={{ flex: 1, padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Continue to Review →</button>
-                </div>
-                <button onClick={() => setActiveStep(4)} style={{ width: '100%', padding: '10px', border: 'none', borderRadius: 10, fontSize: 14, cursor: 'pointer', background: 'transparent', color: '#64748b', marginTop: 8 }}>Skip for now (lower limits)</button>
               </div>
-            )}
+              <div style={{ border: '2px dashed #cbd5e1', borderRadius: '14px', padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: '#f8fafc' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📄</div>
+                <div style={{ fontWeight: 700, fontSize: '14px' }}>Click to Upload Document</div>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>PDF, JPG, PNG — max 10MB</div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                <button onClick={() => setStep(2)} style={{ padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: '14px' }}>← Back</button>
+                <button onClick={() => setStep(4)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>Continue to Review →</button>
+              </div>
+              <button onClick={() => setStep(4)} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: '13px', marginTop: '8px' }}>Skip for now (lower limits)</button>
+            </div>
+          )}
 
-            {/* Step 4: Review */}
-            {activeStep === 4 && !submitted && (
-              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                  <div style={{ fontSize: 36 }}>🔍</div>
-                  <div><div style={{ fontSize: 18, fontWeight: 800 }}>Review & Submit</div><div style={{ color: '#64748b', fontSize: 13 }}>Check everything before submitting</div></div>
-                </div>
-
-                <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Submission Summary</div>
-                  {[['CNIC Front & Back', '✓ Uploaded'], ['Selfie / Liveness', selfieDone ? '✓ Captured' : '✕ Not done'], ['Address Proof', addrUploaded ? '✓ Uploaded' : 'Skipped'], ['KYC Level', addrUploaded ? 'Full KYC (500k PKR/day)' : 'Basic KYC (50k PKR/day)']].map(([k, v]) => (
-                    <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 10 }}>
-                      <span style={{ color: '#64748b' }}>{k}</span>
-                      <span style={{ fontWeight: 600, color: v?.startsWith('✓') ? '#10b981' : v?.startsWith('✕') ? '#ef4444' : '#1d4ed8' }}>{v}</span>
+          {/* Step 4: Review */}
+          {step === 4 && (
+            <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ fontSize: '36px' }}>🔍</div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>Review &amp; Submit</div><div style={{ color: '#64748b', fontSize: '13px' }}>Check everything before submitting</div></div>
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px' }}>Submission Summary</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
+                  {[
+                    ['CNIC Front & Back', '✓ Uploaded'],
+                    ['Selfie / Liveness', '✓ Captured'],
+                    ['Address Proof', '✓ Uploaded'],
+                    ['KYC Level', 'Full KYC (500k PKR/day)', '#1d4ed8'],
+                  ].map(([label, val, color]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#64748b' }}>{label}</span>
+                      <span style={{ color: color || '#10b981', fontWeight: 600 }}>{val}</span>
                     </div>
                   ))}
                 </div>
-
-                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#1e40af' }}>
-                  ⏱ Average review time: <strong>15 min – 2 hours</strong> during business hours (9AM–9PM PKT).
-                </div>
-                <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10, padding: 14, fontSize: 13, color: '#92400e', marginBottom: 20 }}>
-                  ⚠️ <strong>Important:</strong> All documents must match your registered name exactly. Submitting fake or altered documents will result in permanent account ban.
-                </div>
-
-                <button onClick={() => setSubmitted(true)} style={{ width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>✅ Submit for Review</button>
-                <button onClick={() => setActiveStep(3)} style={{ width: '100%', padding: '12px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>← Go Back</button>
               </div>
-            )}
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px 16px', fontSize: '13px', color: '#1d4ed8', marginBottom: '20px' }}>
+                ⏱ Average review time: <strong>15 min – 2 hours</strong> during business hours (9AM–9PM PKT). You'll receive an SMS and email when approved.
+              </div>
+              <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '10px', padding: '14px', fontSize: '13px', color: '#92400e', marginBottom: '20px' }}>
+                ⚠️ <strong>Important:</strong> All documents must match your registered name exactly. Submitting fake or altered documents will result in permanent account ban.
+              </div>
+              <button onClick={() => setStep('submitted')} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#059669', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>✅ Submit for Review</button>
+              <button onClick={() => setStep(3)} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: '13px' }}>← Go Back</button>
+            </div>
+          )}
 
-            {/* Submitted */}
-            {submitted && (
-              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: 28, textAlign: 'center' }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-                <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>KYC Submitted — Under Review</div>
-                <div style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>Both layers must pass before your account is approved</div>
+          {/* Submitted — Two-Layer Status */}
+          {step === 'submitted' && (
+            <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📋</div>
+                <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '6px' }}>KYC Submitted — Under Review</div>
+                <div style={{ fontSize: '14px', color: '#64748b' }}>Both layers must pass before your account is approved</div>
+              </div>
 
-                <div style={{ border: '2px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', marginBottom: 24, textAlign: 'left' }}>
-                  <div style={{ background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', padding: '12px 16px', color: 'white', fontWeight: 800, fontSize: 14 }}>🔐 Two-Layer KYC Review — MANDATORY</div>
-                  <div style={{ padding: 16, background: '#f0f9ff', borderBottom: '1px solid #e2e8f0' }}>
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Layer 1 — AI Document Scan <span style={{ background: '#fef3c7', color: '#d97706', borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700, marginLeft: 4 }}>⚙️ Processing</span></div>
-                    <div style={{ fontSize: 13, color: '#64748b' }}>OCR verification, face match, liveness check, tamper detection</div>
+              {/* Two-Layer Box */}
+              <div style={{ background: '#f0f7ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', marginBottom: '20px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#dbeafe', borderBottom: '1px solid #bfdbfe' }}>
+                  <span style={{ fontWeight: 700, fontSize: '14px', color: '#1e3a5f' }}>🔐 KYC Verification — Mandatory Two-Layer Review</span>
+                  <span style={{ marginLeft: 'auto', background: '#dc2626', color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700 }}>BOTH REQUIRED</span>
+                </div>
+
+                {/* Layer 1 AI */}
+                <div style={{ borderBottom: '1px solid #bfdbfe' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: '#eff6ff' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#2563eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>1</div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f' }}>AI Automated Scan</div>
+                      <div style={{ fontSize: '12px', color: '#3b82f6' }}>OCR · Face Match · Liveness · Duplicate Check</div>
+                    </div>
+                    <span style={{ marginLeft: 'auto', background: '#d1fae5', color: '#059669', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>✓ AI Passed</span>
                   </div>
-                  <div style={{ padding: 16 }}>
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>Layer 2 — Human Review <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700, marginLeft: 4 }}>MANDATORY</span></div>
-                    <div style={{ fontSize: 13, color: '#64748b' }}>Compliance officer reviews all documents. SLA: 2 hours. Cannot be bypassed.</div>
+                  <div style={{ padding: '10px 18px' }}>
+                    {[
+                      ['CNIC OCR', 'Name extracted: Muhammad Usman · ID: 35201-XXXXXXX-X', 'PASS'],
+                      ['CNIC Authenticity', 'Layout, font, and format match genuine NADRA CNIC', 'PASS'],
+                      ['Face Match', 'Selfie vs CNIC photo similarity: 91.4% (threshold: 85%)', '91.4%'],
+                      ['Liveness Detection', 'Real person confirmed, no photo spoof detected', 'PASS'],
+                      ['Duplicate Check', 'No existing account found with this CNIC or face', 'CLEAR'],
+                      ['Sanctions Screening', 'Not on OFAC, UN, or Pakistan designated lists', 'CLEAR'],
+                    ].map(([label, detail, badge]) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', marginBottom: '8px' }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', flexShrink: 0 }}>✓</div>
+                        <div style={{ flex: 1 }}><strong>{label}</strong> — {detail}</div>
+                        <span style={{ background: '#d1fae5', color: '#065f46', padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, whiteSpace: 'nowrap' }}>{badge}</span>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 0 4px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>AI Confidence</span>
+                      <div style={{ flex: 1, height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: '93%', height: '100%', background: '#059669', borderRadius: '3px' }}></div>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#059669', whiteSpace: 'nowrap' }}>93%</span>
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <Link href="/marketplace" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Continue Trading (Basic)</button></Link>
-                  <Link href="/dashboard" style={{ flex: 1, textDecoration: 'none' }}><button style={{ width: '100%', padding: '14px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Go to Dashboard</button></Link>
+                {/* Layer 2 Human */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: '#fffbeb' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#d97706', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>2</div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#78350f' }}>Human Admin Review <span style={{ background: '#fef3c7', color: '#92400e', padding: '1px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, marginLeft: '6px' }}>MANDATORY</span></div>
+                      <div style={{ fontSize: '12px', color: '#92400e' }}>A trained reviewer checks every KYC — no exceptions</div>
+                    </div>
+                    <span style={{ marginLeft: 'auto', background: '#fef3c7', color: '#92400e', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>⏳ In Review</span>
+                  </div>
+                  <div style={{ padding: '14px 18px', background: '#fffbeb' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>KYC Reviewer assigned</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>Currently reviewing your documents visually</div>
+                      </div>
+                      <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>SLA</div>
+                        <div style={{ fontSize: '14px', fontWeight: 800, color: '#d97706' }}>~2 hrs</div>
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.6)', borderRadius: '10px', padding: '12px', fontSize: '13px', color: '#92400e', marginBottom: '14px' }}>
+                      🔍 <strong>What the reviewer checks:</strong> Document quality, name consistency, photo clarity, address document validity, any red flags AI may have missed
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.7 }}>
+                      ✉️ You'll receive an <strong>SMS and email</strong> once the human review is complete.<br />
+                      📅 Submitted: <strong>05 May 2026, 2:30 PM</strong> · Expected by: <strong>4:30 PM PKT</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+
+              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '14px', fontSize: '13px', color: '#166534', marginBottom: '20px' }}>
+                ✅ <strong>AI scan passed (Layer 1).</strong> Your application is now in the human review queue (Layer 2). Most applications are approved within 2 hours during business hours (9AM–9PM PKT).
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <Link href="/marketplace" style={{ flex: 1 }}><button style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>Browse Marketplace</button></Link>
+                <Link href="/wallet" style={{ flex: 1 }}><button style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', fontSize: '14px' }}>Go to Wallet</button></Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
