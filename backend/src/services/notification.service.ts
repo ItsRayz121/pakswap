@@ -22,8 +22,8 @@ export const notificationService = {
       },
     })
 
-    // Queue for SMS/email/push delivery
-    await notificationQueue.add('send', input, { attempts: 3, backoff: { type: 'exponential', delay: 5000 } })
+    // Queue for SMS/email/push delivery (skipped when Redis/BullMQ unavailable)
+    await notificationQueue?.add('send', input, { attempts: 3, backoff: { type: 'exponential', delay: 5000 } })
   },
 
   async markRead(userId: string, notificationId: string): Promise<void> {

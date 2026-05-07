@@ -79,8 +79,8 @@ export async function initiateTrade(buyerId: string, adId: string, fiatAmount: n
   // Lock escrow
   await lockEscrow(trade.id, sellerId, ad.coin, ad.fiat, coinAmount)
 
-  // Set Redis timer for auto-expiry
-  await redis.setex(`trade:timer:${trade.id}`, PAYMENT_WINDOW, '1')
+  // Set Redis timer for auto-expiry (best-effort — no Redis = no server-side expiry countdown)
+  if (redis) await redis.setex(`trade:timer:${trade.id}`, PAYMENT_WINDOW, '1')
 
   // System message in chat
   await prisma.tradeMessage.create({
@@ -113,11 +113,13 @@ export async function claimPayment(tradeId: string, buyerId: string, proofBuffer
     throw Object.assign(new Error('Trade is not awaiting payment'), { code: 'INVALID_STATE', statusCode: 400 })
   }
 
-  // Check timer not expired
-  const timerExists = await redis.exists(`trade:timer:${tradeId}`)
-  if (!timerExists) {
-    await prisma.trade.update({ where: { id: tradeId }, data: { status: 'expired' } })
-    throw Object.assign(new Error('Trade payment window has expired'), { code: 'TRADE_EXPIRED', statusCode: 400 })
+  // Check timer not expired (only when Redis is available)
+  if (redis) {
+    const timerExists = await redis.exists(`trade:timer:${tradeId}`)
+    if (!timerExists) {
+      await prisma.trade.update({ where: { id: tradeId }, data: { status: 'expired' } })
+      throw Object.assign(new Error('Trade payment window has expired'), { code: 'TRADE_EXPIRED', statusCode: 400 })
+    }
   }
 
   const fileUrl = await uploadFile(SCREENSHOTS_BUCKET, `payment-proofs/${tradeId}`, proofBuffer, mimeType)
@@ -138,8 +140,8 @@ export async function claimPayment(tradeId: string, buyerId: string, proofBuffer
     data: { status: 'payment_claimed', paymentClaimedAt: new Date() },
   })
 
-  // Queue Layer 1 OCR verification
-  await ocrQueue.add('payment-proof-ocr', {
+  // Queue Layer 1 OCR verification (skipped when Redis/BullMQ unavailable)
+  await ocrQueue?.add('payment-proof-ocr', {
     verificationId: verification.id,
     tradeId,
     fileUrl,
@@ -180,7 +182,7 @@ export async function cancelTrade(tradeId: string, userId: string, reason: strin
   const { refundEscrow } = await import('./escrow.service')
   await refundEscrow(tradeId, userId, reason)
 
-  await redis.del(`trade:timer:${tradeId}`)
+  if (redis) await redis.del(`trade:timer:${tradeId}`)
 
   // Track cancellation for risk scoring
   await prisma.userTradeStats.upsert({
@@ -207,7 +209,7 @@ export async function getTradeRoom(tradeId: string, userId: string) {
     throw Object.assign(new Error('Not a participant in this trade'), { code: 'FORBIDDEN', statusCode: 403 })
   }
 
-  const ttl = await redis.ttl(`trade:timer:${tradeId}`)
+  const ttl = redis ? await redis.ttl(`trade:timer:${tradeId}`) : -1
 
   return { ...trade, remainingSeconds: ttl > 0 ? ttl : 0 }
 }

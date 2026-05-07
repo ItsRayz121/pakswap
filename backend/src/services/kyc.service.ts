@@ -59,8 +59,8 @@ export async function submitKyc(
     data: { kycStatus: 'pending', kycAttempts: { increment: 1 } },
   })
 
-  // Queue Layer 1 AI processing
-  await ocrQueue.add('kyc-ocr', {
+  // Queue Layer 1 AI processing (skipped when Redis/BullMQ unavailable)
+  await ocrQueue?.add('kyc-ocr', {
     submissionId: submission.id,
     userId,
     level,

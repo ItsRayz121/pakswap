@@ -1,5 +1,4 @@
 import { prisma } from '../lib/prisma'
-import { depositQueue } from '../lib/queues'
 import { logger } from '../lib/logger'
 import { deriveDepositAddress, getNetworkFee } from '../lib/blockchain'
 
