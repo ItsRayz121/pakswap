@@ -60,7 +60,7 @@ export default function MarketplacePage() {
   const [marketRate, setMarketRate] = useState<number | null>(null)
 
   const [modal, setModal] = useState<Ad | null>(null)
-  const [pkrAmount, setPkrAmount] = useState('5000')
+  const [pkrAmount, setPkrAmount] = useState('')
   const [selectedPm, setSelectedPm] = useState(0)
   const [tradeLoading, setTradeLoading] = useState(false)
   const [tradeError, setTradeError] = useState('')

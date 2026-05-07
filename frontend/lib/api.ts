@@ -135,6 +135,10 @@ export const instantBuyApi = {
     api.post(`/instant-buy/orders/${id}/confirm-deposit`, { txHash }),
 }
 
+export const referralApi = {
+  get: () => api.get('/referral'),
+}
+
 export const adminApi = {
   stats: () => api.get('/admin/dashboard/stats'),
   kycQueue: (params?: any) => api.get('/admin/kyc/queue', { params }),

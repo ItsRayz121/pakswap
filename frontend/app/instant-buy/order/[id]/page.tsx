@@ -64,8 +64,8 @@ function OrderForm() {
   const [rate, setRate] = useState<number | null>(null)
   const [rateLoading, setRateLoading] = useState(true)
 
-  const [pkrAmt, setPkrAmt] = useState('10000')
-  const [coinAmt, setCoinAmt] = useState('1')
+  const [pkrAmt, setPkrAmt] = useState('')
+  const [coinAmt, setCoinAmt] = useState('')
   const [addr, setAddr] = useState('')
   const [addrValid, setAddrValid] = useState<boolean | null>(null)
   const [checked, setChecked] = useState(false)
@@ -79,7 +79,6 @@ function OrderForm() {
       const r = res.data?.data?.rate ?? res.data?.rate ?? res.data?.data
       if (typeof r === 'number') {
         setRate(r)
-        if (isPkr) setCoinAmt((10000 / r).toFixed(6))
       }
     }).catch(() => {}).finally(() => setRateLoading(false))
   }, [tokenSym, isPkr])
@@ -292,12 +291,12 @@ function OrderForm() {
           {/* Rate breakdown */}
           <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
             {(isPkr ? [
-              [`Market rate`, `1 ${tokenSym} = PKR ${asset.price_pkr.toLocaleString()}`],
-              [`Spread (${asset.spread}%)`, `+ PKR ${spreadPkr.toLocaleString()}`],
-              [`Your rate`, `1 ${tokenSym} = PKR ${Math.round(effectiveRate).toLocaleString()}`],
+              [`Rate`, rate ? `1 ${tokenSym} = PKR ${Math.round(rate).toLocaleString()}` : '...'],
+              [`Fee (1%)`, rate && coinAmt ? `PKR ${Math.round(parseFloat(coinAmt) * rate * 0.01).toLocaleString()}` : '—'],
+              [`You receive`, coinAmt ? `${(parseFloat(coinAmt) * 0.99 || 0).toFixed(6)} ${tokenSym}` : '—'],
             ] : [
-              [`Market price`, `1 ${tokenSym} = $${asset.price_usd.toLocaleString()} USDT`],
-              [`Spread`, `${asset.spread}%`],
+              [`Rate`, rate ? `1 ${tokenSym} = PKR ${Math.round(rate).toLocaleString()}` : '...'],
+              [`Fee (0.5%)`, coinAmt ? `${(parseFloat(coinAmt) * 0.005 || 0).toFixed(6)} ${tokenSym}` : '—'],
             ]).map(([l, v], i, arr) => (
               <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '5px 0', borderTop: i === arr.length - 1 && isPkr ? '1px solid #e2e8f0' : 'none', marginTop: i === arr.length - 1 && isPkr ? '6px' : 0, paddingTop: i === arr.length - 1 && isPkr ? '10px' : '5px', fontWeight: i === arr.length - 1 ? 700 : 400 }}>
                 <span style={{ color: i === arr.length - 1 ? '#1e293b' : '#64748b' }}>{l}</span>
