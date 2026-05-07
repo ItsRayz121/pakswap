@@ -7,6 +7,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout'
 import { marketplaceApi, tradesApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { toast } from '../../components/ui/toaster'
+import { KycGateModal } from '@/components/KycGateModal'
 
 function NewTradeContent() {
   const router = useRouter()
@@ -15,6 +16,9 @@ function NewTradeContent() {
   const { user } = useAuthStore()
   const [fiatAmount, setFiatAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
+  const [kycGate, setKycGate] = useState(false)
+  const userKycLevel = (user?.kycLevel ?? 'none') as 'none' | 'basic' | 'full'
+  const userKycApproved = user?.kycStatus === 'approved'
 
   const { data: adData, isLoading } = useQuery({
     queryKey: ['ad', adId],
@@ -34,13 +38,25 @@ function NewTradeContent() {
     : false
 
   const tradeMutation = useMutation({
-    mutationFn: () => tradesApi.initiate({ adId, fiatAmount: parseFloat(fiatAmount), paymentMethod }),
+    mutationFn: () => {
+      if (!userKycApproved || userKycLevel === 'none') {
+        setKycGate(true)
+        throw new Error('KYC_REQUIRED')
+      }
+      return tradesApi.initiate({ adId, fiatAmount: parseFloat(fiatAmount), paymentMethod })
+    },
     onSuccess: (res) => {
       const tradeId = res.data?.data?.id
       toast({ type: 'success', title: 'Trade Started!', description: 'Crypto has been locked in escrow.' })
       router.push(`/trade/${tradeId}`)
     },
-    onError: (err: any) => toast({ type: 'error', title: 'Failed', description: err.response?.data?.message }),
+    onError: (err: any) => {
+      if (err?.response?.data?.error === 'KYC_REQUIRED' || err?.message === 'KYC_REQUIRED') {
+        setKycGate(true)
+        return
+      }
+      toast({ type: 'error', title: 'Failed', description: err.response?.data?.message })
+    },
   })
 
   if (!adId) return (
@@ -178,6 +194,7 @@ function NewTradeContent() {
           </button>
         </div>
       </div>
+      <KycGateModal open={kycGate} onClose={() => setKycGate(false)} reason="trade" currentLevel={userKycLevel} />
     </DashboardLayout>
   )
 }

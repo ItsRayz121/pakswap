@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { marketplaceApi, tradesApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { KycGateModal } from '@/components/KycGateModal'
 
 interface Ad {
   id: string
@@ -63,6 +64,22 @@ export default function MarketplacePage() {
   const [selectedPm, setSelectedPm] = useState(0)
   const [tradeLoading, setTradeLoading] = useState(false)
   const [tradeError, setTradeError] = useState('')
+  const [kycGate, setKycGate] = useState(false)
+
+  const userKycLevel = (user?.kycLevel ?? 'none') as 'none' | 'basic' | 'full'
+  const userKycApproved = user?.kycStatus === 'approved'
+
+  function handleAdClick(ad: Ad) {
+    if (!isAuthenticated) { router.push('/login?redirect=/marketplace'); return }
+    if (!userKycApproved || userKycLevel === 'none') {
+      setKycGate(true)
+      return
+    }
+    setModal(ad)
+    setPkrAmount('5000')
+    setSelectedPm(0)
+    setTradeError('')
+  }
 
   const fetchAds = useCallback(async () => {
     setLoading(true)
@@ -107,6 +124,11 @@ export default function MarketplacePage() {
       })
       router.push(`/trade/${res.data.data.id}`)
     } catch (e: any) {
+      if (e?.response?.data?.error === 'KYC_REQUIRED') {
+        setModal(null)
+        setKycGate(true)
+        return
+      }
       setTradeError(e?.response?.data?.message ?? 'Failed to start trade. Please try again.')
     } finally {
       setTradeLoading(false)
@@ -219,7 +241,7 @@ export default function MarketplacePage() {
                     })}
                   </div>
                   <button
-                    onClick={() => { setModal(ad); setPkrAmount('5000'); setSelectedPm(0); setTradeError('') }}
+                    onClick={() => handleAdClick(ad)}
                     style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}
                   >
                     {side === 'buy' ? 'Buy' : 'Sell'} {coin} →
@@ -306,6 +328,13 @@ export default function MarketplacePage() {
           </div>
         </div>
       )}
+
+      <KycGateModal
+        open={kycGate}
+        onClose={() => setKycGate(false)}
+        reason="trade"
+        currentLevel={userKycLevel}
+      />
     </div>
   )
 }

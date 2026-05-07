@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { adsApi, marketplaceApi, walletApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { KycGateModal } from '@/components/KycGateModal'
 
 const COINS = [
   { id: 'USDT', sym: '₮', border: '#26a17b', bg: '#f0fdf4', color: '#065f46' },
@@ -31,6 +32,9 @@ export default function CreateAdPage() {
   const [walletBalance, setWalletBalance] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [kycGate, setKycGate] = useState(false)
+  const userKycLevel = (user?.kycLevel ?? 'none') as 'none' | 'basic' | 'full'
+  const userKycApproved = user?.kycStatus === 'approved'
 
   useEffect(() => {
     marketplaceApi.getRate(coin).then(r => {
@@ -56,6 +60,10 @@ export default function CreateAdPage() {
   }
 
   async function publishAd() {
+    if (!userKycApproved || userKycLevel === 'none') {
+      setKycGate(true)
+      return
+    }
     if (!fixedPrice || parseFloat(fixedPrice) <= 0) return setError('Enter a valid price.')
     if (!totalAmount || parseFloat(totalAmount) <= 0) return setError('Enter the total amount.')
     if (selectedPms.length === 0) return setError('Select at least one payment method.')
@@ -218,6 +226,7 @@ export default function CreateAdPage() {
           </button>
         </div>
       </div>
+      <KycGateModal open={kycGate} onClose={() => setKycGate(false)} reason="create-ad" currentLevel={userKycLevel} />
     </div>
   )
 }
