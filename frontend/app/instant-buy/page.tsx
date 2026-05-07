@@ -1,23 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { marketplaceApi } from '@/lib/api'
 
-const ASSETS: Record<string, { name: string; sym: string; emoji: string; cat: string[]; price_pkr: number; price_usd: number; spread: number; networks: string[] }> = {
-  USDT: { name: 'Tether USD', sym: 'USDT', emoji: '💵', cat: ['popular', 'stable'], price_pkr: 280.5, price_usd: 1, spread: 0.5, networks: ['TRC20', 'BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
-  USDC: { name: 'USD Coin', sym: 'USDC', emoji: '🔵', cat: ['stable'], price_pkr: 280.2, price_usd: 1, spread: 0.5, networks: ['BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
-  BNB: { name: 'BNB', sym: 'BNB', emoji: '🟡', cat: ['popular', 'gas'], price_pkr: 168000, price_usd: 598, spread: 2.5, networks: ['BEP20'] },
-  ETH: { name: 'Ethereum', sym: 'ETH', emoji: '🔷', cat: ['popular', 'gas'], price_pkr: 885000, price_usd: 3150, spread: 2.0, networks: ['ERC20', 'BASE', 'ARB', 'POLY', 'OP'] },
-  SOL: { name: 'Solana', sym: 'SOL', emoji: '🟣', cat: ['popular', 'gas'], price_pkr: 41850, price_usd: 149, spread: 2.5, networks: ['SOL'] },
-  BTC: { name: 'Bitcoin', sym: 'BTC', emoji: '🟠', cat: ['popular'], price_pkr: 26600000, price_usd: 94800, spread: 1.5, networks: ['BTC', 'BEP20'] },
-  TRX: { name: 'TRON', sym: 'TRX', emoji: '🔴', cat: ['gas'], price_pkr: 76, price_usd: 0.27, spread: 2.5, networks: ['TRC20'] },
-  AVAX: { name: 'Avalanche', sym: 'AVAX', emoji: '🔺', cat: ['gas'], price_pkr: 10700, price_usd: 38, spread: 3.0, networks: ['AVAX'] },
-  APT: { name: 'Aptos', sym: 'APT', emoji: '⚡', cat: ['gas'], price_pkr: 2670, price_usd: 9.5, spread: 3.5, networks: ['APTOS'] },
-  NEAR: { name: 'NEAR Protocol', sym: 'NEAR', emoji: '🌐', cat: ['gas'], price_pkr: 2020, price_usd: 7.2, spread: 3.5, networks: ['NEAR'] },
-  OP: { name: 'Optimism', sym: 'OP', emoji: '🔴', cat: ['gas'], price_pkr: 590, price_usd: 2.1, spread: 3.5, networks: ['OP'] },
-  ARB: { name: 'Arbitrum', sym: 'ARB', emoji: '💙', cat: ['gas'], price_pkr: 310, price_usd: 1.1, spread: 3.5, networks: ['ARB'] },
-  SUI: { name: 'Sui', sym: 'SUI', emoji: '💧', cat: ['gas'], price_pkr: 1065, price_usd: 3.8, spread: 3.5, networks: ['SUI'] },
-  RON: { name: 'Ronin', sym: 'RON', emoji: '⚔️', cat: ['gas'], price_pkr: 898, price_usd: 3.2, spread: 3.5, networks: ['RONIN'] },
-  TON: { name: 'TON', sym: 'TON', emoji: '💎', cat: ['popular', 'gas'], price_pkr: 1630, price_usd: 5.8, spread: 3.0, networks: ['TON'] },
+const ASSETS: Record<string, { name: string; sym: string; emoji: string; cat: string[]; networks: string[] }> = {
+  USDT: { name: 'Tether USD',    sym: 'USDT', emoji: '💵', cat: ['popular', 'stable'], networks: ['TRC20', 'BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
+  USDC: { name: 'USD Coin',      sym: 'USDC', emoji: '🔵', cat: ['stable'],             networks: ['BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
+  BNB:  { name: 'BNB',           sym: 'BNB',  emoji: '🟡', cat: ['popular', 'gas'],    networks: ['BEP20'] },
+  ETH:  { name: 'Ethereum',      sym: 'ETH',  emoji: '🔷', cat: ['popular', 'gas'],    networks: ['ERC20', 'BASE', 'ARB', 'POLY', 'OP'] },
+  SOL:  { name: 'Solana',        sym: 'SOL',  emoji: '🟣', cat: ['popular', 'gas'],    networks: ['SOL'] },
+  BTC:  { name: 'Bitcoin',       sym: 'BTC',  emoji: '🟠', cat: ['popular'],            networks: ['BTC', 'BEP20'] },
+  TRX:  { name: 'TRON',          sym: 'TRX',  emoji: '🔴', cat: ['gas'],                networks: ['TRC20'] },
+  AVAX: { name: 'Avalanche',     sym: 'AVAX', emoji: '🔺', cat: ['gas'],                networks: ['AVAX'] },
+  APT:  { name: 'Aptos',         sym: 'APT',  emoji: '⚡', cat: ['gas'],                networks: ['APTOS'] },
+  NEAR: { name: 'NEAR Protocol', sym: 'NEAR', emoji: '🌐', cat: ['gas'],                networks: ['NEAR'] },
+  OP:   { name: 'Optimism',      sym: 'OP',   emoji: '🔴', cat: ['gas'],                networks: ['OP'] },
+  ARB:  { name: 'Arbitrum',      sym: 'ARB',  emoji: '💙', cat: ['gas'],                networks: ['ARB'] },
+  SUI:  { name: 'Sui',           sym: 'SUI',  emoji: '💧', cat: ['gas'],                networks: ['SUI'] },
+  RON:  { name: 'Ronin',         sym: 'RON',  emoji: '⚔️', cat: ['gas'],                networks: ['RONIN'] },
+  TON:  { name: 'TON',           sym: 'TON',  emoji: '💎', cat: ['popular', 'gas'],    networks: ['TON'] },
 }
 
 const NETWORKS: Record<string, { name: string; short: string; conf: number; speed: string; mvp: boolean; warn: string | null }> = {
@@ -50,6 +51,30 @@ export default function InstantBuyPage() {
   const [cat, setCat] = useState('popular')
   const [token, setToken] = useState<string | null>(null)
   const [network, setNetwork] = useState<string | null>(null)
+  const [rates, setRates] = useState<Record<string, number>>({})
+  const [ratesLoading, setRatesLoading] = useState(false)
+
+  useEffect(() => {
+    if (step !== 2) return
+    setRatesLoading(true)
+    const tokens = Object.keys(ASSETS).filter(sym => sym !== payWith)
+    Promise.allSettled(
+      tokens.map(sym =>
+        marketplaceApi.getRate(sym).then(res => {
+          const r = res.data?.data?.rate ?? res.data?.rate ?? res.data?.data
+          return { sym, rate: typeof r === 'number' ? r : null }
+        })
+      )
+    ).then(results => {
+      const newRates: Record<string, number> = {}
+      results.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.rate !== null) {
+          newRates[r.value.sym] = r.value.rate
+        }
+      })
+      setRates(newRates)
+    }).finally(() => setRatesLoading(false))
+  }, [step, payWith])
 
   const payOptions = [
     { id: 'PKR', icon: '🇵🇰', name: 'PKR', sub: 'JazzCash / Bank' },
@@ -160,7 +185,9 @@ export default function InstantBuyPage() {
                       <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{a.name}</div>
                       <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{sym}</div>
                       <div style={{ fontSize: '11px', color: '#2563eb', marginTop: '6px', fontWeight: 600 }}>{a.networks.length} network{a.networks.length > 1 ? 's' : ''}</div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>{fmtPkr(a.price_pkr)}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>
+                        {rates[sym] ? fmtPkr(rates[sym]) : ratesLoading ? '...' : '—'}
+                      </div>
                       <span style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '9px', padding: '2px 6px', borderRadius: '20px', background: mvpNets > 0 ? '#d1fae5' : '#f1f5f9', color: mvpNets > 0 ? '#065f46' : '#64748b', fontWeight: 700 }}>{mvpNets > 0 ? 'Live' : 'Soon'}</span>
                     </div>
                   )
@@ -224,18 +251,20 @@ export default function InstantBuyPage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13px', color: '#166534', fontWeight: 700 }}>Live Rate Preview</div>
                     <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b', marginTop: '2px' }}>
-                      {payWith === 'PKR' ? `1 ${selAsset.sym} = PKR ${selAsset.price_pkr.toLocaleString()} · spread ${selAsset.spread}%` : `1 ${selAsset.sym} = $${selAsset.price_usd.toLocaleString()} USD · spread ${selAsset.spread}%`}
+                      {token && rates[token]
+                        ? `1 ${selAsset.sym} = PKR ${rates[token].toLocaleString()}`
+                        : 'Rate loading...'}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Platform fee</div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{selAsset.spread}% + {selNet.mvp ? 'Low' : 'TBD'} net fee</div>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Network</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{selNet.mvp ? '✓ Live' : 'Coming soon'}</div>
                   </div>
                 </div>
               )}
               <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <button onClick={() => setStep(2)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '14px', cursor: 'pointer', color: '#374151' }}>← Back</button>
-                <Link href={network ? `/instant-buy/order/demo?token=${token}&network=${network}&payWith=${payWith}` : '#'}>
+                <Link href={network ? `/instant-buy/order/new?token=${token}&network=${network}&payWith=${payWith}` : '#'}>
                   <button disabled={!network} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: network ? '#2563eb' : '#93c5fd', color: 'white', fontWeight: 700, fontSize: '15px', cursor: network ? 'pointer' : 'not-allowed', opacity: network ? 1 : 0.6 }}>Preview Order →</button>
                 </Link>
               </div>

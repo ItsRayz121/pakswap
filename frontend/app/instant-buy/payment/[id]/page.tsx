@@ -22,6 +22,7 @@ interface Order {
   rate: number | null
   status: string
   toAddress?: string
+  quoteExpiresAt?: string
 }
 
 const NETWORK_LABELS: Record<string, string> = {
@@ -48,27 +49,30 @@ export default function InstantBuyPaymentPage() {
   const [fileUploaded, setFileUploaded] = useState(false)
   const [fileName, setFileName] = useState('')
   const [fileObj, setFileObj] = useState<File | null>(null)
-  const [timer, setTimer] = useState(523)
+  const [timer, setTimer] = useState(0)
   const [copied, setCopied] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
-    console.log('[InstantBuy Payment] Loading order and payment config:', id)
     Promise.all([
       instantBuyApi.getOrder(id),
       instantBuyApi.getPaymentConfig(),
     ]).then(([orderRes, configRes]) => {
       const o = orderRes.data.data as Order
       const cfg = configRes.data.data as PaymentConfig
-      console.log('[InstantBuy Payment] Order loaded:', { coin: o.coin, coinAmount: o.coinAmount, fiatAmount: o.fiatAmount })
-      console.log('[InstantBuy Payment] Payment config:', { jazzcash: cfg.jazzcash, accountName: cfg.accountName })
       setOrder(o)
       setPayConfig(cfg)
+      // Set timer from real quoteExpiresAt
+      if (o.quoteExpiresAt) {
+        const remaining = Math.max(0, Math.floor((new Date(o.quoteExpiresAt).getTime() - Date.now()) / 1000))
+        setTimer(remaining)
+      } else {
+        setTimer(30 * 60) // 30 min fallback
+      }
     }).catch(e => {
       const msg = e?.response?.data?.error ?? 'Failed to load order'
-      console.error('[InstantBuy Payment] Load failed:', msg)
       setLoadError(msg)
     })
   }, [id])

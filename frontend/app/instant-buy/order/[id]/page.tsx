@@ -2,24 +2,24 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { api } from '@/lib/api'
+import { api, marketplaceApi } from '@/lib/api'
 
-const ASSETS: Record<string, { name: string; sym: string; emoji: string; price_pkr: number; price_usd: number; spread: number }> = {
-  USDT: { name: 'Tether USD',      sym: 'USDT', emoji: '💵', price_pkr: 280.5,     price_usd: 1,      spread: 0.5 },
-  USDC: { name: 'USD Coin',        sym: 'USDC', emoji: '🔵', price_pkr: 280.2,     price_usd: 1,      spread: 0.5 },
-  BNB:  { name: 'BNB',             sym: 'BNB',  emoji: '🟡', price_pkr: 168000,    price_usd: 598,    spread: 2.5 },
-  ETH:  { name: 'Ethereum',        sym: 'ETH',  emoji: '🔷', price_pkr: 885000,    price_usd: 3150,   spread: 2.0 },
-  SOL:  { name: 'Solana',          sym: 'SOL',  emoji: '🟣', price_pkr: 41850,     price_usd: 149,    spread: 2.5 },
-  BTC:  { name: 'Bitcoin',         sym: 'BTC',  emoji: '🟠', price_pkr: 26600000,  price_usd: 94800,  spread: 1.5 },
-  TRX:  { name: 'TRON',            sym: 'TRX',  emoji: '🔴', price_pkr: 76,        price_usd: 0.27,   spread: 2.5 },
-  AVAX: { name: 'Avalanche',       sym: 'AVAX', emoji: '🔺', price_pkr: 10700,     price_usd: 38,     spread: 3.0 },
-  APT:  { name: 'Aptos',           sym: 'APT',  emoji: '⚡', price_pkr: 2670,      price_usd: 9.5,    spread: 3.5 },
-  NEAR: { name: 'NEAR Protocol',   sym: 'NEAR', emoji: '🌐', price_pkr: 2020,      price_usd: 7.2,    spread: 3.5 },
-  OP:   { name: 'Optimism',        sym: 'OP',   emoji: '🔴', price_pkr: 590,       price_usd: 2.1,    spread: 3.5 },
-  ARB:  { name: 'Arbitrum',        sym: 'ARB',  emoji: '💙', price_pkr: 310,       price_usd: 1.1,    spread: 3.5 },
-  SUI:  { name: 'Sui',             sym: 'SUI',  emoji: '💧', price_pkr: 1065,      price_usd: 3.8,    spread: 3.5 },
-  RON:  { name: 'Ronin',           sym: 'RON',  emoji: '⚔️', price_pkr: 898,       price_usd: 3.2,    spread: 3.5 },
-  TON:  { name: 'TON',             sym: 'TON',  emoji: '💎', price_pkr: 1630,      price_usd: 5.8,    spread: 3.0 },
+const ASSETS: Record<string, { name: string; sym: string; emoji: string }> = {
+  USDT: { name: 'Tether USD',      sym: 'USDT', emoji: '💵' },
+  USDC: { name: 'USD Coin',        sym: 'USDC', emoji: '🔵' },
+  BNB:  { name: 'BNB',             sym: 'BNB',  emoji: '🟡' },
+  ETH:  { name: 'Ethereum',        sym: 'ETH',  emoji: '🔷' },
+  SOL:  { name: 'Solana',          sym: 'SOL',  emoji: '🟣' },
+  BTC:  { name: 'Bitcoin',         sym: 'BTC',  emoji: '🟠' },
+  TRX:  { name: 'TRON',            sym: 'TRX',  emoji: '🔴' },
+  AVAX: { name: 'Avalanche',       sym: 'AVAX', emoji: '🔺' },
+  APT:  { name: 'Aptos',           sym: 'APT',  emoji: '⚡' },
+  NEAR: { name: 'NEAR Protocol',   sym: 'NEAR', emoji: '🌐' },
+  OP:   { name: 'Optimism',        sym: 'OP',   emoji: '🔴' },
+  ARB:  { name: 'Arbitrum',        sym: 'ARB',  emoji: '💙' },
+  SUI:  { name: 'Sui',             sym: 'SUI',  emoji: '💧' },
+  RON:  { name: 'Ronin',           sym: 'RON',  emoji: '⚔️' },
+  TON:  { name: 'TON',             sym: 'TON',  emoji: '💎' },
 }
 
 const NETWORKS: Record<string, { name: string; short: string; conf: number; addrRegex: RegExp; addrHint: string; addrExample: string }> = {
@@ -61,17 +61,28 @@ function OrderForm() {
   const network = NETWORKS[networkId]
   const isPkr = payWith === 'PKR'
 
-  const initPkr = '10000'
-  const initCoin = asset ? (parseFloat(initPkr) / asset.price_pkr).toFixed(6) : '1'
+  const [rate, setRate] = useState<number | null>(null)
+  const [rateLoading, setRateLoading] = useState(true)
 
-  const [pkrAmt, setPkrAmt] = useState(initPkr)
-  const [coinAmt, setCoinAmt] = useState(isPkr ? initCoin : '1')
+  const [pkrAmt, setPkrAmt] = useState('10000')
+  const [coinAmt, setCoinAmt] = useState('1')
   const [addr, setAddr] = useState('')
   const [addrValid, setAddrValid] = useState<boolean | null>(null)
   const [checked, setChecked] = useState(false)
-  const [timer, setTimer] = useState(598)
+  const [timer, setTimer] = useState(600)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!tokenSym) return
+    marketplaceApi.getRate(tokenSym).then(res => {
+      const r = res.data?.data?.rate ?? res.data?.rate ?? res.data?.data
+      if (typeof r === 'number') {
+        setRate(r)
+        if (isPkr) setCoinAmt((10000 / r).toFixed(6))
+      }
+    }).catch(() => {}).finally(() => setRateLoading(false))
+  }, [tokenSym, isPkr])
 
   useEffect(() => {
     const iv = setInterval(() => setTimer(t => Math.max(0, t - 1)), 1000)
@@ -88,13 +99,13 @@ function OrderForm() {
 
   function onPkrChange(v: string) {
     setPkrAmt(v)
-    if (asset && v) setCoinAmt((parseFloat(v) / asset.price_pkr).toFixed(6))
+    if (rate && v) setCoinAmt((parseFloat(v) / rate).toFixed(6))
     else setCoinAmt('')
   }
 
   function onCoinChange(v: string) {
     setCoinAmt(v)
-    if (asset && v) setPkrAmt(String(Math.round(parseFloat(v) * asset.price_pkr)))
+    if (rate && v) setPkrAmt(String(Math.round(parseFloat(v) * rate)))
     else setPkrAmt('')
   }
 
@@ -156,8 +167,8 @@ function OrderForm() {
     )
   }
 
-  const effectiveRate = isPkr ? asset.price_pkr * (1 + asset.spread / 100) : asset.price_usd
-  const spreadPkr = Math.round(asset.price_pkr * asset.spread / 100)
+  const effectiveRate = rate ?? null
+  const spreadPct = 1.0
   const canSubmit = !!addr && addrValid === true && checked && !loading
 
   return (
@@ -185,9 +196,9 @@ function OrderForm() {
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '12px', color: '#64748b' }}>Market price</div>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', marginTop: '2px' }}>
-                {isPkr ? `PKR ${asset.price_pkr.toLocaleString()}` : `$${asset.price_usd.toLocaleString()} USDT`}
+                {rateLoading ? 'Loading...' : rate ? `PKR ${rate.toLocaleString()}` : '—'}
               </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>Spread: {asset.spread}%</div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>Live rate</div>
             </div>
           </div>
 
