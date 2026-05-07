@@ -1,21 +1,33 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { marketplaceApi } from '@/lib/api'
+
+interface PlatformCfg {
+  fees: {
+    p2pTakerBps: number; p2pMakerBps: number; merchantTakerBps: number
+    instantBuySpreadBps: Record<string, number>
+  }
+  networkFees: Record<string, number>
+  kycLimits: Record<string, { dailyPkr: number; monthlyPkr: number }>
+  minWithdrawal: Record<string, number>
+}
+
+const bpsToPct = (bps: number) => `${(bps / 100).toFixed(bps % 100 === 0 ? 1 : 2)}%`
+const fmtPkr = (n: number) => n > 0 ? `${n.toLocaleString()} PKR` : 'Unlimited*'
 
 export default function FeesPage() {
   const [openFaqs, setOpenFaqs] = useState<number[]>([])
+  const [cfg, setCfg] = useState<PlatformCfg | null>(null)
+  const [faqs, setFaqs] = useState<{ q: string; a: string }[]>([])
+  useEffect(() => {
+    marketplaceApi.getConfig().then(r => setCfg(r.data.data)).catch(() => {})
+    marketplaceApi.getCms('fees_faqs').then(r => setFaqs(r.data.data ?? [])).catch(() => {})
+  }, [])
 
   function toggleFaq(i: number) {
     setOpenFaqs(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])
   }
-
-  const faqs = [
-    { q: 'When exactly is the P2P taker fee deducted?', a: 'The 0.5% taker fee is deducted from the crypto amount at the moment the trade is marked complete and USDT is released from escrow. You will see the exact fee amount on the trade receipt before you confirm the trade.' },
-    { q: 'Can I see the fee before I submit a trade?', a: 'Yes. The order confirmation screen always displays the fee breakdown: trade amount, fee amount, and the net crypto you receive — before you commit.' },
-    { q: 'Is there a fee for depositing crypto into PakSwap?', a: 'No. Crypto deposits are always free on the PakSwap side. You only pay the blockchain network fee charged by miners/validators to send from your external wallet.' },
-    { q: 'Are Instant Buy fees negotiable for high-volume buyers?', a: 'Merchant accounts trading above 20M PKR/month may apply for custom spread rates through our merchant support team. Contact us via the merchant dashboard.' },
-    { q: "What happens to fees on a cancelled or disputed trade?", a: "No fee is charged on cancelled trades. If a dispute is resolved in the buyer's favour, any deducted fee is refunded. If resolved in the seller's favour, the fee is not refunded." },
-  ]
 
   const th: React.CSSProperties = { background: '#f8fafc', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1.5px solid #e2e8f0' }
   const td: React.CSSProperties = { padding: '14px 16px', borderBottom: '1px solid #f1f5f9', color: '#1e293b', fontSize: '14px' }
@@ -60,7 +72,7 @@ export default function FeesPage() {
               <tr>
                 <td style={td}><span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>Taker</span></td>
                 <td style={td}>User who initiates a trade against an existing ad</td>
-                <td style={{ ...td, fontWeight: 800, color: '#059669' }}>0.5%</td>
+                <td style={{ ...td, fontWeight: 800, color: '#059669' }}>{cfg ? bpsToPct(cfg.fees.p2pTakerBps) : '—'}</td>
                 <td style={td}>Of the PKR trade value</td>
               </tr>
               <tr>
@@ -72,7 +84,7 @@ export default function FeesPage() {
               <tr>
                 <td style={{ ...td, borderBottom: 'none' }}><span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>Verified Merchant — Taker</span></td>
                 <td style={{ ...td, borderBottom: 'none' }}>Trade initiated against a merchant ad</td>
-                <td style={{ ...td, borderBottom: 'none', fontWeight: 800, color: '#059669' }}>0.3%</td>
+                <td style={{ ...td, borderBottom: 'none', fontWeight: 800, color: '#059669' }}>{cfg ? bpsToPct(cfg.fees.merchantTakerBps) : '—'}</td>
                 <td style={{ ...td, borderBottom: 'none' }}>Reduced rate for high-volume pairs</td>
               </tr>
             </tbody>
@@ -88,13 +100,17 @@ export default function FeesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th style={th}>Coin</th><th style={th}>Buy Spread</th><th style={th}>Sell Spread</th><th style={th}>PKR Payment Processing</th></tr></thead>
             <tbody>
-              {[
-                ['USDT (TRC-20)', '1.5%', '1.5%', 'Included in spread'],
-                ['USDT (ERC-20)', '1.8%', '1.8%', 'Higher network cost reflected'],
-                ['BTC', '1.2%', '1.2%', 'Included in spread'],
-                ['ETH', '1.5%', '1.5%', 'Included in spread'],
-                ['USDC', '1.5%', '1.5%', 'Included in spread'],
-              ].map(([coin, buy, sell, note], i, arr) => (
+              {(() => {
+                const sp = cfg?.fees.instantBuySpreadBps
+                const fmt = (k: string) => sp ? bpsToPct(sp[k] ?? 0) : '—'
+                return [
+                  ['USDT (TRC-20)', fmt('USDT_TRC20'), fmt('USDT_TRC20'), 'Included in spread'],
+                  ['USDT (ERC-20)', fmt('USDT_ERC20'), fmt('USDT_ERC20'), 'Higher network cost reflected'],
+                  ['BTC', fmt('BTC'), fmt('BTC'), 'Included in spread'],
+                  ['ETH', fmt('ETH'), fmt('ETH'), 'Included in spread'],
+                  ['USDC', fmt('USDC'), fmt('USDC'), 'Included in spread'],
+                ]
+              })().map(([coin, buy, sell, note], i, arr) => (
                 <tr key={coin}>
                   <td style={{ ...td, borderBottom: i < arr.length - 1 ? td.borderBottom : 'none' }}><strong>{coin}</strong></td>
                   <td style={{ ...td, borderBottom: i < arr.length - 1 ? td.borderBottom : 'none', fontWeight: 800, color: '#059669' }}>{buy}</td>
@@ -118,13 +134,19 @@ export default function FeesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th style={th}>Coin / Network</th><th style={th}>Network Fee (approx.)</th><th style={th}>PakSwap Fee</th><th style={th}>Min Withdrawal</th></tr></thead>
             <tbody>
-              {[
-                ['USDT — TRC-20', '~1 USDT', '0', '10 USDT'],
-                ['USDT — ERC-20', '~5–15 USDT (varies with gas)', '0', '20 USDT'],
-                ['BTC — Bitcoin', '~0.00005 BTC', '0', '0.001 BTC'],
-                ['ETH — ERC-20', '~0.001 ETH (varies)', '0', '0.01 ETH'],
-                ['USDC — ERC-20', '~5–15 USDT equiv.', '0', '20 USDC'],
-              ].map(([coin, fee, ps, min], i, arr) => (
+              {(() => {
+                const nf = cfg?.networkFees ?? {}
+                const mw = cfg?.minWithdrawal ?? {}
+                const f = (k: string, unit: string) => k in nf ? `~${nf[k]} ${unit}` : '—'
+                const m = (k: string, unit: string) => k in mw ? `${mw[k]} ${unit}` : '—'
+                return [
+                  ['USDT — TRC-20', f('USDT_TRC20', 'USDT'), '0', m('USDT', 'USDT')],
+                  ['USDT — ERC-20', f('USDT_ERC20', 'USDT'), '0', m('USDT', 'USDT')],
+                  ['BTC — Bitcoin', f('BTC_BTC', 'BTC'), '0', m('BTC', 'BTC')],
+                  ['ETH — ERC-20', f('ETH_ERC20', 'ETH'), '0', m('ETH', 'ETH')],
+                  ['USDC — ERC-20', f('USDC_ERC20', 'USDC'), '0', m('USDC', 'USDC')],
+                ]
+              })().map(([coin, fee, ps, min], i, arr) => (
                 <tr key={coin}>
                   <td style={{ ...td, borderBottom: i < arr.length - 1 ? td.borderBottom : 'none' }}><strong>{coin}</strong></td>
                   <td style={{ ...td, borderBottom: i < arr.length - 1 ? td.borderBottom : 'none' }}>{fee}</td>
@@ -148,13 +170,18 @@ export default function FeesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th style={th}>KYC Tier</th><th style={th}>Daily Buy Limit</th><th style={th}>Daily Sell Limit</th><th style={th}>Monthly Cap</th></tr></thead>
             <tbody>
-              {[
-                { badge: 'No KYC', bg: '#f1f5f9', color: '#64748b', sub: '', buy: 'View only — no trading', sell: '—', cap: '—', highlight: false },
-                { badge: 'Basic KYC', bg: '#fef3c7', color: '#92400e', sub: 'Phone verified', buy: '50,000 PKR', sell: '50,000 PKR', cap: '500,000 PKR', highlight: false },
-                { badge: 'Standard KYC', bg: '#dbeafe', color: '#1d4ed8', sub: 'CNIC verified', buy: '200,000 PKR', sell: '200,000 PKR', cap: '2,000,000 PKR', highlight: false },
-                { badge: 'Full KYC', bg: '#d1fae5', color: '#065f46', sub: 'CNIC + Selfie + Address', buy: '500,000 PKR', sell: '500,000 PKR', cap: '10,000,000 PKR', highlight: false },
-                { badge: 'Verified Merchant', bg: '#fdf4ff', color: '#7c3aed', sub: 'Full KYC + approved', buy: '5,000,000 PKR', sell: '5,000,000 PKR', cap: 'Unlimited*', highlight: true },
-              ].map((row, i, arr) => (
+              {(() => {
+                const lim = cfg?.kycLimits
+                const day = (k: string) => lim?.[k] ? fmtPkr(lim[k].dailyPkr) : '—'
+                const mon = (k: string) => lim?.[k] ? fmtPkr(lim[k].monthlyPkr) : '—'
+                return [
+                  { badge: 'No KYC', bg: '#f1f5f9', color: '#64748b', sub: '', buy: 'View only — no trading', sell: '—', cap: '—', highlight: false },
+                  { badge: 'Basic KYC', bg: '#fef3c7', color: '#92400e', sub: 'Phone verified', buy: day('basic'), sell: day('basic'), cap: mon('basic'), highlight: false },
+                  { badge: 'Standard KYC', bg: '#dbeafe', color: '#1d4ed8', sub: 'CNIC verified', buy: day('standard'), sell: day('standard'), cap: mon('standard'), highlight: false },
+                  { badge: 'Full KYC', bg: '#d1fae5', color: '#065f46', sub: 'CNIC + Selfie + Address', buy: day('full'), sell: day('full'), cap: mon('full'), highlight: false },
+                  { badge: 'Verified Merchant', bg: '#fdf4ff', color: '#7c3aed', sub: 'Full KYC + approved', buy: day('merchant'), sell: day('merchant'), cap: mon('merchant'), highlight: true },
+                ]
+              })().map((row, i, arr) => (
                 <tr key={row.badge}>
                   <td style={{ ...td, borderBottom: i < arr.length - 1 ? td.borderBottom : 'none' }}>
                     <span style={{ background: row.bg, color: row.color, padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>{row.badge}</span>

@@ -63,7 +63,7 @@ export async function deriveDepositAddress(coin: string, network: string, index:
  * Network fee lookup. Tries env override first, then a coin/network default.
  * Set NETWORK_FEE_<COIN>_<NETWORK>=<amount-in-coin> to override.
  */
-const FEE_DEFAULTS: Record<string, number> = {
+export const NETWORK_FEE_DEFAULTS: Record<string, number> = {
   USDT_TRC20: 1,
   USDT_ERC20: 8,
   USDT_BEP20: 0.5,
@@ -75,10 +75,26 @@ const FEE_DEFAULTS: Record<string, number> = {
 
 export async function getNetworkFee(coin: string, network: string): Promise<number> {
   const key = `${coin}_${network}`.toUpperCase()
+
+  // 1. Env override
   const envFee = process.env[`NETWORK_FEE_${key}`]
   if (envFee) {
     const n = parseFloat(envFee)
     if (Number.isFinite(n) && n >= 0) return n
   }
-  return FEE_DEFAULTS[key] ?? 0
+
+  // 2. PlatformConfig (db)
+  try {
+    const { prisma } = await import('./prisma')
+    const cfg = await prisma.platformConfig.findUnique({ where: { key: `network_fee_${key}` } })
+    if (cfg) {
+      const n = parseFloat(cfg.value)
+      if (Number.isFinite(n) && n >= 0) return n
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Failed to read network fee from PlatformConfig; falling back to defaults')
+  }
+
+  // 3. Built-in defaults
+  return NETWORK_FEE_DEFAULTS[key] ?? 0
 }

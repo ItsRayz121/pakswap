@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { marketplaceApi } from '@/lib/api'
 
 const tokens = [
   { id: 'bnb', label: '🟡 BNB' },
@@ -11,17 +12,14 @@ const tokens = [
   { id: 'usdt', label: '💵 USDT' },
 ]
 
-const benefits = [
-  { icon: '💸', title: 'Competitive Revenue', text: 'Set your own spread. Platform only takes 0.5% per fulfilled order.' },
-  { icon: '🤖', title: 'Automated Orders', text: 'PKR orders are AI-verified. USDT orders are 100% automatic — no manual work.' },
-  { icon: '🛡️', title: 'Platform Protection', text: 'Escrow and fraud detection built in. Only verified payments trigger releases.' },
-  { icon: '📈', title: 'Scale Your Volume', text: "Tap into PakSwap's user base. Top providers fulfill 500+ orders monthly." },
-]
-
 export default function ProviderApplyPage() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set())
   const [agreed, setAgreed] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [benefits, setBenefits] = useState<{ icon: string; title: string; desc?: string; text?: string }[]>([])
+  useEffect(() => {
+    marketplaceApi.getCms('provider_benefits').then(r => setBenefits(r.data.data ?? [])).catch(() => {})
+  }, [])
 
   const toggleToken = (id: string) => {
     const s = new Set(selectedTokens)
@@ -68,11 +66,11 @@ export default function ProviderApplyPage() {
 
         {/* Benefits */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 32 }}>
-          {benefits.map(({ icon, title, text }) => (
-            <div key={title} style={{ background: 'white', borderRadius: 14, border: '1px solid #e2e8f0', padding: 20, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>{icon}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{title}</div>
-              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{text}</div>
+          {benefits.map((b) => (
+            <div key={b.title} style={{ background: 'white', borderRadius: 14, border: '1px solid #e2e8f0', padding: 20, textAlign: 'center' }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>{b.icon}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{b.title}</div>
+              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>{b.desc ?? b.text}</div>
             </div>
           ))}
         </div>

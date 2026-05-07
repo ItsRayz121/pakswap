@@ -53,6 +53,11 @@ export const marketplaceApi = {
   getAds: (params?: any) => api.get('/marketplace/ads', { params }),
   getAd: (id: string) => api.get(`/marketplace/ads/${id}`),
   getRate: (coin: string) => api.get(`/marketplace/rate/${coin}`),
+  getStats: () => api.get('/marketplace/stats'),
+  getTopAds: (params?: { side?: 'buy' | 'sell'; coin?: string; limit?: number }) =>
+    api.get('/marketplace/top-ads', { params }),
+  getConfig: () => api.get('/marketplace/config'),
+  getCms: (key: string) => api.get(`/marketplace/cms/${key}`),
 }
 
 export const tradesApi = {

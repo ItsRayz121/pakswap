@@ -1,27 +1,39 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { marketplaceApi } from '@/lib/api'
 
-const faqItems = [
-  ['How does the escrow work?', "When you initiate a buy trade, the seller's cryptocurrency is immediately locked in PakSwap's escrow system. The crypto cannot be moved until you confirm your payment. Once you pay and confirm, the seller verifies and releases the crypto to your wallet. If there's a dispute, our team reviews evidence from both parties."],
-  ['Is P2P crypto trading legal in Pakistan?', "P2P trading operates in a regulatory grey area in Pakistan. The SBP has issued advisories about crypto risks but has not enacted an outright ban. PakSwap maintains full KYC/AML compliance and is structured to align with SECP's emerging VASP framework. We strongly recommend consulting a local financial advisor about your specific situation."],
-  ["What if the seller doesn't release my crypto?", "If you've paid and the seller doesn't release within the trade window, you can open a dispute. Our dispute agents will review your payment proof (JazzCash screenshot, bank transfer receipt) and the seller's account. If your payment is confirmed, the crypto will be released to you from escrow."],
-  ['How long does KYC verification take?', 'KYC is typically approved within 15 minutes to 2 hours during business hours (9AM–9PM PKT). You\'ll receive an SMS and email notification as soon as your documents are reviewed. Clear, well-lit CNIC photos and a liveness selfie make the process fastest.'],
-  ["What are PakSwap's trading fees?", "PakSwap charges 0% trading fees during our launch promotional period. After the promotional period, a 0.5% taker fee applies on completed trades. Verified merchants enjoy 0.3% fees. There are no deposit fees; standard blockchain fees apply for withdrawals."],
+const COIN_META: Record<string, { sym: string; bg: string; name: string; sub: string; color: string }> = {
+  USDT: { sym: '₮', bg: '#26a17b', name: 'USDT', sub: 'Tether', color: '#26a17b' },
+  BTC:  { sym: '₿', bg: '#f7931a', name: 'BTC', sub: 'Bitcoin', color: '#f7931a' },
+  ETH:  { sym: 'Ξ', bg: '#627eea', name: 'ETH', sub: 'Ethereum', color: '#627eea' },
+  USDC: { sym: '$', bg: '#2775ca', name: 'USDC', sub: 'USD Coin', color: '#2775ca' },
+}
+
+const MERCHANT_GRADIENTS = [
+  'linear-gradient(135deg,#1e3a5f,#2563eb)',
+  'linear-gradient(135deg,#059669,#34d399)',
+  'linear-gradient(135deg,#7c3aed,#a78bfa)',
 ]
 
-const merchants = [
-  { init: 'C', bg: 'linear-gradient(135deg,#1e3a5f,#2563eb)', name: 'CryptoKing', meta: '⭐ 4.9 · 1,240 trades · 99.2%', badge: '👑 Merchant', badgeBg: '#fef3c7', badgeColor: '#92400e', rate: '280.50', limits: '1k – 200k PKR', pm: '⚡ JazzCash' },
-  { init: 'P', bg: 'linear-gradient(135deg,#059669,#34d399)', name: 'PKR_Pro', meta: '⭐ 4.7 · 890 trades · 98.5%', badge: '✓ Verified', badgeBg: '#eff6ff', badgeColor: '#1d4ed8', rate: '280.20', limits: '5k – 500k PKR', pm: '🏦 Bank HBL' },
-  { init: 'F', bg: 'linear-gradient(135deg,#7c3aed,#a78bfa)', name: 'FastTrade', meta: '⭐ 4.8 · 654 trades · 99.0%', badge: '👑 Merchant', badgeBg: '#fef3c7', badgeColor: '#92400e', rate: '279.90', limits: '2k – 100k PKR', pm: '💚 Easypaisa' },
-]
+function formatPkr(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return '—'
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M PKR`
+  if (n >= 100_000) return `${Math.round(n).toLocaleString()} PKR`
+  return `${n.toFixed(2)} PKR`
+}
 
-const coins = [
-  { sym: '₮', bg: '#26a17b', name: 'USDT', sub: 'Tether', price: '280.50 PKR', color: '#26a17b' },
-  { sym: '₿', bg: '#f7931a', name: 'BTC', sub: 'Bitcoin', price: '19.2M PKR', color: '#f7931a' },
-  { sym: 'Ξ', bg: '#627eea', name: 'ETH', sub: 'Ethereum', price: '1,04,500 PKR', color: '#627eea' },
-  { sym: '$', bg: '#2775ca', name: 'USDC', sub: 'USD Coin', price: '279.80 PKR', color: '#2775ca' },
-]
+function formatVolume(n: number): string {
+  if (!n) return '—'
+  if (n >= 1_000_000_000) return `₨${(n / 1_000_000_000).toFixed(1)}B`
+  if (n >= 1_000_000) return `₨${(n / 1_000_000).toFixed(1)}M`
+  return `₨${Math.round(n).toLocaleString()}`
+}
+
+function compactCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K+`
+  return `${n}`
+}
 
 const paymentMethods = [
   { label: 'JCash', bg: '#fef3c7', color: '#92400e', name: 'JazzCash', sub: 'Mobile Wallet' },
@@ -37,8 +49,32 @@ export default function HomePage() {
   const [tab, setTab] = useState<'buy' | 'sell'>('buy')
   const [heroTab, setHeroTab] = useState<'buy' | 'sell'>('buy')
   const [pkrAmount, setPkrAmount] = useState('5000')
+  const [stats, setStats] = useState<any>(null)
+  const [rates, setRates] = useState<Record<string, number>>({})
+  const [topAds, setTopAds] = useState<any[]>([])
+  const [faqItems, setFaqItems] = useState<[string, string][]>([])
 
-  const cryptoEst = pkrAmount ? (parseFloat(pkrAmount) / 280.5).toFixed(2) : '0'
+  useEffect(() => {
+    marketplaceApi.getCms('home_faqs')
+      .then(r => setFaqItems((r.data.data ?? []).map((f: any) => [f.q, f.a] as [string, string])))
+      .catch(() => setFaqItems([]))
+  }, [])
+
+  useEffect(() => {
+    marketplaceApi.getStats().then(r => setStats(r.data.data)).catch(() => {})
+    marketplaceApi.getTopAds({ side: tab === 'buy' ? 'sell' : 'buy', coin: 'USDT', limit: 3 })
+      .then(r => setTopAds(r.data.data ?? []))
+      .catch(() => setTopAds([]))
+  }, [tab])
+
+  useEffect(() => {
+    Promise.all(['USDT', 'BTC', 'ETH', 'USDC'].map(c =>
+      marketplaceApi.getRate(c).then(r => [c, r.data?.data?.rate ?? 0] as const).catch(() => [c, 0] as const),
+    )).then(entries => setRates(Object.fromEntries(entries)))
+  }, [])
+
+  const usdtRate = rates.USDT || 0
+  const cryptoEst = pkrAmount && usdtRate > 0 ? (parseFloat(pkrAmount) / usdtRate).toFixed(2) : '—'
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
@@ -106,7 +142,13 @@ export default function HomePage() {
       {/* Trust Bar */}
       <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '20px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap' }}>
-          {[['50,000+', 'Trades Completed'], ['99.1%', 'Completion Rate'], ['8,200+', 'Verified Users'], ['4.9 ★', 'User Rating (3,200 reviews)'], ['< 15 min', 'Avg Trade Time']].map(([val, lbl]) => (
+          {[
+            [stats ? compactCount(stats.completedTrades) : '—', 'Trades Completed'],
+            [stats ? `${stats.completionRate}%` : '—', 'Completion Rate'],
+            [stats ? compactCount(stats.verifiedUsers) : '—', 'Verified Users'],
+            [stats?.avgRating ? `${stats.avgRating} ★` : '—', stats?.ratingsCount ? `User Rating (${stats.ratingsCount.toLocaleString()} reviews)` : 'User Rating'],
+            ['< 15 min', 'Avg Trade Time'],
+          ].map(([val, lbl]) => (
             <div key={lbl}>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#1d4ed8' }}>{val}</div>
               <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{lbl}</div>
@@ -155,14 +197,14 @@ export default function HomePage() {
             <Link href="/marketplace"><button style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>View All Offers →</button></Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-            {coins.map(({ sym, bg, name, sub, price, color }) => (
+            {Object.values(COIN_META).map(({ sym, bg, name, sub, color }) => (
               <Link key={name} href="/marketplace" style={{ textDecoration: 'none' }}>
                 <div style={{ background: 'white', borderRadius: 14, padding: 20, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer' }}>
                   <div style={{ width: 48, height: 48, borderRadius: '50%', background: bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, flexShrink: 0 }}>{sym}</div>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700 }}>{name}</div>
                     <div style={{ fontSize: 13, color: '#64748b' }}>{sub}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color, marginTop: 4 }}>{price}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color, marginTop: 4 }}>{formatPkr(rates[name] ?? 0)}</div>
                   </div>
                 </div>
               </Link>
@@ -187,24 +229,48 @@ export default function HomePage() {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.5fr auto', padding: '10px 20px', gap: 12, background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               <span>Merchant</span><span>Rate (PKR)</span><span>Limits</span><span>Payment</span><span></span>
             </div>
-            {merchants.map(({ init, bg, name, meta, badge, badgeBg, badgeColor, rate, limits, pm }) => (
-              <div key={name} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.5fr auto', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{init}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{name}</div>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>{meta}</div>
-                  </div>
-                  <span style={{ background: badgeBg, color: badgeColor, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{badge}</span>
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#1e293b' }}>{rate}</div>
-                <div style={{ fontSize: 13, color: '#64748b' }}>{limits}</div>
-                <div><span style={{ background: '#f0fdf4', color: '#065f46', border: '1px solid #86efac', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{pm}</span></div>
-                <Link href="/login"><button style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Buy →</button></Link>
+            {topAds.length === 0 && (
+              <div style={{ padding: '32px 20px', textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
+                No live offers right now. Check back soon.
               </div>
-            ))}
+            )}
+            {topAds.map((ad, i) => {
+              const u = ad.user ?? {}
+              const stats = u.tradeStats ?? {}
+              const displayName = u.username ?? u.fullName ?? 'Trader'
+              const init = displayName.charAt(0).toUpperCase()
+              const total = stats.totalTrades ?? 0
+              const completion = stats.completionRate ? Number(stats.completionRate).toFixed(1) : null
+              const rating = stats.avgRating ? Number(stats.avgRating).toFixed(1) : null
+              const meta = [
+                rating ? `⭐ ${rating}` : null,
+                total ? `${total.toLocaleString()} trades` : null,
+                completion ? `${completion}%` : null,
+              ].filter(Boolean).join(' · ') || 'New trader'
+              const isMerchant = u.kycLevel === 'full'
+              const limits = `${Number(ad.minOrderFiat).toLocaleString()} – ${Number(ad.maxOrderFiat).toLocaleString()} PKR`
+              const pm = (ad.paymentMethods ?? [])[0] ?? '—'
+              return (
+                <div key={ad.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.5fr auto', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: MERCHANT_GRADIENTS[i % MERCHANT_GRADIENTS.length], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{init}</div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{displayName}</div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>{meta}</div>
+                    </div>
+                    <span style={{ background: isMerchant ? '#fef3c7' : '#eff6ff', color: isMerchant ? '#92400e' : '#1d4ed8', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                      {isMerchant ? '👑 Merchant' : '✓ Verified'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#1e293b' }}>{Number(ad.fixedPrice).toFixed(2)}</div>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>{limits}</div>
+                  <div><span style={{ background: '#f0fdf4', color: '#065f46', border: '1px solid #86efac', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{pm}</span></div>
+                  <Link href="/login"><button style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{tab === 'buy' ? 'Buy' : 'Sell'} →</button></Link>
+                </div>
+              )
+            })}
             <div style={{ padding: '16px 20px', textAlign: 'center', background: '#f8fafc' }}>
-              <Link href="/marketplace"><button style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>View All 48 Offers →</button></Link>
+              <Link href="/marketplace"><button style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>View All Offers →</button></Link>
               <span style={{ fontSize: 13, color: '#64748b', marginLeft: 16 }}>Login required to trade</span>
             </div>
           </div>
@@ -278,7 +344,7 @@ export default function HomePage() {
       {/* CTA */}
       <section style={{ background: 'linear-gradient(135deg,#1e3a8a,#1d4ed8)', padding: '80px 24px', textAlign: 'center', color: 'white' }}>
         <h2 style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1, marginBottom: 16 }}>Start Trading in 5 Minutes</h2>
-        <p style={{ fontSize: 18, color: '#93c5fd', marginBottom: 36, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>Join 8,200+ Pakistanis who trust PakSwap to buy and sell crypto safely.</p>
+        <p style={{ fontSize: 18, color: '#93c5fd', marginBottom: 36, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>Join {stats ? `${compactCount(stats.verifiedUsers)} ` : ''}Pakistanis who trust PakSwap to buy and sell crypto safely.</p>
         <Link href="/register"><button style={{ padding: '16px 36px', background: 'white', color: '#1d4ed8', border: 'none', borderRadius: 12, fontSize: 18, fontWeight: 700, cursor: 'pointer' }}>Create Free Account →</button></Link>
       </section>
 

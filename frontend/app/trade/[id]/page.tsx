@@ -189,7 +189,7 @@ export default function TradePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '22px' }}>🔒</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b' }}>17.82 USDT locked in escrow</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b' }}>{trade.cryptoAmount} {trade.coin} locked in escrow</div>
                 <div style={{ fontSize: '13px', color: '#64748b' }}>Buyer must send payment before timer expires</div>
               </div>
             </div>

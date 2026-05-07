@@ -1,24 +1,32 @@
+'use client'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { marketplaceApi } from '@/lib/api'
 
-const team = [
-  { init: 'A', bg: 'linear-gradient(135deg,#2563eb,#7c3aed)', name: 'Ahmed Raza', role: 'Co-Founder & CEO', desc: 'Former fintech product lead. 8 years in Pakistani payments infrastructure. IBA Karachi alum.' },
-  { init: 'S', bg: 'linear-gradient(135deg,#059669,#0d9488)', name: 'Sara Malik', role: 'Co-Founder & CTO', desc: 'Blockchain engineer and AWS certified architect. Previously at a Karachi-based neobank. LUMS CS graduate.' },
-  { init: 'U', bg: 'linear-gradient(135deg,#d97706,#dc2626)', name: 'Usman Khan', role: 'Head of Compliance', desc: '10 years in AML/KYC for Pakistani banks. ACCA qualified. Former SBP banking sector consultant.' },
-  { init: 'F', bg: 'linear-gradient(135deg,#7c3aed,#db2777)', name: 'Fatima Shah', role: 'Head of Operations', desc: 'P2P dispute resolution and merchant relations. Built PakSwap\'s admin workflow from the ground up.' },
-  { init: 'Z', bg: 'linear-gradient(135deg,#0ea5e9,#2563eb)', name: 'Zain Ahmed', role: 'Lead Engineer', desc: 'Node.js and PostgreSQL specialist. Built the escrow engine and real-time trade notification system.' },
-  { init: 'N', bg: 'linear-gradient(135deg,#10b981,#2563eb)', name: 'Nadia Hussain', role: 'Customer Experience', desc: 'Leads our 9am–9pm support team. 5 years in Pakistani fintech user support. Urdu and English fluent.' },
-]
+function compactCount(n: number): string {
+  if (!n) return '—'
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K+`
+  return `${n}`
+}
 
-const values = [
-  { icon: '🔐', title: 'Security First', desc: 'Every trade is protected by escrow. Crypto doesn\'t move until payment is confirmed by a human admin — not an automated script. We use AWS KMS for key signing and never hold private keys on-disk.' },
-  { icon: '🤝', title: 'Trader Protection', desc: 'Our two-layer payment verification means screenshots are OCR-checked AND human-reviewed before any release. Fraud attempts trigger an immediate freeze and investigation.' },
-  { icon: '🇵🇰', title: 'Pakistan-Native', desc: 'JazzCash, Easypaisa, Sadapay, HBL, UBL, MCB, Meezan — all supported. CNIC KYC with Urdu-friendly flows. PKR denomination throughout. Pakistan Standard Time everywhere.' },
-  { icon: '⚖️', title: 'Compliance-Ready', desc: 'KYC, AML transaction monitoring, and full audit trails built in from day one. We operate with a long-term view of regulatory compliance in Pakistan\'s evolving crypto landscape.' },
-  { icon: '📊', title: 'Transparency', desc: 'Our fee schedule is public. Spreads are shown before you trade. No surprise deductions. Every admin action on your account is logged and visible in your account history.' },
-  { icon: '🚀', title: 'Merchant Ecosystem', desc: 'We invest in our merchant partners — verified badge, 5M PKR/day limits, priority dispute SLA, and a dedicated merchant dashboard. Merchants are the backbone of our liquidity.' },
-]
+function formatVolume(n: number): string {
+  if (!n) return '—'
+  if (n >= 1_000_000_000) return `₨${(n / 1_000_000_000).toFixed(1)}B`
+  if (n >= 1_000_000) return `₨${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1000) return `₨${(n / 1000).toFixed(1)}K`
+  return `₨${Math.round(n).toLocaleString()}`
+}
 
 export default function AboutPage() {
+  const [stats, setStats] = useState<any>(null)
+  const [team, setTeam] = useState<any[]>([])
+  const [values, setValues] = useState<any[]>([])
+  useEffect(() => {
+    marketplaceApi.getStats().then(r => setStats(r.data.data)).catch(() => {})
+    marketplaceApi.getCms('team').then(r => setTeam(r.data.data ?? [])).catch(() => {})
+    marketplaceApi.getCms('values').then(r => setValues(r.data.data ?? [])).catch(() => {})
+  }, [])
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui, sans-serif' }}>
       <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '24px', height: '60px' }}>
@@ -44,9 +52,9 @@ export default function AboutPage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '48px', marginTop: '-32px' }}>
           {[
-            { num: '12K+', lbl: 'Registered Users' },
-            { num: '₨4.2B', lbl: 'Total Volume Traded' },
-            { num: '99.1%', lbl: 'Trade Completion Rate' },
+            { num: stats ? compactCount(stats.totalUsers) : '—', lbl: 'Registered Users' },
+            { num: stats ? formatVolume(stats.totalVolumePkr) : '—', lbl: 'Total Volume Traded' },
+            { num: stats ? `${stats.completionRate}%` : '—', lbl: 'Trade Completion Rate' },
             { num: '2 hr', lbl: 'Avg Dispute Resolution' },
           ].map(s => (
             <div key={s.lbl} style={{ textAlign: 'center', padding: '24px 16px', background: 'white', borderRadius: '14px', border: '1.5px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>

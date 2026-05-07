@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { authApi } from '@/lib/api'
+import { authApi, marketplaceApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 
 type Tab = 'security' | 'profile' | 'sessions' | 'kyc-limits'
@@ -17,11 +17,14 @@ interface Session {
   createdAt: string
 }
 
-const TIER_LIMITS: Record<string, { daily: string; monthly: string; label: string }> = {
-  none: { daily: 'PKR 0', monthly: 'PKR 0', label: 'Unverified' },
-  basic: { daily: 'PKR 50,000', monthly: 'PKR 500,000', label: 'Tier 1 — Basic' },
-  full: { daily: 'PKR 500,000', monthly: 'PKR 5,000,000', label: 'Tier 2 — Advanced' },
+const TIER_LABELS: Record<string, string> = {
+  none: 'Unverified',
+  basic: 'Tier 1 — Basic',
+  standard: 'Tier 2 — Standard',
+  full: 'Tier 2 — Advanced',
+  merchant: 'Verified Merchant',
 }
+const fmtPkr = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : 'Unlimited'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -154,7 +157,7 @@ function ProfileTab({ user, updateUser }: { user: any; updateUser: (u: any) => v
   const initials = (user.fullName ?? 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   const verifiedBadge = (ok: boolean | undefined) => ok ? <Badge tone="green">Verified</Badge> : <Badge tone="amber">Not verified</Badge>
   const kycBadge = user.kycStatus === 'approved'
-    ? <Badge tone="green">✓ {TIER_LIMITS[user.kycLevel]?.label ?? 'Verified'}</Badge>
+    ? <Badge tone="green">✓ {TIER_LABELS[user.kycLevel] ?? 'Verified'}</Badge>
     : user.kycStatus === 'pending' || user.kycStatus === 'under_review'
       ? <Badge tone="amber">⏳ Under review</Badge>
       : <Badge tone="slate">Not verified</Badge>
@@ -516,8 +519,15 @@ function SessionsTab() {
 // ─── KYC Limits Tab ──────────────────────────────────────────────────────────
 
 function KycLimitsTab({ user }: { user: any }) {
+  const [limits, setLimits] = useState<Record<string, { dailyPkr: number; monthlyPkr: number }> | null>(null)
+  useEffect(() => {
+    marketplaceApi.getConfig().then(r => setLimits(r.data.data.kycLimits)).catch(() => {})
+  }, [])
+
   if (!user) return <Card>Loading…</Card>
-  const limit = TIER_LIMITS[user.kycLevel ?? 'none']
+  const tierKey = user.kycLevel ?? 'none'
+  const tier = limits?.[tierKey]
+  const label = TIER_LABELS[tierKey] ?? 'Unverified'
   const isApproved = user.kycStatus === 'approved'
   const isPending = user.kycStatus === 'pending' || user.kycStatus === 'under_review'
 
@@ -528,7 +538,7 @@ function KycLimitsTab({ user }: { user: any }) {
       : 'linear-gradient(135deg,#fee2e2,#fff1f2)'
   const heroBorder = isApproved ? '#6ee7b7' : isPending ? '#fde68a' : '#fecaca'
   const heroIcon = isApproved ? '🏆' : isPending ? '⏳' : '🪪'
-  const heroTitle = isApproved ? `${limit.label} verified` : isPending ? 'Under review' : 'Not yet verified'
+  const heroTitle = isApproved ? `${label} verified` : isPending ? 'Under review' : 'Not yet verified'
   const heroSub = isApproved
     ? 'Your trading limits are unlocked.'
     : isPending
@@ -547,8 +557,8 @@ function KycLimitsTab({ user }: { user: any }) {
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Stat label="Daily Limit" value={limit.daily} color="#1d4ed8" />
-          <Stat label="Monthly Limit" value={limit.monthly} color="#10b981" />
+          <Stat label="Daily Limit" value={tier ? fmtPkr(tier.dailyPkr) : '—'} color="#1d4ed8" />
+          <Stat label="Monthly Limit" value={tier ? fmtPkr(tier.monthlyPkr) : '—'} color="#10b981" />
         </div>
       </div>
       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>Limits reset daily at 12:00 AM PKT.</div>
