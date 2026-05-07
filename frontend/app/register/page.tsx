@@ -134,7 +134,8 @@ export default function RegisterPage() {
           {stage === 'form' && (
             <div>
               <Field label="Full Name" required>
-                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Muhammad Usman" style={inputStyle} />
+                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="As on your CNIC (e.g. Muhammad Usman)" style={inputStyle} />
+                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Must match your CNIC exactly for verification.</div>
               </Field>
 
               <Field label="Email Address" required>
