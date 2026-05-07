@@ -9,7 +9,10 @@ on:
 env:
   NODE_VERSION: '20'
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/pakswap
+  # Docker registry names must be lowercase. GitHub Actions has no built-in
+  # `lower` filter, so we hardcode the lowercased owner here. Update if the
+  # repo is transferred to a different owner.
+  IMAGE_PREFIX: itsrayz121/pakswap
 
 jobs:
   # ─── Lint & Type Check ──────────────────────────────────────
