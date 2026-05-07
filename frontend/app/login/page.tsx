@@ -30,6 +30,10 @@ export default function LoginPage() {
         setPreAuthToken(data.preAuthToken)
         setView('twofa')
       } else {
+        // Persist token BEFORE calling /me — the axios interceptor reads
+        // localStorage on every request to attach Authorization. Without
+        // this, /me goes out unauthenticated and returns 401.
+        localStorage.setItem('access_token', data.accessToken)
         const me = await authApi.me()
         setAuth(me.data.data, data.accessToken)
         router.push('/dashboard')
@@ -56,6 +60,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.verify2fa(preAuthToken, code)
       const { accessToken } = res.data.data
+      localStorage.setItem('access_token', accessToken)
       const me = await authApi.me()
       setAuth(me.data.data, accessToken)
       router.push('/dashboard')
