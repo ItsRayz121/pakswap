@@ -5,7 +5,6 @@ import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import multipart from '@fastify/multipart'
 import websocket from '@fastify/websocket'
-import { redis } from './lib/redis'
 import { logger } from './lib/logger'
 
 // Routes
@@ -48,9 +47,10 @@ export async function buildApp() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 
-  // Rate limiting
+  // Rate limiting — use Redis if REDIS_URL is set, otherwise in-memory
+  const redisForRateLimit = process.env.REDIS_URL ? (await import('./lib/redis')).redis : undefined
   await app.register(rateLimit, {
-    redis,
+    ...(redisForRateLimit ? { redis: redisForRateLimit } : {}),
     max: parseInt(process.env.RATE_LIMIT_GLOBAL_RPM ?? '300'),
     timeWindow: '1 minute',
     skipOnError: true,
