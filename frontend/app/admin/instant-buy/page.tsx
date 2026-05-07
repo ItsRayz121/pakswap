@@ -883,7 +883,7 @@ export default function AdminInstantBuyPage() {
                     { val: `${providerDetail.volume} PKR`, label: 'Est. Daily Volume', color: '#2563eb' },
                     { val: providerDetail.exp, label: 'Experience' },
                     { val: providerDetail.tokens, label: 'Tokens Offered' },
-                    { val: { submitted: 'Submitted', under_review: 'Under Review', approved: 'Approved', waitlisted: 'Waitlisted' }[providerDetail.status] || providerDetail.status, label: 'Status', color: { submitted: '#f59e0b', under_review: '#2563eb', approved: '#059669', waitlisted: '#64748b' }[providerDetail.status] },
+                    { val: ({ submitted: 'Submitted', under_review: 'Under Review', approved: 'Approved', waitlisted: 'Waitlisted' } as Record<string, string>)[providerDetail.status] || providerDetail.status, label: 'Status', color: ({ submitted: '#f59e0b', under_review: '#2563eb', approved: '#059669', waitlisted: '#64748b' } as Record<string, string>)[providerDetail.status] },
                   ].map(m => (
                     <div key={m.label} style={{ background: '#f8fafc', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
                       <div style={{ fontWeight: 700, fontSize: '15px', color: m.color }}>{m.val}</div>

@@ -298,7 +298,7 @@ export default function TradePage() {
                 🔒 USDT remains safely locked in escrow while dispute is under review. SLA: 4 hours.
               </div>
               <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
-                {[['Status', '🔴 Under Review', true], ['Agent', 'Support Agent Ali K.'], ['Expected Resolution', 'Within 4 hours']].map(([label, val, badge]) => (
+                {([['Status', '🔴 Under Review', true], ['Agent', 'Support Agent Ali K.', false], ['Expected Resolution', 'Within 4 hours', false]] as [string, string, boolean][]).map(([label, val, badge]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f1f5f9', fontSize: '14px' }}>
                     <span style={{ color: '#64748b' }}>{label}</span>
                     {badge ? <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{val}</span> : <strong>{val}</strong>}

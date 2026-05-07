@@ -148,7 +148,7 @@ export default function DisputePage() {
 
         {/* Past disputes */}
         <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '14px', color: '#64748b' }}>Past Disputes</div>
-        <div style={{ background: 'white', border: '1.5px solid #10b981', borderRadius: '16px', padding: '20px', background: 'linear-gradient(135deg,#f0fdf4,#ffffff)' as any }}>
+        <div style={{ border: '1.5px solid #10b981', borderRadius: '16px', padding: '20px', background: 'linear-gradient(135deg,#f0fdf4,#ffffff)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ fontSize: '28px' }}>✅</div>

@@ -38,7 +38,7 @@ export default function MerchantPage() {
                 <span style={{ fontSize: '28px', fontWeight: 900 }}>CryptoKing</span>
                 <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '13px', fontWeight: 700, padding: '6px 14px', borderRadius: '20px' }}>👑 Verified Merchant</span>
                 <span style={{ background: '#d1fae5', color: '#065f46', fontSize: '13px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px' }}>✓ Full KYC</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#10b981', fontWeight: 600' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#10b981', fontWeight: 600 }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span> Online Now
                 </span>
               </div>

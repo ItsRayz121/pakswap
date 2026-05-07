@@ -23,8 +23,8 @@ export default function KYCPage() {
   const steps = [
     { n: 1, label: 'Step 1: CNIC Upload', sub: 'Completed', done: true },
     { n: 2, label: 'Step 2: Selfie Check', sub: 'In Progress', active: step === 2 },
-    { n: 3, label: 'Step 3: Address Proof', sub: 'For higher limits', locked: step < 3 },
-    { n: 4, label: 'Step 4: Review', sub: 'Awaiting submission', locked: step < 4 },
+    { n: 3, label: 'Step 3: Address Proof', sub: 'For higher limits', locked: (step as number) < 3 },
+    { n: 4, label: 'Step 4: Review', sub: 'Awaiting submission', locked: (step as number) < 4 },
   ]
 
   return (
