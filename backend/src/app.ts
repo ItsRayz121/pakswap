@@ -42,7 +42,7 @@ export async function buildApp() {
 
   // CORS
   await app.register(cors, {
-    origin: (process.env.CORS_ORIGINS ?? 'http://localhost:3000').split(','),
+    origin: (process.env.CORS_ORIGINS ?? 'https://pakswap.vercel.app,http://localhost:3000').split(','),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
