@@ -122,6 +122,18 @@ export const merchantsApi = {
   adminReject: (id: string, reason: string) => api.post(`/merchants/admin/${id}/reject`, { reason }),
 }
 
+export const instantBuyApi = {
+  getPaymentConfig: () => api.get('/instant-buy/payment-config'),
+  createOrder: (data: { coin: string; network: string; paymentMode: 'pkr' | 'crypto'; amount: number; toAddress?: string }) =>
+    api.post('/instant-buy/orders', data),
+  getOrders: (params?: { page?: number; limit?: number }) => api.get('/instant-buy/orders', { params }),
+  getOrder: (id: string) => api.get(`/instant-buy/orders/${id}`),
+  submitPayment: (id: string, formData: FormData) =>
+    api.post(`/instant-buy/orders/${id}/submit-payment`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  confirmDeposit: (id: string, txHash: string) =>
+    api.post(`/instant-buy/orders/${id}/confirm-deposit`, { txHash }),
+}
+
 export const adminApi = {
   stats: () => api.get('/admin/dashboard/stats'),
   kycQueue: (params?: any) => api.get('/admin/kyc/queue', { params }),

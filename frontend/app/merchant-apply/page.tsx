@@ -1,20 +1,39 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { merchantsApi } from '@/lib/api'
+import { useAuthStore } from '@/lib/store'
 
 export default function MerchantApplyPage() {
+  const { user } = useAuthStore()
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [agrees, setAgrees] = useState([false, false, false, false])
+  const [businessName, setBusinessName] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const allAgreed = agrees.every(Boolean)
+
+  const initial = user?.fullName?.charAt(0)?.toUpperCase() ?? '?'
+  const displayName = user?.fullName?.split(' ')[0] ?? 'Account'
 
   function toggle(i: number) {
     setAgrees(prev => { const n = [...prev]; n[i] = !n[i]; return n })
   }
 
-  function submit() {
+  async function submit() {
     if (!allAgreed) { alert('Please read and agree to all terms before submitting.'); return }
-    setSubmitted(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (!businessName.trim()) { alert('Please enter a business/trading name.'); return }
+    setSubmitting(true)
+    setError(null)
+    try {
+      await merchantsApi.apply({ businessName: businessName.trim() })
+      setSubmitted(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Submission failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -24,8 +43,8 @@ export default function MerchantApplyPage() {
         <Link href="/home" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Home</Link>
         <Link href="/marketplace" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>M</div>
-          <span style={{ fontSize: '14px', fontWeight: 600 }}>Muhammad U.</span>
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>{initial}</div>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>{displayName}</span>
         </div>
       </nav>
 
@@ -69,23 +88,20 @@ export default function MerchantApplyPage() {
         <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
           <div style={{ fontSize: '17px', fontWeight: 800, marginBottom: '16px' }}>📋 Requirements to Apply</div>
           {[
-            { title: 'Full KYC Approved', desc: 'Your CNIC, selfie, and address proof must all be verified.', status: '✓ You qualify' },
-            { title: 'Minimum 20 Completed Trades', desc: 'You need at least 20 completed P2P trades on the platform.', status: '✓ You have 142 trades' },
-            { title: 'Completion Rate ≥ 90%', desc: 'Your trade completion rate over the last 30 trades must be 90% or higher.', status: '✓ Your rate: 99.3%' },
-            { title: 'No Active Disputes or Bans', desc: 'Your account must be in good standing with no current disputes or fraud flags.', status: '✓ Account clean' },
-            { title: 'Account Age ≥ 30 Days', desc: 'Your PakSwap account must be at least 30 days old.', status: '✓ Your account: 114 days old' },
+            { title: 'Full KYC Approved', desc: 'Your CNIC, selfie, and address proof must all be verified.' },
+            { title: 'Minimum 20 Completed Trades', desc: 'You need at least 20 completed P2P trades on the platform.' },
+            { title: 'Completion Rate ≥ 90%', desc: 'Your trade completion rate over the last 30 trades must be 90% or higher.' },
+            { title: 'No Active Disputes or Bans', desc: 'Your account must be in good standing with no current disputes or fraud flags.' },
+            { title: 'Account Age ≥ 30 Days', desc: 'Your PakSwap account must be at least 30 days old.' },
           ].map((r, i) => (
             <div key={r.title} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: i < 4 ? '1px solid #f1f5f9' : 'none' }}>
               <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#d1fae5', color: '#065f46', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>✓</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '14px' }}>{r.title}</div>
-                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{r.desc} <span style={{ color: '#059669', fontWeight: 600 }}>{r.status}</span></div>
+                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{r.desc}</div>
               </div>
             </div>
           ))}
-          <div style={{ background: '#d1fae5', border: '1px solid #86efac', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#065f46', marginTop: '16px', fontWeight: 700 }}>
-            🎉 You meet all requirements! Complete the application below.
-          </div>
         </div>
 
         {submitted ? (
@@ -110,24 +126,27 @@ export default function MerchantApplyPage() {
             <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
               <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '16px' }}>👤 About You</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                {[
-                  { label: 'Full Name (as on CNIC)', type: 'text', value: 'Muhammad Usman', readOnly: true },
-                  { label: 'City', type: 'select' },
-                  { label: 'Phone Number', type: 'tel', placeholder: '+92 300 0000000', value: '+92 312 4567890' },
-                  { label: 'WhatsApp Number (for support contact)', type: 'tel', placeholder: '+92 300 0000000' },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>{f.label}</label>
-                    {f.type === 'select' ? (
-                      <select defaultValue="Lahore" style={{ width: '100%', padding: '11px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', marginTop: '6px' }}>
-                        {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Other'].map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    ) : (
-                      <input type={f.type} defaultValue={f.value} readOnly={f.readOnly} placeholder={f.placeholder}
-                        style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: f.readOnly ? '#f8fafc' : 'white', color: f.readOnly ? '#64748b' : '#1e293b', boxSizing: 'border-box', marginTop: '6px' }} />
-                    )}
-                  </div>
-                ))}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Full Name (as on CNIC)</label>
+                  <input type="text" value={user?.fullName ?? ''} readOnly
+                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: '#f8fafc', color: '#64748b', boxSizing: 'border-box', marginTop: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Business / Trading Name</label>
+                  <input type="text" value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. PakCrypto Exchange"
+                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginTop: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>City</label>
+                  <select defaultValue="Lahore" style={{ width: '100%', padding: '11px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', marginTop: '6px' }}>
+                    {['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Other'].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>WhatsApp Number (for support contact)</label>
+                  <input type="tel" placeholder="+92 300 0000000"
+                    style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginTop: '6px' }} />
+                </div>
               </div>
             </div>
 
@@ -182,7 +201,15 @@ export default function MerchantApplyPage() {
                   </label>
                 ))}
               </div>
-              <button onClick={submit} style={{ width: '100%', padding: '14px', background: allAgreed ? '#2563eb' : '#94a3b8', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: allAgreed ? 'pointer' : 'not-allowed' }}>Submit Merchant Application →</button>
+              {error && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#dc2626', marginBottom: '12px' }}>
+                  ⚠️ {error}
+                </div>
+              )}
+              <button onClick={submit} disabled={submitting || !allAgreed}
+                style={{ width: '100%', padding: '14px', background: allAgreed && !submitting ? '#2563eb' : '#94a3b8', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: allAgreed && !submitting ? 'pointer' : 'not-allowed' }}>
+                {submitting ? 'Submitting...' : 'Submit Merchant Application →'}
+              </button>
               <div style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', marginTop: '12px' }}>Review takes 2–5 business days. You'll receive an SMS and email with the decision.</div>
             </div>
           </>

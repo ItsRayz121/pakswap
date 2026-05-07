@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useAuthStore } from '@/lib/store'
 
 const navStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', background: 'white', borderBottom: '1px solid #e2e8f0' }
 
@@ -13,7 +14,10 @@ const referrals = [
 ]
 
 export default function ReferralPage() {
+  const { user } = useAuthStore()
   const [copied, setCopied] = useState(false)
+  const referralCode = user?.referralCode ?? '—'
+  const referralLink = user?.referralCode ? `pakswap.pk/r/${user.referralCode}` : '—'
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f8fafc', minHeight: '100vh' }}>
@@ -25,8 +29,8 @@ export default function ReferralPage() {
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '12px' }}>U</div>
-          <span style={{ fontSize: '14px', fontWeight: 600 }}>Muhammad U.</span>
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '12px' }}>{user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}</div>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>{user?.fullName?.split(' ')[0] ?? 'Account'}</span>
         </div>
       </nav>
 
@@ -38,10 +42,10 @@ export default function ReferralPage() {
           <p style={{ fontSize: '16px', color: '#93c5fd', marginBottom: '28px' }}>Share your link. Both you and your friend earn <strong style={{ color: 'white' }}>500 PKR bonus</strong> after their first trade!</p>
           <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: '14px', padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
             <div style={{ fontSize: '12px', color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Your Referral Code</div>
-            <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '3px', marginBottom: '16px' }}>PAKSWAP-USM42</div>
-            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#bfdbfe', marginBottom: '14px', wordBreak: 'break-all', fontFamily: 'monospace' }}>pakswap.pk/r/USM42</div>
+            <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '3px', marginBottom: '16px' }}>{referralCode}</div>
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#bfdbfe', marginBottom: '14px', wordBreak: 'break-all', fontFamily: 'monospace' }}>{referralLink}</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: copied ? '#d1fae5' : 'white', color: copied ? '#065f46' : '#1d4ed8', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>{copied ? '✅ Copied!' : '📋 Copy Link'}</button>
+              <button onClick={() => { navigator.clipboard?.writeText(referralLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: copied ? '#d1fae5' : 'white', color: copied ? '#065f46' : '#1d4ed8', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>{copied ? '✅ Copied!' : '📋 Copy Link'}</button>
               <button style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#25d366', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>💬 WhatsApp</button>
               <button style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#0088cc', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>✈️ Telegram</button>
               <button style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#1877f2', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>📘 Facebook</button>

@@ -11,20 +11,50 @@ function nanoid(size: number) {
   return randomBytes(size).toString('base64url').slice(0, size).toUpperCase()
 }
 
+const SUPPORTED_COINS = [
+  'USDT', 'USDC', 'BTC', 'ETH', 'BNB', 'SOL', 'TRX',
+  'AVAX', 'APT', 'NEAR', 'OP', 'ARB', 'SUI', 'RON', 'TON',
+] as const
+
+const SUPPORTED_NETWORKS = [
+  'TRC20', 'BEP20', 'ERC20', 'SOL', 'ARB', 'POLY', 'OP',
+  'BASE', 'AVAX', 'BTC', 'APTOS', 'NEAR', 'SUI', 'TON', 'RONIN',
+] as const
+
 const createOrderSchema = z.object({
-  coin: z.enum(['USDT', 'BTC', 'ETH', 'USDC']),
-  network: z.string().min(2).max(20).default('TRC20'),
+  coin: z.enum(SUPPORTED_COINS as unknown as [string, ...string[]]),
+  network: z.enum(SUPPORTED_NETWORKS as unknown as [string, ...string[]]),
   paymentMode: z.enum(['pkr', 'crypto']),
   amount: z.number().positive(),
-  toAddress: z.string().optional(),
+  toAddress: z.string().min(10).optional(),
 })
 
 export default async function instantBuyRoutes(app: FastifyInstance) {
+  // GET /api/instant-buy/payment-config — public; returns platform payment details from DB
+  app.get('/payment-config', async () => {
+    const keys = ['ib_jazzcash_number', 'ib_easypaisa_number', 'ib_account_name', 'ib_bank_iban', 'ib_bank_name']
+    const configs = await prisma.platformConfig.findMany({ where: { key: { in: keys } } })
+    const map = Object.fromEntries(configs.map(c => [c.key, c.value]))
+    return {
+      success: true,
+      data: {
+        jazzcash:    map['ib_jazzcash_number']  ?? null,
+        easypaisa:   map['ib_easypaisa_number'] ?? null,
+        accountName: map['ib_account_name']     ?? 'PakSwap (Pvt) Ltd',
+        bankIban:    map['ib_bank_iban']        ?? null,
+        bankName:    map['ib_bank_name']        ?? null,
+      },
+    }
+  })
+
+
   // POST /api/instant-buy/orders
   app.post('/orders', { preHandler: [authenticate] }, async (req, reply) => {
+    req.log.info({ rawBody: req.body }, '[InstantBuy] Incoming order request')
     const body = createOrderSchema.parse(req.body) as {
       coin: string; network: string; paymentMode: string; amount: number; toAddress?: string
     }
+    req.log.info({ coin: body.coin, network: body.network, paymentMode: body.paymentMode, amount: body.amount }, '[InstantBuy] Parsed order payload')
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: req.user!.sub },
