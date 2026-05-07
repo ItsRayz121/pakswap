@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/fraud', label: 'Fraud Monitor', icon: '🚨' },
   { href: '/admin/audit-log', label: 'Audit Log', icon: '📋' },
   { href: '/admin/config', label: 'Platform Config', icon: '⚙️' },
+  { href: '/admin/team', label: 'Team Management', icon: '🛡️' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

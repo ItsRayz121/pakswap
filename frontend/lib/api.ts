@@ -140,4 +140,8 @@ export const adminApi = {
   instantBuyQueue: (params?: any) => api.get('/admin/instant-buy/queue', { params }),
   approveInstantBuy: (id: string) => api.post(`/admin/instant-buy/${id}/approve`),
   rejectInstantBuy: (id: string, reason: string) => api.post(`/admin/instant-buy/${id}/reject`, { reason }),
+  getTeam: () => api.get('/admin/team'),
+  inviteTeam: (email: string, role: string) => api.post('/admin/team/invite', { email, role }),
+  changeTeamRole: (userId: string, role: string) => api.patch(`/admin/team/${userId}/role`, { role }),
+  revokeTeam: (userId: string) => api.delete(`/admin/team/${userId}`),
 }

@@ -504,4 +504,107 @@ export default async function adminRoutes(app: FastifyInstance) {
     await notificationService.send({ userId: order.userId, title: 'Instant Buy Rejected', body: `Your order was rejected: ${reason}`, type: 'ib_rejected', data: { orderId: id } })
     return { success: true }
   })
+
+  // ─── Team Management (super_admin only) ──────────────────────────────────
+
+  const ASSIGNABLE_ROLES = ['admin', 'kyc_reviewer', 'dispute_agent', 'support', 'user'] as const
+  type AssignableRole = typeof ASSIGNABLE_ROLES[number]
+
+  function requireSuperAdmin(req: any, reply: any) {
+    if (!req.user || req.user.role !== 'super_admin') {
+      return reply.status(403).send({ success: false, error: 'FORBIDDEN', message: 'super_admin only' })
+    }
+  }
+
+  // GET /admin/team — list all staff (non-user roles)
+  app.get('/team', { preHandler: [requireSuperAdmin] }, async () => {
+    const team = await prisma.user.findMany({
+      where: { role: { in: ['super_admin', 'admin', 'kyc_reviewer', 'dispute_agent', 'support'] } },
+      select: { id: true, fullName: true, email: true, role: true, status: true, lastLoginAt: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    })
+    return { success: true, data: team }
+  })
+
+  // POST /admin/team/invite — promote an existing user to a staff role by email
+  app.post('/team/invite', { preHandler: [requireSuperAdmin] }, async (req) => {
+    const { email, role } = z.object({
+      email: z.string().email(),
+      role: z.enum(ASSIGNABLE_ROLES),
+    }).parse(req.body)
+
+    const adminId = req.user!.sub
+
+    const target = await prisma.user.findUnique({ where: { email } })
+    if (!target) {
+      return { success: false, error: 'USER_NOT_FOUND', message: `No account found for ${email}. They must register first.` }
+    }
+    if (target.id === adminId) {
+      return { success: false, error: 'SELF_MODIFY', message: 'You cannot change your own role.' }
+    }
+    if (target.role === 'super_admin') {
+      return { success: false, error: 'FORBIDDEN', message: 'Cannot modify another super_admin.' }
+    }
+
+    const updated = await prisma.user.update({
+      where: { email },
+      data: { role: role as any },
+      select: { id: true, fullName: true, email: true, role: true },
+    })
+
+    await prisma.adminAuditLog.create({
+      data: { adminId, actionType: 'team_role_assign', resourceId: updated.id, resourceType: 'user', decision: role, notes: `${email} → ${role}` },
+    })
+
+    return { success: true, data: updated, message: `${email} is now ${role}` }
+  })
+
+  // PATCH /admin/team/:userId/role — change role of an existing team member
+  app.patch('/team/:userId/role', { preHandler: [requireSuperAdmin] }, async (req) => {
+    const { userId } = req.params as { userId: string }
+    const { role } = z.object({ role: z.enum(ASSIGNABLE_ROLES) }).parse(req.body)
+    const adminId = req.user!.sub
+
+    const target = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    if (target.id === adminId) {
+      return { success: false, error: 'SELF_MODIFY', message: 'You cannot change your own role.' }
+    }
+    if (target.role === 'super_admin') {
+      return { success: false, error: 'FORBIDDEN', message: 'Cannot modify another super_admin.' }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { role: role as any },
+      select: { id: true, fullName: true, email: true, role: true },
+    })
+
+    await prisma.adminAuditLog.create({
+      data: { adminId, actionType: 'team_role_change', resourceId: userId, resourceType: 'user', decision: role, notes: `${target.email}: ${target.role} → ${role}` },
+    })
+
+    return { success: true, data: updated, message: `Role updated to ${role}` }
+  })
+
+  // DELETE /admin/team/:userId — revoke all staff access (set back to user)
+  app.delete('/team/:userId', { preHandler: [requireSuperAdmin] }, async (req) => {
+    const { userId } = req.params as { userId: string }
+    const adminId = req.user!.sub
+
+    const target = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    if (target.id === adminId) {
+      return { success: false, error: 'SELF_MODIFY', message: 'You cannot revoke your own access.' }
+    }
+    if (target.role === 'super_admin') {
+      return { success: false, error: 'FORBIDDEN', message: 'Cannot revoke another super_admin.' }
+    }
+
+    await prisma.user.update({ where: { id: userId }, data: { role: 'user' } })
+
+    await prisma.adminAuditLog.create({
+      data: { adminId, actionType: 'team_revoke', resourceId: userId, resourceType: 'user', notes: `${target.email} revoked from ${target.role}` },
+    })
+
+    return { success: true, message: `${target.email} access revoked` }
+  })
 }
