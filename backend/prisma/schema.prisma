@@ -226,7 +226,9 @@ model UserTwoFa {
 model OtpCode {
   id        String    @id @default(uuid())
   target    String
-  codeHash  String    @map("code_hash")
+  // Optional in schema so the migration can be applied to a non-empty table
+  // without a default. App code always sets it on create.
+  codeHash  String?   @map("code_hash")
   type      String
   attempts  Int       @default(0)
   expiresAt DateTime  @map("expires_at")
