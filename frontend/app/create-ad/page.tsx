@@ -2,246 +2,248 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const coins = [
-  { id: 'USDT', symbol: '₮', border: '#26a17b', bg: '#f0fdf4', color: '#065f46' },
-  { id: 'BTC', symbol: '₿', border: '#f7931a', bg: '#fff7ed', color: '#9a3412' },
-  { id: 'ETH', symbol: 'Ξ', border: '#627eea', bg: '#f0f4ff', color: '#3730a3' },
-  { id: 'USDC', symbol: '$', border: '#2775ca', bg: '#eff6ff', color: '#1e40af' },
-]
-
 export default function CreateAdPage() {
   const [side, setSide] = useState<'sell' | 'buy'>('sell')
   const [coin, setCoin] = useState('USDT')
   const [priceType, setPriceType] = useState<'fixed' | 'float'>('fixed')
-  const [rate, setRate] = useState('280.50')
+  const [fixedRate, setFixedRate] = useState('280.50')
   const [margin, setMargin] = useState(1.5)
-  const [pmJazz, setPmJazz] = useState(true)
-  const [pmBank, setPmBank] = useState(true)
+  const [pm, setPm] = useState<Record<string, boolean>>({ jazz: true, hbl: true, easy: false })
   const [terms, setTerms] = useState('')
 
   const market = 280.05
-  const rateDiff = rate ? ((parseFloat(rate) - market) / market * 100).toFixed(2) : '0.00'
+  const rate = parseFloat(fixedRate) || market
+  const diff = ((rate - market) / market * 100).toFixed(2)
+  const diffPositive = rate >= market
+
+  const coins = [
+    { id: 'USDT', sym: '₮', border: '#26a17b', bg: '#f0fdf4', color: '#065f46' },
+    { id: 'BTC', sym: '₿', border: '#f7931a', bg: '#fff7ed', color: '#9a3412' },
+    { id: 'ETH', sym: 'Ξ', border: '#627eea', bg: '#f0f4ff', color: '#3730a3' },
+    { id: 'USDC', sym: '$', border: '#2775ca', bg: '#eff6ff', color: '#1e40af' },
+  ]
+
+  function publishAd() {
+    alert('✅ Ad published successfully!\nYour SELL USDT offer is now live in the marketplace.\n\nRedirecting to marketplace...')
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
-      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
-        <div style={{ display: 'flex', gap: 24 }}>
-          <Link href="/marketplace" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
-          <Link href="/wallet" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Wallet</Link>
-          <Link href="/create-ad" style={{ fontSize: 14, fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}>+ Create Ad</Link>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 10, padding: '8px 14px' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>U</div>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Muhammad U.</span>
-          <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>👑 Merchant</span>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui, sans-serif' }}>
+      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '24px', height: '60px' }}>
+        <Link href="/" style={{ fontSize: '20px', fontWeight: 800, color: '#2563eb', textDecoration: 'none' }}>Pak<span style={{ color: '#1e293b' }}>Swap</span></Link>
+        <Link href="/marketplace" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Marketplace</Link>
+        <Link href="/wallet" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Wallet</Link>
+        <span style={{ fontSize: '14px', color: '#2563eb', fontWeight: 700 }}>+ Create Ad</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', borderRadius: '10px', padding: '8px 14px' }}>
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 700 }}>U</div>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>Muhammad U.</span>
+          <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px' }}>👑 Merchant</span>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Create P2P Advertisement</h1>
-            <p style={{ color: '#64748b', fontSize: 14, marginTop: 4, marginBottom: 0 }}>Set up your offer for the marketplace</p>
+            <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0 }}>Create P2P Advertisement</h1>
+            <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px', margin: 0 }}>Set up your offer for the marketplace</p>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button style={{ padding: '8px 16px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: '#f1f5f9' }}>Save Draft</button>
-            <Link href="/marketplace"><button style={{ padding: '8px 16px', border: 'none', background: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#64748b' }}>View My Ads</button></Link>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => alert('Draft saved')} style={{ padding: '9px 18px', border: '1.5px solid #e2e8f0', background: 'white', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Save Draft</button>
+            <Link href="/marketplace" style={{ padding: '9px 18px', border: '1.5px solid #e2e8f0', background: 'white', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', textDecoration: 'none', color: '#374151' }}>View My Ads</Link>
           </div>
         </div>
 
-        {/* Section helper */}
-        {(() => {
-          const Section = ({ n, title, sub, children }: any) => (
-            <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 14, padding: 24, marginBottom: 16 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>{n}. {title}</div>
-              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>{sub}</div>
-              {children}
+        {/* Section 1: Trade Direction */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px' }}>1. Trade Direction</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Are you buying or selling crypto?</div>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+            {([['sell', '💰', 'SELL Crypto', 'Receive PKR from buyers'], ['buy', '🛒', 'BUY Crypto', 'Send PKR to sellers']] as const).map(([s, icon, label, sub]) => (
+              <button key={s} onClick={() => setSide(s)} style={{ flex: 1, padding: '16px', borderRadius: '10px', border: `2px solid ${side === s ? '#2563eb' : '#e2e8f0'}`, background: side === s ? '#eff6ff' : 'white', color: side === s ? '#1d4ed8' : '#374151', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                <div style={{ fontSize: '24px', marginBottom: '6px' }}>{icon}</div>
+                <div>{label}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 400, marginTop: '2px' }}>{sub}</div>
+              </button>
+            ))}
+          </div>
+          <div>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Cryptocurrency</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+              {coins.map(c => (
+                <button key={c.id} onClick={() => setCoin(c.id)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '10px', border: `2px solid ${coin === c.id ? c.border : '#e2e8f0'}`, background: coin === c.id ? c.bg : 'white', color: coin === c.id ? c.color : '#374151', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: c.border, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: 700 }}>{c.sym}</div>
+                  {c.id}
+                </button>
+              ))}
             </div>
-          )
+          </div>
+        </div>
 
-          return (
-            <>
-              {/* 1. Trade Direction */}
-              <Section n="1" title="Trade Direction" sub="Are you buying or selling crypto?">
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-                  {[{ key: 'sell', icon: '💰', label: 'SELL Crypto', sub: 'Receive PKR from buyers' }, { key: 'buy', icon: '🛒', label: 'BUY Crypto', sub: 'Send PKR to sellers' }].map(({ key, icon, label, sub }) => (
-                    <button key={key} onClick={() => setSide(key as any)} style={{ flex: 1, padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: `2px solid ${side === key ? '#2563eb' : '#e2e8f0'}`, background: side === key ? '#eff6ff' : 'white', color: side === key ? '#1d4ed8' : '#374151', textAlign: 'center' }}>
-                      <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
-                      <div>{label}</div>
-                      <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400, marginTop: 2 }}>{sub}</div>
-                    </button>
-                  ))}
+        {/* Section 2: Price Setting */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px' }}>2. Price Setting</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Set your exchange rate — fixed or floating with market</div>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+            {([['fixed', 'Fixed Price', 'Set exact PKR/USDT rate manually'], ['float', 'Floating Price', 'Auto-adjust with market ± margin']] as const).map(([t, label, sub]) => (
+              <button key={t} onClick={() => setPriceType(t)} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: `2px solid ${priceType === t ? '#2563eb' : '#e2e8f0'}`, background: priceType === t ? '#eff6ff' : 'white', color: priceType === t ? '#1d4ed8' : '#374151', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                <strong>{label}</strong>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 400, marginTop: '4px' }}>{sub}</div>
+              </button>
+            ))}
+          </div>
+
+          {priceType === 'fixed' ? (
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Your Rate (PKR per USDT)</label>
+              <div style={{ position: 'relative', marginTop: '6px' }}>
+                <input type="number" value={fixedRate} onChange={e => setFixedRate(e.target.value)}
+                  style={{ width: '100%', padding: '14px', paddingRight: '60px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '20px', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} />
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748b' }}>PKR</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>Market rate: <strong>280.05 PKR</strong></span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: diffPositive ? '#10b981' : '#f59e0b' }}>{diffPositive ? '▲ +' : '▼ '}{diff}% vs market</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Floating Margin (%)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+                <button onClick={() => setMargin(m => Math.max(0, +(m - 0.5).toFixed(1)))} style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontSize: '20px', cursor: 'pointer' }}>−</button>
+                <input type="number" value={margin} onChange={e => setMargin(+e.target.value)} style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, width: '100px', border: '1.5px solid #e2e8f0', borderRadius: '10px', padding: '8px', outline: 'none' }} />
+                <button onClick={() => setMargin(m => +(m + 0.5).toFixed(1))} style={{ width: '36px', height: '36px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontSize: '20px', cursor: 'pointer' }}>+</button>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#64748b' }}>%</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#10b981', marginTop: '8px' }}>Your effective rate: ≈ {(market * (1 + margin / 100)).toFixed(2)} PKR/USDT (+{margin}%)</div>
+            </div>
+          )}
+        </div>
+
+        {/* Section 3: Trade Limits */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px' }}>3. Trade Limits</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>How much USDT do you want to trade?</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            {[
+              { label: 'Total USDT to Sell', unit: 'USDT', default: '500', hint: 'Wallet: 35.50 USDT' },
+              { label: 'Min per Trade', unit: 'PKR', default: '1000', hint: '' },
+              { label: 'Max per Trade', unit: 'PKR', default: '200000', hint: '' },
+            ].map(f => (
+              <div key={f.label}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>{f.label}</label>
+                <div style={{ position: 'relative', marginTop: '6px' }}>
+                  <input type="number" defaultValue={f.default} style={{ width: '100%', padding: '11px 48px 11px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                  <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 700, color: '#64748b' }}>{f.unit}</span>
                 </div>
+                {f.hint && <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>{f.hint}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 4: Payment Methods */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px' }}>4. Payment Methods</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Which payment methods will you accept?</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[
+              { key: 'jazz', label: '⚡ JazzCash', detail: '0312-XXXXXXX (Verified ✓)', detailColor: '#065f46' },
+              { key: 'hbl', label: '🏦 HBL Bank Transfer', detail: 'IBAN: PK36HABB... (Verified ✓)', detailColor: '#065f46' },
+              { key: 'easy', label: '💚 Easypaisa', detail: 'Not added yet', detailColor: '#94a3b8', addLink: true },
+            ].map(p => (
+              <div key={p.key} onClick={() => !p.addLink && setPm(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: `1.5px solid ${pm[p.key] ? '#2563eb' : '#e2e8f0'}`, borderRadius: '10px', cursor: 'pointer', background: pm[p.key] ? '#eff6ff' : 'white' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600 }}>{p.label}</span>
+                <span style={{ fontSize: '13px', color: p.detailColor, flex: 1 }}>{p.detail}</span>
+                {p.addLink ? (
+                  <Link href="/payment-methods" style={{ fontSize: '12px', color: '#2563eb' }}>+ Add</Link>
+                ) : (
+                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: pm[p.key] ? '#10b981' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px' }}>{pm[p.key] ? '✓' : ''}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 5: Trade Settings */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '4px' }}>5. Trade Settings</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Configure trade window and counterparty requirements</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Trade Window</label>
+              <select defaultValue="15" style={{ width: '100%', padding: '11px 12px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', marginTop: '6px' }}>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+              </select>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Time buyer has to complete payment</div>
+            </div>
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Counterparty Requirements</label>
+              <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {['KYC verified (min)', 'Full KYC only', 'Min. 1 completed trade'].map((r, i) => (
+                  <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                    <input type="checkbox" defaultChecked={i === 0} style={{ accentColor: '#2563eb' }} /> {r}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop: '16px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Ad Terms <span style={{ color: '#94a3b8', fontWeight: 400 }}>(shown to buyers)</span></label>
+            <textarea value={terms} onChange={e => setTerms(e.target.value)} rows={3}
+              placeholder="e.g. Send from your own registered account only. No third-party payments. I release within 5 minutes of confirmation."
+              style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', resize: 'none', marginTop: '6px', boxSizing: 'border-box' }} />
+            <div style={{ textAlign: 'right', fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>{terms.length}/500 characters</div>
+          </div>
+        </div>
+
+        {/* Section 6: Preview */}
+        <div style={{ background: '#f8faff', border: '1.5px solid #2563eb', borderRadius: '14px', padding: '24px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, color: '#1d4ed8', marginBottom: '4px' }}>6. Preview Your Ad</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>This is how your ad will appear in the marketplace</div>
+          <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 700 }}>U</div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Cryptocurrency</label>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {coins.map(c => (
-                      <button key={c.id} onClick={() => setCoin(c.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, border: `2px solid ${coin === c.id ? c.border : '#e2e8f0'}`, background: coin === c.id ? c.bg : 'white', fontWeight: 700, cursor: 'pointer', fontSize: 14, color: coin === c.id ? c.color : '#374151' }}>
-                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.border, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800 }}>{c.symbol}</div>
-                        {c.id}
-                      </button>
-                    ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '16px', fontWeight: 800 }}>Muhammad U.</span>
+                    <span style={{ background: '#fef3c7', color: '#92400e', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px' }}>👑 Merchant</span>
                   </div>
-                </div>
-              </Section>
-
-              {/* 2. Pricing */}
-              <Section n="2" title="Price Setting" sub="Set your exchange rate — fixed or floating with market">
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-                  {[{ key: 'fixed', label: 'Fixed Price', sub: 'Set exact PKR/USDT rate manually' }, { key: 'float', label: 'Floating Price', sub: 'Auto-adjust with market ± margin' }].map(({ key, label, sub }) => (
-                    <button key={key} onClick={() => setPriceType(key as any)} style={{ flex: 1, padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: `2px solid ${priceType === key ? '#2563eb' : '#e2e8f0'}`, background: priceType === key ? '#eff6ff' : 'white', color: priceType === key ? '#1d4ed8' : '#374151', textAlign: 'center' }}>
-                      <strong>{label}</strong>
-                      <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400, marginTop: 4 }}>{sub}</div>
-                    </button>
-                  ))}
-                </div>
-
-                {priceType === 'fixed' && (
-                  <div>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Your Rate (PKR per USDT)</label>
-                    <div style={{ position: 'relative' }}>
-                      <input type="number" value={rate} onChange={e => setRate(e.target.value)} style={{ width: '100%', padding: '14px', paddingRight: 60, border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 20, fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} />
-                      <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748b' }}>PKR</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                      <span style={{ fontSize: 13, color: '#64748b' }}>Market rate: <strong>280.05 PKR</strong></span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: parseFloat(rateDiff) >= 0 ? '#10b981' : '#f59e0b' }}>{parseFloat(rateDiff) >= 0 ? '▲ +' : '▼ '}{rateDiff}% {parseFloat(rateDiff) >= 0 ? 'above' : 'below'} market</span>
-                    </div>
-                  </div>
-                )}
-
-                {priceType === 'float' && (
-                  <div>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Floating Margin (%)</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <button onClick={() => setMargin(m => Math.max(0, parseFloat((m - 0.5).toFixed(1))))} style={{ width: 36, height: 36, borderRadius: 8, border: '1.5px solid #e2e8f0', background: 'white', fontSize: 20, cursor: 'pointer' }}>−</button>
-                      <input type="number" value={margin} onChange={e => setMargin(parseFloat(e.target.value) || 0)} style={{ width: 100, padding: '8px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 20, fontWeight: 800, textAlign: 'center', outline: 'none' }} />
-                      <button onClick={() => setMargin(m => parseFloat((m + 0.5).toFixed(1)))} style={{ width: 36, height: 36, borderRadius: 8, border: '1.5px solid #e2e8f0', background: 'white', fontSize: 20, cursor: 'pointer' }}>+</button>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#64748b' }}>%</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#10b981', marginTop: 8 }}>Your effective rate: ≈ {(market * (1 + margin / 100)).toFixed(2)} PKR/USDT (+{margin}%)</div>
-                  </div>
-                )}
-              </Section>
-
-              {/* 3. Limits */}
-              <Section n="3" title="Trade Limits" sub="How much USDT do you want to trade?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-                  {[{ label: 'Total USDT to Sell', val: '500', unit: 'USDT', hint: 'Wallet: 35.50 USDT' }, { label: 'Min per Trade', val: '1000', unit: 'PKR', hint: '' }, { label: 'Max per Trade', val: '200000', unit: 'PKR', hint: '' }].map(({ label, val, unit, hint }) => (
-                    <div key={label}>
-                      <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{label}</label>
-                      <div style={{ position: 'relative' }}>
-                        <input type="number" defaultValue={val} style={{ width: '100%', padding: '10px 56px 10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                        <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 700, color: '#64748b' }}>{unit}</span>
-                      </div>
-                      {hint && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{hint}</div>}
-                    </div>
-                  ))}
-                </div>
-              </Section>
-
-              {/* 4. Payment Methods */}
-              <Section n="4" title="Payment Methods" sub="Which payment methods will you accept?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { label: '⚡ JazzCash', pill: '#065f46', pillBg: '#f0fdf4', detail: '0312-XXXXXXX (Verified ✓)', on: pmJazz, toggle: () => setPmJazz(!pmJazz) },
-                    { label: '🏦 HBL Bank Transfer', pill: '#1d4ed8', pillBg: '#eff6ff', detail: 'IBAN: PK36HABB... (Verified ✓)', on: pmBank, toggle: () => setPmBank(!pmBank) },
-                  ].map(({ label, pill, pillBg, detail, on, toggle }) => (
-                    <div key={label} onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: `1.5px solid ${on ? '#2563eb' : '#e2e8f0'}`, borderRadius: 10, cursor: 'pointer', background: on ? '#eff6ff' : 'white' }}>
-                      <span style={{ background: pillBg, color: pill, border: `1px solid ${on ? '#93c5fd' : '#e2e8f0'}`, borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>{label}</span>
-                      <span style={{ fontSize: 13, color: '#065f46', flex: 1 }}>{detail}</span>
-                      {on && <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>✓</div>}
-                    </div>
-                  ))}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10 }}>
-                    <span style={{ background: '#f0fdf4', color: '#065f46', border: '1px solid #e2e8f0', borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>💚 Easypaisa</span>
-                    <span style={{ fontSize: 13, color: '#94a3b8', flex: 1 }}>Not added yet</span>
-                    <Link href="/payment-methods" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none' }}>+ Add</Link>
-                  </div>
-                </div>
-              </Section>
-
-              {/* 5. Trade Settings */}
-              <Section n="5" title="Trade Settings" sub="Configure trade window and counterparty requirements">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Trade Window</label>
-                    <select style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
-                      <option>10 minutes</option>
-                      <option selected>15 minutes</option>
-                      <option>20 minutes</option>
-                      <option>30 minutes</option>
-                    </select>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Time buyer has to complete payment</div>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Counterparty Requirements</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-                      {['KYC verified (min)', 'Full KYC only', 'Min. 1 completed trade'].map((l, i) => (
-                        <label key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
-                          <input type="checkbox" defaultChecked={i === 0} style={{ accentColor: '#2563eb' }} /> {l}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ marginTop: 20 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Ad Terms <span style={{ color: '#94a3b8', fontWeight: 400 }}>(shown to buyers)</span></label>
-                  <textarea value={terms} onChange={e => setTerms(e.target.value)} rows={3} placeholder="e.g. Send from your own registered account only. No third-party payments. I release within 5 minutes of confirmation." style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box' }} />
-                  <div style={{ textAlign: 'right', fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{terms.length}/500 characters</div>
-                </div>
-              </Section>
-
-              {/* 6. Preview */}
-              <div style={{ background: '#f8faff', border: '1.5px solid #2563eb', borderRadius: 14, padding: 24, marginBottom: 16 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1d4ed8', marginBottom: 4 }}>6. Preview Your Ad</div>
-                <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>This is how your ad will appear in the marketplace</div>
-                <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 14, padding: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800 }}>U</div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 16, fontWeight: 800 }}>Muhammad U.</span>
-                          <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>👑 Merchant</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                          <span style={{ color: '#f59e0b', fontSize: 13 }}>★★★★★</span><span style={{ fontSize: 13 }}>4.9</span>
-                          <span style={{ fontSize: 13, color: '#64748b' }}>87 trades · 97.2%</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} /><span style={{ fontSize: 12, color: '#64748b' }}>Online</span></span>
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 26, fontWeight: 900 }}>{priceType === 'fixed' ? (parseFloat(rate) || 280.5).toFixed(2) : (market * (1 + margin / 100)).toFixed(2)} <span style={{ fontSize: 14, color: '#64748b', fontWeight: 600 }}>PKR</span></div>
-                      <div style={{ fontSize: 12, color: '#10b981' }}>▲ +{priceType === 'fixed' ? rateDiff : margin.toFixed(1)}% above market</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, fontSize: 13, color: '#64748b' }}>
-                    <span>Limits: <strong style={{ color: '#1e293b' }}>1,000–200,000 PKR</strong></span>
-                    <span>Available: <strong style={{ color: '#1e293b' }}>500 USDT</strong></span>
-                    <span>⚡ ~4 min</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {pmJazz && <span style={{ background: '#f0fdf4', color: '#065f46', border: '1px solid #86efac', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>⚡ JazzCash</span>}
-                      {pmBank && <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>🏦 HBL Bank</span>}
-                    </div>
-                    <button style={{ padding: '7px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'default', opacity: 0.5 }}>{side === 'sell' ? 'Buy' : 'Sell'} USDT →</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                    <span style={{ color: '#f59e0b' }}>★★★★★</span>
+                    <span style={{ fontSize: '13px' }}>4.9</span>
+                    <span style={{ fontSize: '13px', color: '#64748b' }}>87 trades · 97.2%</span>
                   </div>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', gap: 12, paddingBottom: 32 }}>
-                <button style={{ padding: '13px 24px', border: '1.5px solid #e2e8f0', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', background: '#f1f5f9' }}>Save as Draft</button>
-                <Link href="/marketplace" style={{ flex: 1, textDecoration: 'none' }}>
-                  <button style={{ width: '100%', padding: 13, background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>🚀 Publish Ad to Marketplace</button>
-                </Link>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '26px', fontWeight: 900 }}>{priceType === 'fixed' ? rate.toFixed(2) : (market * (1 + margin / 100)).toFixed(2)} <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>PKR</span></div>
+                <div style={{ fontSize: '12px', color: '#10b981' }}>▲ +{priceType === 'fixed' ? diff : margin}% above market</div>
               </div>
-            </>
-          )
-        })()}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '14px', fontSize: '13px', color: '#64748b' }}>
+              <span>Limits: <strong style={{ color: '#1e293b' }}>1,000–200,000 PKR</strong></span>
+              <span>Available: <strong style={{ color: '#1e293b' }}>500 USDT</strong></span>
+              <span>⚡ ~4 min</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {pm.jazz && <span style={{ background: '#fef3c7', color: '#92400e', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>⚡ JazzCash</span>}
+                {pm.hbl && <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>🏦 HBL Bank</span>}
+              </div>
+              <button disabled style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '13px', opacity: 0.5, cursor: 'default' }}>Buy USDT →</button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', paddingBottom: '32px' }}>
+          <button onClick={() => alert('Saved as draft')} style={{ padding: '14px 24px', border: '1.5px solid #e2e8f0', background: 'white', borderRadius: '12px', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>Save as Draft</button>
+          <button onClick={publishAd} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>🚀 Publish Ad to Marketplace</button>
+        </div>
       </div>
     </div>
   )
