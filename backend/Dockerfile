@@ -20,4 +20,4 @@ COPY --from=builder /app/prisma ./prisma
 COPY package.json ./
 
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma db push --skip-generate && echo 'Starting node...' && node dist/index.js 2>&1; echo \"Node exited with code $?\""]
+CMD ["sh", "-c", "npx prisma db push 2>&1 || true; echo 'Starting node...'; node dist/index.js"]
