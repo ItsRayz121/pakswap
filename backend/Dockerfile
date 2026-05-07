@@ -1,6 +1,6 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 WORKDIR /app
-RUN apk add --no-cache openssl
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
 COPY package*.json ./
@@ -20,4 +20,4 @@ COPY --from=builder /app/prisma ./prisma
 COPY package.json ./
 
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && echo 'Starting node...' && node dist/index.js 2>&1; echo \"Node exited with code $?\""]
