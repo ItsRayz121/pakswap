@@ -2,34 +2,29 @@ import bcrypt from 'bcrypt'
 import { randomBytes, createHash } from 'crypto'
 import { prisma } from '../lib/prisma'
 import { redis } from '../lib/redis'
-import { sendSms } from '../lib/twilio'
-import { sendEmail, TEMPLATES } from '../lib/sendgrid'
+import { issueOtp, verifyOtp } from './otp.service'
 import { logger } from '../lib/logger'
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12')
-const OTP_TTL = 600 // 10 minutes
-
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
 
 function generateReferralCode(): string {
   return randomBytes(4).toString('hex').toUpperCase()
 }
 
+/**
+ * Single-step signup: email + name + password.
+ * Phone & KYC are collected later from the dashboard.
+ */
 export async function registerUser(data: {
   email: string
-  phone: string
   fullName: string
   password: string
   referralCode?: string
 }) {
-  const [existingEmail, existingPhone] = await Promise.all([
-    prisma.user.findUnique({ where: { email: data.email } }),
-    prisma.user.findUnique({ where: { phone: data.phone } }),
-  ])
-  if (existingEmail) throw Object.assign(new Error('Email already registered'), { code: 'EMAIL_EXISTS', statusCode: 409 })
-  if (existingPhone) throw Object.assign(new Error('Phone already registered'), { code: 'PHONE_EXISTS', statusCode: 409 })
+  const existing = await prisma.user.findUnique({ where: { email: data.email } })
+  if (existing) {
+    throw Object.assign(new Error('Email already registered'), { code: 'EMAIL_EXISTS', statusCode: 409 })
+  }
 
   const passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS)
   const referralCode = generateReferralCode()
@@ -43,7 +38,6 @@ export async function registerUser(data: {
   const user = await prisma.user.create({
     data: {
       email: data.email,
-      phone: data.phone,
       fullName: data.fullName,
       passwordHash,
       referralCode,
@@ -53,57 +47,38 @@ export async function registerUser(data: {
     },
   })
 
-  await sendPhoneOtp(data.phone)
+  await issueOtp(data.email, 'email_verify')
 
-  sendEmail({
-    to: data.email,
-    templateId: TEMPLATES.WELCOME,
-    dynamicTemplateData: { name: data.fullName, referralCode },
-  }).catch((err) => logger.warn({ err }, 'Welcome email failed'))
-
-  return { userId: user.id, message: 'OTP sent to your phone number' }
+  logger.info({ userId: user.id, email: data.email }, 'New user registered, verification email sent')
+  return { userId: user.id, email: user.email, message: 'Verification code sent to your email' }
 }
 
-export async function sendPhoneOtp(phone: string): Promise<void> {
-  // OTP rate limit — Redis when available, otherwise skip rate limiting
-  if (redis) {
-    const rateLimitKey = `otp:rate:${phone}`
-    const count = await redis.incr(rateLimitKey)
-    if (count === 1) await redis.expire(rateLimitKey, 3600)
-    if (count > parseInt(process.env.RATE_LIMIT_OTP_PER_HOUR ?? '5')) {
-      throw Object.assign(new Error('Too many OTP requests'), { code: 'OTP_RATE_LIMIT', statusCode: 429 })
-    }
+export async function sendEmailVerificationOtp(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true, emailVerified: true } })
+  if (!user) {
+    // Silent — don't reveal account existence
+    return
   }
-
-  const code = generateOtp()
-  const expiresAt = new Date(Date.now() + OTP_TTL * 1000)
-
-  // Always persist OTP in DB (source of truth)
-  await prisma.otpCode.create({ data: { target: phone, code, type: 'phone_verify', expiresAt } })
-
-  // Also cache in Redis for fast lookup when available
-  if (redis) await redis.setex(`otp:phone:${phone}`, OTP_TTL, code)
-
-  await sendSms(phone, `Your PakSwap verification code is: ${code}. Valid for 10 minutes.`)
+  if (user.emailVerified) {
+    throw Object.assign(new Error('Email already verified'), { code: 'ALREADY_VERIFIED', statusCode: 400 })
+  }
+  await issueOtp(email, 'email_verify')
 }
 
-export async function verifyPhoneOtp(phone: string, code: string): Promise<boolean> {
-  // Check Redis first (fast path), fall back to DB
-  if (redis) {
-    const stored = await redis.get(`otp:phone:${phone}`)
-    if (!stored || stored !== code) return false
-    await redis.del(`otp:phone:${phone}`)
-  } else {
-    const record = await prisma.otpCode.findFirst({
-      where: { target: phone, code, type: 'phone_verify', usedAt: null, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
+export async function verifyEmail(email: string, code: string): Promise<{ userId: string }> {
+  const ok = await verifyOtp(email, 'email_verify', code)
+  if (!ok) {
+    throw Object.assign(new Error('Invalid or expired verification code'), {
+      code: 'INVALID_OTP',
+      statusCode: 400,
     })
-    if (!record) return false
-    await prisma.otpCode.update({ where: { id: record.id }, data: { usedAt: new Date() } })
   }
-
-  await prisma.user.update({ where: { phone }, data: { phoneVerified: true } })
-  return true
+  const user = await prisma.user.update({
+    where: { email },
+    data: { emailVerified: true },
+    select: { id: true },
+  })
+  return { userId: user.id }
 }
 
 export async function loginUser(data: {
@@ -140,7 +115,6 @@ export async function loginUser(data: {
       await redis.setex(loginAttemptKey, 900, (attempts + 1).toString())
       throw Object.assign(new Error('Invalid credentials'), { code: 'INVALID_CREDENTIALS', statusCode: 401 })
     }
-
     await redis.del(loginAttemptKey)
   } else {
     const valid = await bcrypt.compare(data.password, user.passwordHash)
@@ -158,67 +132,34 @@ export async function loginUser(data: {
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
 
-  sendEmail({
-    to: user.email,
-    templateId: TEMPLATES.LOGIN_ALERT,
-    dynamicTemplateData: {
-      name: user.fullName,
-      ip: data.ip ?? 'Unknown',
-      userAgent: data.userAgent ?? 'Unknown',
-      time: new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }),
-    },
-  }).catch(() => {})
-
-  return { userId: user.id, role: user.role, twoFaEnabled: user.twoFaEnabled, kycLevel: user.kycLevel }
-}
-
-export async function forgotPassword(emailOrPhone: string): Promise<void> {
-  const isPhone = /^\+|\d{10,}/.test(emailOrPhone)
-  const user = await prisma.user.findFirst({
-    where: isPhone ? { phone: emailOrPhone } : { email: emailOrPhone },
-  })
-  if (!user) return // Silently succeed (security)
-
-  const code = generateOtp()
-  const expiresAt = new Date(Date.now() + OTP_TTL * 1000)
-
-  await prisma.otpCode.create({ data: { target: user.id, code, type: 'password_reset', expiresAt } })
-  if (redis) await redis.setex(`otp:reset:${user.id}`, OTP_TTL, code)
-
-  if (isPhone) {
-    await sendSms(user.phone, `Your PakSwap password reset code is: ${code}. Valid for 10 minutes.`)
-  } else {
-    await sendEmail({
-      to: user.email,
-      templateId: TEMPLATES.LOGIN_ALERT,
-      dynamicTemplateData: { name: user.fullName, resetCode: code },
-    })
+  return {
+    userId: user.id,
+    role: user.role,
+    twoFaEnabled: user.twoFaEnabled,
+    kycLevel: user.kycLevel,
+    emailVerified: user.emailVerified,
   }
 }
 
-export async function resetPassword(userId: string, code: string, newPassword: string): Promise<void> {
-  let valid = false
+export async function forgotPassword(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (!user) return // Silent — security
+  await issueOtp(email, 'password_reset')
+}
 
-  if (redis) {
-    const stored = await redis.get(`otp:reset:${userId}`)
-    valid = stored === code
-    if (valid) await redis.del(`otp:reset:${userId}`)
-  } else {
-    const record = await prisma.otpCode.findFirst({
-      where: { target: userId, code, type: 'password_reset', usedAt: null, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    })
-    valid = !!record
-    if (record) await prisma.otpCode.update({ where: { id: record.id }, data: { usedAt: new Date() } })
-  }
-
-  if (!valid) {
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  const ok = await verifyOtp(email, 'password_reset', code)
+  if (!ok) {
     throw Object.assign(new Error('Invalid or expired reset code'), { code: 'INVALID_CODE', statusCode: 400 })
   }
-
   const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS)
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash } })
-  await prisma.userSession.updateMany({ where: { userId }, data: { isActive: false } })
+  const user = await prisma.user.update({
+    where: { email },
+    data: { passwordHash },
+    select: { id: true },
+  })
+  // Invalidate all sessions
+  await prisma.userSession.updateMany({ where: { userId: user.id }, data: { isActive: false } })
 }
 
 export function hashToken(token: string): string {

@@ -3,8 +3,8 @@ import { z } from 'zod'
 import {
   registerUser,
   loginUser,
-  verifyPhoneOtp,
-  sendPhoneOtp,
+  sendEmailVerificationOtp,
+  verifyEmail,
   forgotPassword,
   resetPassword,
 } from '../services/auth.service'
@@ -13,7 +13,6 @@ import { prisma } from '../lib/prisma'
 
 const registerSchema = z.object({
   email: z.string().email(),
-  phone: z.string().min(10).max(20),
   fullName: z.string().min(2).max(100),
   password: z.string().min(8).max(128),
   referralCode: z.string().optional(),
@@ -25,28 +24,30 @@ const loginSchema = z.object({
 })
 
 export default async function authRoutes(app: FastifyInstance) {
-  // POST /api/auth/register
+  // POST /api/auth/register — single-step signup (email + name + password)
   app.post('/register', async (req, reply) => {
     const body = registerSchema.parse(req.body) as {
-      email: string; phone: string; fullName: string; password: string; referralCode?: string
+      email: string; fullName: string; password: string; referralCode?: string
     }
     const result = await registerUser(body)
     return reply.status(201).send({ success: true, data: result })
   })
 
-  // POST /api/auth/verify-otp
-  app.post('/verify-otp', async (req, reply) => {
-    const { phone, code } = z.object({ phone: z.string(), code: z.string().length(6) }).parse(req.body)
-    const ok = await verifyPhoneOtp(phone, code)
-    if (!ok) return reply.status(400).send({ success: false, error: 'INVALID_OTP', message: 'Invalid or expired OTP' })
-    return { success: true, message: 'Phone verified successfully' }
+  // POST /api/auth/verify-email — verify the OTP we emailed at signup / resend
+  app.post('/verify-email', async (req, reply) => {
+    const { email, code } = z.object({
+      email: z.string().email(),
+      code: z.string().length(6),
+    }).parse(req.body)
+    const result = await verifyEmail(email, code)
+    return { success: true, data: result, message: 'Email verified successfully' }
   })
 
-  // POST /api/auth/resend-otp
-  app.post('/resend-otp', async (req, reply) => {
-    const { phone } = z.object({ phone: z.string() }).parse(req.body)
-    await sendPhoneOtp(phone)
-    return { success: true, message: 'OTP sent' }
+  // POST /api/auth/resend-email-otp — re-issue verification code (60s cooldown enforced server-side)
+  app.post('/resend-email-otp', async (req, reply) => {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body)
+    await sendEmailVerificationOtp(email)
+    return { success: true, message: 'Verification code sent' }
   })
 
   // POST /api/auth/login
@@ -107,30 +108,19 @@ export default async function authRoutes(app: FastifyInstance) {
 
   // POST /api/auth/forgot-password
   app.post('/forgot-password', async (req) => {
-    const body = z.object({ email: z.string().optional(), emailOrPhone: z.string().optional() }).parse(req.body)
-    const identifier = body.email ?? body.emailOrPhone ?? ''
-    await forgotPassword(identifier)
+    const { email } = z.object({ email: z.string().email() }).parse(req.body)
+    await forgotPassword(email)
     return { success: true, message: 'If an account exists, a reset code has been sent' }
   })
 
   // POST /api/auth/reset-password
   app.post('/reset-password', async (req, reply) => {
     const body = z.object({
-      email: z.string().email().optional(),
-      otp: z.string().length(6).optional(),
-      code: z.string().length(6).optional(),
+      email: z.string().email(),
+      code: z.string().length(6),
       newPassword: z.string().min(8),
     }).parse(req.body)
-
-    const code = body.otp ?? body.code ?? ''
-    if (!code) return reply.status(400).send({ success: false, error: 'OTP_REQUIRED' })
-
-    // Look up user by email to get userId
-    if (body.email) {
-      const user = await prisma.user.findUnique({ where: { email: body.email }, select: { id: true } })
-      if (!user) return reply.status(400).send({ success: false, error: 'INVALID_RESET' })
-      await resetPassword(user.id, code, body.newPassword)
-    }
+    await resetPassword(body.email, body.code, body.newPassword)
     return { success: true, message: 'Password reset successfully' }
   })
 
@@ -150,7 +140,9 @@ export default async function authRoutes(app: FastifyInstance) {
       select: {
         id: true,
         email: true,
+        emailVerified: true,
         phone: true,
+        phoneVerified: true,
         fullName: true,
         username: true,
         role: true,

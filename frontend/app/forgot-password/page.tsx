@@ -53,10 +53,9 @@ export default function ForgotPasswordPage() {
     setError('')
     setLoading(true)
     try {
-      const isEmail = contact.includes('@')
       await authApi.resetPassword({
-        ...(isEmail ? { email: contact } : { emailOrPhone: contact }),
-        otp: code,
+        email: contact,
+        code,
         newPassword: pwd,
       })
       setStep(4)

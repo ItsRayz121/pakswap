@@ -120,11 +120,6 @@ export default function DashboardPage() {
             <div style={{ fontSize: 26, fontWeight: 900, color: '#1e293b' }}>{greeting()}, {displayName}! 👋</div>
             <div style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>
               {new Date().toLocaleDateString('en-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              {user?.kycStatus !== 'approved' && (
-                <span style={{ marginLeft: 12, background: '#fef3c7', color: '#92400e', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-                  ⚠️ KYC Pending — <Link href="/kyc" style={{ color: '#92400e' }}>Complete now</Link>
-                </span>
-              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -132,6 +127,28 @@ export default function DashboardPage() {
             <Link href="/marketplace"><button style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Browse P2P</button></Link>
           </div>
         </div>
+
+        {/* Verification banner — drives users through the onboarding tiers */}
+        {user && !user.emailVerified && (
+          <VerificationBanner
+            tone="warn"
+            icon="📧"
+            title="Verify your email"
+            body="We sent a verification code to your email. Verify to unlock full account access."
+            cta={{ href: '/verify-email', label: 'Verify now' }}
+          />
+        )}
+        {user?.emailVerified && user?.kycStatus !== 'approved' && (
+          <VerificationBanner
+            tone="info"
+            icon="🪪"
+            title={user?.kycLevel === 'none' ? 'Complete Basic Verification (Tier 1)' : 'Upgrade to Advanced Verification (Tier 2)'}
+            body={user?.kycLevel === 'none'
+              ? 'Submit your CNIC and selfie to start trading up to PKR 50,000/day.'
+              : 'Add a bank statement or utility bill to raise your daily limit to PKR 500,000.'}
+            cta={{ href: '/kyc', label: user?.kycLevel === 'none' ? 'Start KYC' : 'Upgrade tier' }}
+          />
+        )}
 
         {/* Portfolio + Quick Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
@@ -275,6 +292,38 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function VerificationBanner({
+  tone, icon, title, body, cta,
+}: {
+  tone: 'warn' | 'info'
+  icon: string
+  title: string
+  body: string
+  cta: { href: string; label: string }
+}) {
+  const palette = tone === 'warn'
+    ? { bg: '#fffbeb', border: '#fde68a', titleColor: '#92400e', bodyColor: '#78350f', btn: '#f59e0b' }
+    : { bg: '#eff6ff', border: '#bfdbfe', titleColor: '#1e40af', bodyColor: '#1e3a8a', btn: '#2563eb' }
+  return (
+    <div style={{
+      background: palette.bg, border: `1.5px solid ${palette.border}`, borderRadius: 14,
+      padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14,
+    }}>
+      <div style={{ fontSize: 28 }}>{icon}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: palette.titleColor }}>{title}</div>
+        <div style={{ fontSize: 13, color: palette.bodyColor, marginTop: 2 }}>{body}</div>
+      </div>
+      <Link href={cta.href} style={{
+        padding: '9px 16px', background: palette.btn, color: 'white', borderRadius: 10,
+        fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+      }}>
+        {cta.label} →
+      </Link>
     </div>
   )
 }

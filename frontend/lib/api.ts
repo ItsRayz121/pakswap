@@ -29,12 +29,14 @@ api.interceptors.response.use(
 )
 
 export const authApi = {
-  register: (data: any) => api.post('/auth/register', data),
+  register: (data: { email: string; fullName: string; password: string; referralCode?: string }) =>
+    api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data),
-  verifyOtp: (phone: string, code: string) => api.post('/auth/verify-otp', { phone, code }),
-  resendOtp: (phone: string) => api.post('/auth/resend-otp', { phone }),
+  verifyEmail: (email: string, code: string) => api.post('/auth/verify-email', { email, code }),
+  resendEmailOtp: (email: string) => api.post('/auth/resend-email-otp', { email }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (data: any) => api.post('/auth/reset-password', data),
+  resetPassword: (data: { email: string; code: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
   updateProfile: (data: any) => api.patch('/auth/profile', data),

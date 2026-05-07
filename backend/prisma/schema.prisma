@@ -140,7 +140,7 @@ enum RiskLevel {
 model User {
   id                String     @id @default(uuid())
   email             String     @unique
-  phone             String     @unique
+  phone             String?    @unique
   phoneVerified     Boolean    @default(false) @map("phone_verified")
   emailVerified     Boolean    @default(false) @map("email_verified")
   fullName          String     @map("full_name")
@@ -224,15 +224,16 @@ model UserTwoFa {
 }
 
 model OtpCode {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   target    String
-  code      String
+  codeHash  String    @map("code_hash")
   type      String
-  expiresAt DateTime @map("expires_at")
+  attempts  Int       @default(0)
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  @@index([target, type])
+  @@index([target, type, usedAt])
   @@map("otp_codes")
 }
 
