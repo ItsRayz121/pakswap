@@ -42,6 +42,7 @@ export const authApi = {
   updateProfile: (data: any) => api.patch('/auth/profile', data),
   changePassword: (data: any) => api.post('/auth/change-password', data),
   setup2fa: () => api.post('/auth/2fa/setup'),
+  enable2fa: (code: string) => api.post('/auth/2fa/enable', { code }),
   verify2fa: (preAuthToken: string, totpCode: string) => api.post('/auth/2fa/verify', { preAuthToken, totpCode }),
   disable2fa: (code: string) => api.post('/auth/2fa/disable', { code }),
   getSessions: () => api.get('/auth/sessions'),
