@@ -15,6 +15,7 @@ export async function submitKyc(
     selfie?: Buffer
     addressProof?: Buffer
   },
+  meta: { phone?: string; cnicNumber?: string } = {},
 ) {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
 
@@ -32,6 +33,19 @@ export async function submitKyc(
     )
   }
 
+  // Persist phone on the user if newly provided. Phone uniqueness is enforced
+  // at the schema level — a clearer error to the user if it clashes.
+  if (meta.phone && meta.phone !== user.phone) {
+    const clash = await prisma.user.findFirst({ where: { phone: meta.phone, NOT: { id: userId } } })
+    if (clash) {
+      throw Object.assign(
+        new Error('This phone number is already linked to another account.'),
+        { code: 'PHONE_EXISTS', statusCode: 409 },
+      )
+    }
+    await prisma.user.update({ where: { id: userId }, data: { phone: meta.phone } })
+  }
+
   // Upload files to S3
   const prefix = `kyc/${userId}`
   const [cnicFrontUrl, cnicBackUrl, selfieUrl, addressProofUrl] = await Promise.all([
@@ -47,6 +61,7 @@ export async function submitKyc(
       level,
       status: 'pending',
       verificationStatus: 'pending_layer1',
+      cnicNumber: meta.cnicNumber,
       cnicFrontUrl,
       cnicBackUrl,
       selfieUrl,
