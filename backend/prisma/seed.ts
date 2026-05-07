@@ -143,6 +143,18 @@ async function main() {
     })
   }
 
+  // Promote super_admin by email — safe upsert, runs on every seed
+  const superAdminEmail = 'fazalelahi5577@gmail.com'
+  const promoted = await prisma.user.updateMany({
+    where: { email: superAdminEmail },
+    data: { role: 'super_admin', kycLevel: 'full', kycStatus: 'approved' },
+  })
+  if (promoted.count > 0) {
+    console.log(`🔑 Promoted ${superAdminEmail} → super_admin`)
+  } else {
+    console.log(`⚠️  ${superAdminEmail} not found — register first, then re-run seed`)
+  }
+
   console.log('✅ Seed complete!')
   console.log('   Admin:    admin@pakswap.com / Admin@123456')
   console.log('   Seller:   seller@test.com / Seller@123456')
