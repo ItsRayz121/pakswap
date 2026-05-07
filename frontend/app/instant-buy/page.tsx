@@ -1,227 +1,243 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
-const PAY_OPTIONS = [
-  { id: 'PKR', icon: '🇵🇰', name: 'PKR', sub: 'JazzCash / Bank' },
-  { id: 'USDT', icon: '💵', name: 'USDT', sub: 'Any network' },
-  { id: 'USDC', icon: '🔵', name: 'USDC', sub: 'Any network' },
-  { id: 'BNB', icon: '🟡', name: 'BNB', sub: 'BSC / BEP-20' },
-  { id: 'ETH', icon: '🔷', name: 'ETH', sub: 'Any EVM chain' },
-  { id: 'SOL', icon: '🟣', name: 'SOL', sub: 'Solana' },
-]
-
-const TOKENS = [
-  { id: 'USDT', name: 'Tether USD', emoji: '💵', cat: ['popular', 'stable'], pricePkr: 280.5, priceUsd: 1, networks: ['TRC-20', 'BEP-20', 'ERC-20', 'ARB', 'SOL'] },
-  { id: 'USDC', name: 'USD Coin', emoji: '🔵', cat: ['stable'], pricePkr: 280.2, priceUsd: 1, networks: ['BEP-20', 'ERC-20', 'SOL'] },
-  { id: 'BNB', name: 'BNB', emoji: '🟡', cat: ['popular', 'gas'], pricePkr: 168000, priceUsd: 598, networks: ['BEP-20'] },
-  { id: 'ETH', name: 'Ethereum', emoji: '🔷', cat: ['popular', 'gas'], pricePkr: 885000, priceUsd: 3150, networks: ['ERC-20', 'ARB', 'BASE'] },
-  { id: 'SOL', name: 'Solana', emoji: '🟣', cat: ['popular', 'gas'], pricePkr: 41850, priceUsd: 149, networks: ['SOL'] },
-  { id: 'BTC', name: 'Bitcoin', emoji: '🟠', cat: ['popular'], pricePkr: 26600000, priceUsd: 94800, networks: ['BTC', 'BEP-20'] },
-  { id: 'TRX', name: 'TRON', emoji: '🔴', cat: ['gas'], pricePkr: 76, priceUsd: 0.27, networks: ['TRC-20'] },
-  { id: 'TON', name: 'TON', emoji: '💎', cat: ['popular', 'gas'], pricePkr: 1630, priceUsd: 5.8, networks: ['TON'] },
-  { id: 'AVAX', name: 'Avalanche', emoji: '🔺', cat: ['gas'], pricePkr: 10700, priceUsd: 38, networks: ['AVAX'] },
-  { id: 'ARB', name: 'Arbitrum', emoji: '💙', cat: ['gas'], pricePkr: 310, priceUsd: 1.1, networks: ['ARB'] },
-  { id: 'OP', name: 'Optimism', emoji: '🔴', cat: ['gas'], pricePkr: 590, priceUsd: 2.1, networks: ['OP'] },
-  { id: 'SUI', name: 'Sui', emoji: '💧', cat: ['gas'], pricePkr: 1065, priceUsd: 3.8, networks: ['SUI'] },
-]
-
-const NETWORK_INFO: Record<string, { speed: string; speedColor: string; fee: string; confirm: string }> = {
-  'TRC-20': { speed: '⚡ Fast', speedColor: '#059669', fee: '1 USDT', confirm: '~1 min' },
-  'BEP-20': { speed: '⚡ Fast', speedColor: '#059669', fee: '0.5 USDT', confirm: '~3 min' },
-  'ERC-20': { speed: '🐌 Slow', speedColor: '#ef4444', fee: '5–15 USDT', confirm: '~5 min' },
-  'ARB': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.1 USDT', confirm: '~1 min' },
-  'SOL': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.01 USDT', confirm: '< 30s' },
-  'BASE': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.1 USDT', confirm: '~2 min' },
-  'BTC': { speed: '🐢 Slow', speedColor: '#f59e0b', fee: 'Variable', confirm: '~10 min' },
-  'TON': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.01 USDT', confirm: '< 30s' },
-  'AVAX': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.1 USDT', confirm: '~2 min' },
-  'ARB': { speed: '⚡ Fast', speedColor: '#059669', fee: '< 0.1 USDT', confirm: '~1 min' },
+const ASSETS: Record<string, { name: string; sym: string; emoji: string; cat: string[]; price_pkr: number; price_usd: number; spread: number; networks: string[] }> = {
+  USDT: { name: 'Tether USD', sym: 'USDT', emoji: '💵', cat: ['popular', 'stable'], price_pkr: 280.5, price_usd: 1, spread: 0.5, networks: ['TRC20', 'BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
+  USDC: { name: 'USD Coin', sym: 'USDC', emoji: '🔵', cat: ['stable'], price_pkr: 280.2, price_usd: 1, spread: 0.5, networks: ['BEP20', 'ERC20', 'ARB', 'POLY', 'SOL', 'OP'] },
+  BNB: { name: 'BNB', sym: 'BNB', emoji: '🟡', cat: ['popular', 'gas'], price_pkr: 168000, price_usd: 598, spread: 2.5, networks: ['BEP20'] },
+  ETH: { name: 'Ethereum', sym: 'ETH', emoji: '🔷', cat: ['popular', 'gas'], price_pkr: 885000, price_usd: 3150, spread: 2.0, networks: ['ERC20', 'BASE', 'ARB', 'POLY', 'OP'] },
+  SOL: { name: 'Solana', sym: 'SOL', emoji: '🟣', cat: ['popular', 'gas'], price_pkr: 41850, price_usd: 149, spread: 2.5, networks: ['SOL'] },
+  BTC: { name: 'Bitcoin', sym: 'BTC', emoji: '🟠', cat: ['popular'], price_pkr: 26600000, price_usd: 94800, spread: 1.5, networks: ['BTC', 'BEP20'] },
+  TRX: { name: 'TRON', sym: 'TRX', emoji: '🔴', cat: ['gas'], price_pkr: 76, price_usd: 0.27, spread: 2.5, networks: ['TRC20'] },
+  AVAX: { name: 'Avalanche', sym: 'AVAX', emoji: '🔺', cat: ['gas'], price_pkr: 10700, price_usd: 38, spread: 3.0, networks: ['AVAX'] },
+  APT: { name: 'Aptos', sym: 'APT', emoji: '⚡', cat: ['gas'], price_pkr: 2670, price_usd: 9.5, spread: 3.5, networks: ['APTOS'] },
+  NEAR: { name: 'NEAR Protocol', sym: 'NEAR', emoji: '🌐', cat: ['gas'], price_pkr: 2020, price_usd: 7.2, spread: 3.5, networks: ['NEAR'] },
+  OP: { name: 'Optimism', sym: 'OP', emoji: '🔴', cat: ['gas'], price_pkr: 590, price_usd: 2.1, spread: 3.5, networks: ['OP'] },
+  ARB: { name: 'Arbitrum', sym: 'ARB', emoji: '💙', cat: ['gas'], price_pkr: 310, price_usd: 1.1, spread: 3.5, networks: ['ARB'] },
+  SUI: { name: 'Sui', sym: 'SUI', emoji: '💧', cat: ['gas'], price_pkr: 1065, price_usd: 3.8, spread: 3.5, networks: ['SUI'] },
+  RON: { name: 'Ronin', sym: 'RON', emoji: '⚔️', cat: ['gas'], price_pkr: 898, price_usd: 3.2, spread: 3.5, networks: ['RONIN'] },
+  TON: { name: 'TON', sym: 'TON', emoji: '💎', cat: ['popular', 'gas'], price_pkr: 1630, price_usd: 5.8, spread: 3.0, networks: ['TON'] },
 }
 
-const CATS = ['popular', 'stable', 'gas', 'all']
-const CAT_LABELS: Record<string, string> = { popular: '⭐ Popular', stable: '💵 Stablecoins', gas: '⚡ Gas Tokens', all: '🌐 All Tokens' }
+const NETWORKS: Record<string, { name: string; short: string; conf: number; speed: string; mvp: boolean; warn: string | null }> = {
+  TRC20: { name: 'TRON (TRC-20)', short: 'TRC-20', conf: 20, speed: 'fast', mvp: true, warn: null },
+  BEP20: { name: 'BSC (BEP-20)', short: 'BEP-20', conf: 15, speed: 'fast', mvp: true, warn: null },
+  ERC20: { name: 'Ethereum (ERC-20)', short: 'ERC-20', conf: 12, speed: 'medium', mvp: false, warn: 'erc20' },
+  ARB: { name: 'Arbitrum One', short: 'ARB', conf: 10, speed: 'fast', mvp: false, warn: null },
+  POLY: { name: 'Polygon (MATIC)', short: 'MATIC', conf: 100, speed: 'fast', mvp: false, warn: null },
+  SOL: { name: 'Solana (SPL)', short: 'SOL', conf: 32, speed: 'fast', mvp: true, warn: null },
+  OP: { name: 'Optimism', short: 'OP', conf: 10, speed: 'fast', mvp: false, warn: null },
+  BASE: { name: 'Base', short: 'BASE', conf: 10, speed: 'fast', mvp: false, warn: null },
+  AVAX: { name: 'Avalanche C-Chain', short: 'C-Chain', conf: 12, speed: 'fast', mvp: false, warn: null },
+  BTC: { name: 'Bitcoin', short: 'BTC', conf: 3, speed: 'slow', mvp: false, warn: null },
+  APTOS: { name: 'Aptos', short: 'APT', conf: 1, speed: 'fast', mvp: false, warn: null },
+  NEAR: { name: 'NEAR Protocol', short: 'NEAR', conf: 1, speed: 'fast', mvp: false, warn: null },
+  SUI: { name: 'Sui Network', short: 'SUI', conf: 1, speed: 'fast', mvp: false, warn: null },
+  TON: { name: 'TON Network', short: 'TON', conf: 1, speed: 'fast', mvp: false, warn: null },
+  RONIN: { name: 'Ronin Network', short: 'RON', conf: 5, speed: 'medium', mvp: false, warn: null },
+}
+
+function fmtPkr(pkr: number) {
+  if (pkr >= 1000000) return 'PKR ' + (pkr / 1000000).toFixed(2) + 'M'
+  if (pkr >= 1000) return 'PKR ' + (pkr / 1000).toFixed(1) + 'K'
+  return 'PKR ' + pkr.toFixed(2)
+}
 
 export default function InstantBuyPage() {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [payWith, setPayWith] = useState('PKR')
   const [cat, setCat] = useState('popular')
-  const [selectedToken, setSelectedToken] = useState<string | null>(null)
-  const [selectedNet, setSelectedNet] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [network, setNetwork] = useState<string | null>(null)
 
-  const token = TOKENS.find(t => t.id === selectedToken)
+  const payOptions = [
+    { id: 'PKR', icon: '🇵🇰', name: 'PKR', sub: 'JazzCash / Bank' },
+    { id: 'USDT', icon: '💵', name: 'USDT', sub: 'Any network' },
+    { id: 'USDC', icon: '🔵', name: 'USDC', sub: 'Any network' },
+    { id: 'BNB', icon: '🟡', name: 'BNB', sub: 'BSC / BEP-20' },
+    { id: 'ETH', icon: '🔷', name: 'ETH', sub: 'Any EVM chain' },
+    { id: 'SOL', icon: '🟣', name: 'SOL', sub: 'Solana' },
+  ]
 
-  const filteredTokens = cat === 'all' ? TOKENS : TOKENS.filter(t => t.cat.includes(cat))
+  const filteredTokens = Object.entries(ASSETS).filter(([sym, a]) => {
+    if (sym === payWith) return false
+    if (cat === 'all') return true
+    if (cat === 'popular') return a.cat.includes('popular')
+    return a.cat.includes(cat)
+  })
 
-  const goStep = (n: number) => {
-    if (n === 3 && !selectedToken) return
-    setStep(n)
-    if (n !== 3) setSelectedNet(null)
-  }
+  const selAsset = token ? ASSETS[token] : null
+  const selNet = network ? NETWORKS[network] : null
 
-  const handleTokenSelect = (id: string) => {
-    setSelectedToken(id)
-    setSelectedNet(null)
-    setStep(3)
-  }
+  const speedColor = (s: string) => s === 'fast' ? '#059669' : s === 'medium' ? '#f59e0b' : '#ef4444'
+  const speedLabel = (s: string) => s === 'fast' ? '⚡ Fast' : s === 'medium' ? '⏱ Medium' : '🐢 Slow'
 
-  const proceed = () => {
-    if (!selectedToken || !selectedNet) return
-    router.push('/instant-buy/order/new')
-  }
+  const navStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', background: 'white', borderBottom: '1px solid #e2e8f0' }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter',sans-serif" }}>
-      {/* Navbar */}
-      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/" style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', textDecoration: 'none' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
-        <div style={{ display: 'flex', gap: 24 }}>
-          <Link href="/trade" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>P2P Trade</Link>
-          <Link href="/instant-buy" style={{ fontSize: 14, fontWeight: 600, color: '#2563eb', textDecoration: 'none' }}>Instant Buy</Link>
+    <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f8fafc', minHeight: '100vh' }}>
+      <nav style={navStyle}>
+        <Link href="/" style={{ fontWeight: 800, fontSize: '20px', textDecoration: 'none', color: '#1e293b' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <Link href="/marketplace" style={{ fontSize: '14px', fontWeight: 500, color: '#374151', textDecoration: 'none' }}>P2P Trade</Link>
+          <Link href="/instant-buy" style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb', textDecoration: 'none' }}>Instant Buy</Link>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/kyc"><button style={{ padding: '8px 16px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>My Account</button></Link>
-          <Link href="/trade"><button style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Trade P2P</button></Link>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link href="/kyc" style={{ padding: '8px 16px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '14px', color: '#374151', textDecoration: 'none' }}>My Account</Link>
+          <Link href="/marketplace" style={{ padding: '8px 16px', borderRadius: '8px', background: '#2563eb', color: 'white', fontWeight: 600, fontSize: '14px', textDecoration: 'none' }}>Trade P2P</Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg,#1e3a8a,#1d4ed8,#2563eb)', padding: '48px 24px 72px', textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden' }}>
-        <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 10, position: 'relative' }}>Buy Crypto Instantly in Pakistan</h1>
-        <p style={{ fontSize: 16, opacity: 0.85, maxWidth: 520, margin: '0 auto 28px', position: 'relative' }}>Pay with PKR, USDT, or any supported crypto. 25+ tokens, 15+ networks. Instant delivery to your wallet.</p>
-        <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>
+      <div style={{ background: 'linear-gradient(135deg,#1e3a8a,#1d4ed8 50%,#2563eb)', padding: '48px 24px 72px', textAlign: 'center', color: 'white' }}>
+        <h1 style={{ fontSize: '36px', fontWeight: 900, marginBottom: '10px' }}>Buy Crypto Instantly in Pakistan</h1>
+        <p style={{ fontSize: '16px', opacity: 0.85, maxWidth: '520px', margin: '0 auto 28px' }}>Pay with PKR, USDT, or any supported crypto. 25+ tokens, 15+ networks. Instant delivery to your wallet.</p>
+        <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
           {['⚡ Auto blockchain verification', '🔐 Two-layer security', '🇵🇰 JazzCash & Easypaisa supported', '💬 24/7 support'].map(t => (
-            <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, opacity: 0.9 }}>{t}</span>
+            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', opacity: 0.9 }}>{t}</div>
           ))}
         </div>
       </div>
 
       {/* Wizard */}
       <div style={{ padding: '0 24px' }}>
-        <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 8px 40px rgba(0,0,0,0.10)', maxWidth: 820, margin: '-36px auto 32px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 8px 40px rgba(0,0,0,0.10)', maxWidth: '820px', margin: '-36px auto 32px', overflow: 'hidden' }}>
           {/* Step bar */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
             {[{ n: 1, label: 'Pay With' }, { n: 2, label: 'Select Token' }, { n: 3, label: 'Select Network' }].map(s => (
-              <div key={s.n} onClick={() => goStep(s.n)} style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: step === s.n ? '#1d4ed8' : step > s.n ? '#059669' : '#94a3b8', borderBottom: `3px solid ${step === s.n ? '#2563eb' : 'transparent'}`, background: step === s.n ? 'white' : 'transparent' }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: step > s.n ? '#059669' : step === s.n ? '#2563eb' : '#e2e8f0', color: step >= s.n ? 'white' : '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{step > s.n ? '✓' : s.n}</div>
-                <span>{s.label}</span>
+              <div key={s.n} style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 600, color: step === s.n ? '#1d4ed8' : step > s.n ? '#059669' : '#94a3b8', borderBottom: step === s.n ? '3px solid #2563eb' : '3px solid transparent', background: step === s.n ? 'white' : 'transparent' }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, background: step === s.n ? '#2563eb' : step > s.n ? '#059669' : '#e2e8f0', color: step >= s.n ? 'white' : '#64748b' }}>
+                  {step > s.n ? '✓' : s.n}
+                </div>
+                {s.label}
               </div>
             ))}
           </div>
 
           {/* Step 1 */}
           {step === 1 && (
-            <div style={{ padding: '28px 32px 0' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>How will you pay?</div>
-              <div style={{ fontSize: 14, color: '#64748b', marginBottom: 20 }}>Choose your payment currency. PKR orders use JazzCash / bank transfer. Crypto orders are verified automatically on-chain.</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 10 }}>
-                {PAY_OPTIONS.map(p => (
-                  <div key={p.id} onClick={() => setPayWith(p.id)} style={{ border: `2px solid ${payWith === p.id ? '#2563eb' : '#e2e8f0'}`, borderRadius: 12, padding: '14px 10px', textAlign: 'center', cursor: 'pointer', background: payWith === p.id ? '#eff6ff' : 'white', boxShadow: payWith === p.id ? '0 0 0 3px rgba(37,99,235,0.12)' : 'none', transition: 'all 0.15s' }}>
-                    <div style={{ fontSize: 26, marginBottom: 6 }}>{p.icon}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{p.sub}</div>
+            <div style={{ padding: '28px 32px 24px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>How will you pay?</div>
+              <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>Choose your payment currency. PKR orders use JazzCash / bank transfer. Crypto orders are verified automatically on-chain.</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: '10px', marginBottom: '4px' }}>
+                {payOptions.map(p => (
+                  <div key={p.id} onClick={() => setPayWith(p.id)} style={{ border: `2px solid ${payWith === p.id ? '#2563eb' : '#e2e8f0'}`, borderRadius: '12px', padding: '14px 10px', textAlign: 'center', cursor: 'pointer', background: payWith === p.id ? '#eff6ff' : 'white', boxShadow: payWith === p.id ? '0 0 0 3px rgba(37,99,235,0.12)' : 'none' }}>
+                    <div style={{ fontSize: '26px', marginBottom: '6px' }}>{p.icon}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{p.sub}</div>
                   </div>
                 ))}
               </div>
               {payWith !== 'PKR' && (
-                <div style={{ marginTop: 14, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#166534' }}>
+                <div style={{ marginTop: '14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#166534' }}>
                   ⚡ <strong>Crypto payments are verified automatically on-chain.</strong> No screenshot needed — send crypto to the deposit address and the system confirms it instantly.
                 </div>
               )}
-              <div style={{ padding: '16px 0', borderTop: '1px solid #f1f5f9', marginTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 13, color: '#64748b' }}>PKR orders: JazzCash, Bank Transfer, Easypaisa</div>
-                <button onClick={() => goStep(2)} style={{ padding: '10px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Select Token →</button>
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: '13px', color: '#64748b' }}>PKR orders: JazzCash, Bank Transfer, Easypaisa</div>
+                <button onClick={() => setStep(2)} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>Select Token →</button>
               </div>
             </div>
           )}
 
           {/* Step 2 */}
           {step === 2 && (
-            <div style={{ padding: '28px 32px 0' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>Which token do you want to receive?</div>
-              <div style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>Select the crypto asset you want to buy. <span style={{ fontWeight: 600, color: '#1d4ed8' }}>Paying with {payWith}</span></div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                {CATS.map(c => (
-                  <button key={c} onClick={() => setCat(c)} style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${cat === c ? '#2563eb' : '#e2e8f0'}`, background: cat === c ? '#2563eb' : 'white', color: cat === c ? 'white' : '#64748b' }}>{CAT_LABELS[c]}</button>
+            <div style={{ padding: '28px 32px 24px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '6px' }}>Which token do you want to receive?</div>
+              <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '16px' }}>Select the crypto asset you want to buy. <span style={{ fontWeight: 600, color: '#1d4ed8' }}>Paying with: {payWith}</span></div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                {[{ key: 'popular', label: '⭐ Popular' }, { key: 'stable', label: '💵 Stablecoins' }, { key: 'gas', label: '⚡ Gas Tokens' }, { key: 'all', label: '🌐 All Tokens' }].map(c => (
+                  <button key={c.key} onClick={() => setCat(c.key)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${cat === c.key ? '#2563eb' : '#e2e8f0'}`, background: cat === c.key ? '#2563eb' : 'white', color: cat === c.key ? 'white' : '#64748b' }}>{c.label}</button>
                 ))}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(152px,1fr))', gap: 10 }}>
-                {filteredTokens.map(t => (
-                  <div key={t.id} onClick={() => handleTokenSelect(t.id)} style={{ border: `2px solid ${selectedToken === t.id ? '#2563eb' : '#e2e8f0'}`, borderRadius: 14, padding: 14, cursor: 'pointer', background: selectedToken === t.id ? '#eff6ff' : 'white', boxShadow: selectedToken === t.id ? '0 0 0 3px rgba(37,99,235,0.12)' : 'none', transition: 'all 0.15s', position: 'relative' }}>
-                    <div style={{ fontSize: 30, marginBottom: 8 }}>{t.emoji}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{t.id}</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: '#2563eb', marginTop: 6, fontWeight: 600 }}>{t.networks.length} networks</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', marginTop: 8 }}>
-                      {t.priceUsd >= 1000 ? `$${(t.priceUsd / 1000).toFixed(0)}k` : `$${t.priceUsd.toFixed(2)}`}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(152px,1fr))', gap: '10px' }}>
+                {filteredTokens.map(([sym, a]) => {
+                  const mvpNets = a.networks.filter(n => NETWORKS[n]?.mvp).length
+                  return (
+                    <div key={sym} onClick={() => { setToken(sym); setNetwork(null); setTimeout(() => setStep(3), 100) }} style={{ border: `2px solid ${token === sym ? '#2563eb' : '#e2e8f0'}`, borderRadius: '14px', padding: '14px', cursor: 'pointer', background: token === sym ? '#eff6ff' : 'white', boxShadow: token === sym ? '0 0 0 3px rgba(37,99,235,0.12)' : 'none', position: 'relative' }}>
+                      <div style={{ fontSize: '30px', marginBottom: '8px' }}>{a.emoji}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{a.name}</div>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{sym}</div>
+                      <div style={{ fontSize: '11px', color: '#2563eb', marginTop: '6px', fontWeight: 600 }}>{a.networks.length} network{a.networks.length > 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>{fmtPkr(a.price_pkr)}</div>
+                      <span style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '9px', padding: '2px 6px', borderRadius: '20px', background: mvpNets > 0 ? '#d1fae5' : '#f1f5f9', color: mvpNets > 0 ? '#065f46' : '#64748b', fontWeight: 700 }}>{mvpNets > 0 ? 'Live' : 'Soon'}</span>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
-              <div style={{ padding: '16px 0', borderTop: '1px solid #f1f5f9', marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button onClick={() => goStep(1)} style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>← Back</button>
-                <div style={{ fontSize: 13, color: '#64748b' }}>{selectedToken ? `${selectedToken} selected` : 'Select a token to continue'}</div>
+              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button onClick={() => setStep(1)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '14px', cursor: 'pointer', color: '#374151' }}>← Back</button>
+                <div style={{ fontSize: '13px', color: '#64748b' }}>{token ? `${ASSETS[token].emoji} ${ASSETS[token].name} selected — next: choose network` : 'Select a token to continue'}</div>
               </div>
             </div>
           )}
 
           {/* Step 3 */}
-          {step === 3 && token && (
-            <div style={{ padding: '28px 32px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                <div style={{ fontSize: 36 }}>{token.emoji}</div>
+          {step === 3 && selAsset && (
+            <div style={{ padding: '28px 32px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                <div style={{ fontSize: '36px' }}>{selAsset.emoji}</div>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>{token.name}</div>
-                  <div style={{ fontSize: 13, color: '#64748b' }}>${token.priceUsd.toLocaleString()} · {token.pricePkr.toLocaleString()} PKR</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800 }}>{selAsset.name} ({selAsset.sym})</div>
+                  <div style={{ fontSize: '13px', color: '#64748b' }}>{fmtPkr(selAsset.price_pkr)} per {selAsset.sym} · Spread: {selAsset.spread}%</div>
                 </div>
-                <button onClick={() => goStep(2)} style={{ marginLeft: 'auto', padding: '6px 14px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, cursor: 'pointer', background: 'white' }}>Change Token</button>
+                <button onClick={() => setStep(2)} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Change Token</button>
               </div>
-
-              <div style={{ background: '#f8fafc', border: '1.5px solid #bfdbfe', borderRadius: 16, padding: 20, marginTop: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e3a5f', marginBottom: 4 }}>Select the receiving network</div>
-                <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>Make sure your wallet supports the selected network. Tokens sent to the wrong network may be lost forever.</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8 }}>
-                  {token.networks.map(n => {
-                    const info = NETWORK_INFO[n] || { speed: '⚡ Fast', speedColor: '#059669', fee: 'Variable', confirm: '~5 min' }
+              <div style={{ background: '#f8fafc', border: '1.5px solid #bfdbfe', borderRadius: '16px', padding: '20px', marginTop: '16px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e3a5f', marginBottom: '4px' }}>Select the receiving network</div>
+                <div style={{ fontSize: '13px', color: '#64748b' }}>Make sure your wallet supports the selected network. Tokens sent to the wrong network may be lost forever.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: '8px', marginTop: '12px' }}>
+                  {selAsset.networks.map(netId => {
+                    const n = NETWORKS[netId]
+                    if (!n) return null
                     return (
-                      <div key={n} onClick={() => setSelectedNet(n)} style={{ border: `2px solid ${selectedNet === n ? '#2563eb' : '#e2e8f0'}`, borderRadius: 10, padding: '11px 12px', cursor: 'pointer', background: selectedNet === n ? '#eff6ff' : 'white', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.15s' }}>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{n}</div>
-                          <div style={{ fontSize: 11, color: '#64748b' }}>{info.confirm}</div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: info.speedColor }}>{info.speed}</div>
+                      <div key={netId} onClick={() => setNetwork(netId)} style={{ border: `2px solid ${network === netId ? '#2563eb' : '#e2e8f0'}`, borderRadius: '10px', padding: '11px 12px', cursor: 'pointer', background: network === netId ? '#eff6ff' : 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                            {n.short}
+                            {n.mvp && <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', borderRadius: '3px', padding: '1px 4px', fontWeight: 700, marginLeft: '4px' }}>Live</span>}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{n.name}</div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: speedColor(n.speed), marginTop: '3px' }}>{speedLabel(n.speed)} · {n.conf} confs</div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
               </div>
-
-              {selectedNet === 'ERC-20' && (
-                <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#92400e', display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 12 }}>
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>💡</span>
+              {network && (
+                <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#dc2626', display: 'flex', gap: '10px', alignItems: 'flex-start', marginTop: '12px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+                  <div><strong>Wrong network = permanent loss of funds.</strong> Only send to the exact network you select. PakSwap cannot recover tokens sent to the wrong network.</div>
+                </div>
+              )}
+              {network === 'ERC20' && (
+                <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#92400e', display: 'flex', gap: '10px', alignItems: 'flex-start', marginTop: '12px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>💡</span>
                   <div><strong>Ethereum ERC-20 has high gas fees.</strong> For small amounts, consider BEP-20 (BSC) or TRC-20 — same token, lower fees, faster confirmation.</div>
                 </div>
               )}
-
-              {selectedNet && (
-                <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1.5px solid #86efac', borderRadius: 14, padding: '16px 20px', marginTop: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: 22 }}>📊</div>
+              {network && selNet && (
+                <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1.5px solid #86efac', borderRadius: '14px', padding: '16px 20px', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '22px' }}>📊</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: '#166534', fontWeight: 700 }}>Live Rate Preview</div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', marginTop: 2 }}>1 {token.id} = {token.pricePkr.toLocaleString()} PKR</div>
+                    <div style={{ fontSize: '13px', color: '#166534', fontWeight: 700 }}>Live Rate Preview</div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b', marginTop: '2px' }}>
+                      {payWith === 'PKR' ? `1 ${selAsset.sym} = PKR ${selAsset.price_pkr.toLocaleString()} · spread ${selAsset.spread}%` : `1 ${selAsset.sym} = $${selAsset.price_usd.toLocaleString()} USD · spread ${selAsset.spread}%`}
+                    </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Platform fee</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>0.5% + network fee</div>
+                    <div style={{ fontSize: '11px', color: '#64748b' }}>Platform fee</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>{selAsset.spread}% + {selNet.mvp ? 'Low' : 'TBD'} net fee</div>
                   </div>
                 </div>
               )}
-
-              <div style={{ padding: '16px 0', borderTop: '1px solid #f1f5f9', marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button onClick={() => goStep(2)} style={{ padding: '10px 20px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>← Back</button>
-                <button onClick={proceed} disabled={!selectedNet} style={{ padding: '12px 28px', background: selectedNet ? '#2563eb' : '#94a3b8', color: 'white', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: selectedNet ? 'pointer' : 'not-allowed', opacity: selectedNet ? 1 : 0.6 }}>Preview Order →</button>
+              <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button onClick={() => setStep(2)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '14px', cursor: 'pointer', color: '#374151' }}>← Back</button>
+                <Link href={network ? `/instant-buy/order/demo?token=${token}&network=${network}&payWith=${payWith}` : '#'}>
+                  <button disabled={!network} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: network ? '#2563eb' : '#93c5fd', color: 'white', fontWeight: 700, fontSize: '15px', cursor: network ? 'pointer' : 'not-allowed', opacity: network ? 1 : 0.6 }}>Preview Order →</button>
+                </Link>
               </div>
             </div>
           )}
@@ -229,39 +245,65 @@ export default function InstantBuyPage() {
       </div>
 
       {/* Below wizard */}
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '0 24px 40px' }}>
-        {/* How it works */}
-        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 28, marginBottom: 24 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 20, textAlign: 'center' }}>How Instant Buy Works</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 20 }}>
-            {[['🪙', '1', 'Choose Token & Network', 'Select what to buy and which blockchain to receive it on'], ['💰', '2', 'Enter Amount', 'Enter PKR or crypto amount. Live oracle rate locks for 10 minutes'], ['📲', '3', 'Make Payment', 'PKR: send via JazzCash/bank. Crypto: auto verified on-chain'], ['🔐', '4', 'Verification', 'AI + human two-layer check (PKR) or automatic blockchain confirmation'], ['🚀', '5', 'Receive Crypto', 'Token sent directly to your wallet with transaction hash']].map(([icon, num, title, sub]) => (
-              <div key={num} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
-                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#eff6ff', color: '#2563eb', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>{num}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{title}</div>
-                <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>{sub}</div>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 24px 40px' }}>
+        {/* How It Works */}
+        <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', padding: '28px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px', textAlign: 'center' }}>How Instant Buy Works</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '20px' }}>
+            {[
+              { icon: '🪙', n: 1, title: 'Choose Token & Network', sub: 'Select what you want to buy and which blockchain network to receive it on' },
+              { icon: '💰', n: 2, title: 'Enter Amount', sub: 'Enter PKR or crypto amount. Live oracle rate locks for 10 minutes' },
+              { icon: '📲', n: 3, title: 'Make Payment', sub: 'PKR: send via JazzCash/bank. Crypto: send to deposit address — auto verified on-chain' },
+              { icon: '🔐', n: 4, title: 'Verification', sub: 'AI + human two-layer check (PKR) or automatic blockchain confirmation (Crypto)' },
+              { icon: '🚀', n: 5, title: 'Receive Crypto', sub: 'Token sent directly to your wallet. Transaction hash provided for tracking' },
+            ].map(s => (
+              <div key={s.n} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>{s.icon}</div>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', fontWeight: 800, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>{s.n}</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>{s.title}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>{s.sub}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Supported Networks */}
-        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', padding: 24, marginBottom: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Supported Networks</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {[['🟡 BSC / BEP-20', '#fffbeb', '#fde68a', '#92400e'], ['🔴 TRON / TRC-20', '#fef2f2', '#fca5a5', '#991b1b'], ['🟣 Solana', '#faf5ff', '#e9d5ff', '#6d28d9'], ['🔷 Ethereum / ERC-20', '#eff6ff', '#bfdbfe', '#1d4ed8'], ['💙 Arbitrum', '#eff6ff', '#bfdbfe', '#1d4ed8'], ['🔴 Optimism', '#fef2f2', '#fca5a5', '#991b1b'], ['🟢 Polygon', '#f0fdf4', '#bbf7d0', '#166534'], ['🔵 Base', '#eff6ff', '#bfdbfe', '#1d4ed8'], ['🔺 Avalanche', '#fff7ed', '#fed7aa', '#9a3412'], ['💎 TON', '#f0f9ff', '#bae6fd', '#0369a1'], ['💧 Sui', '#f0f9ff', '#bae6fd', '#0369a1']].map(([label, bg, border, color]) => (
-              <div key={label as string} style={{ background: bg as string, border: `1px solid ${border}`, borderRadius: 8, padding: '7px 12px', fontSize: 13, fontWeight: 600, color: color as string }}>{label}</div>
+        <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', padding: '24px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '16px' }}>Supported Networks</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {[
+              { bg: '#fffbeb', border: '#fde68a', color: '#92400e', label: '🟡 BSC / BEP-20', mvp: true },
+              { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b', label: '🔴 TRON / TRC-20', mvp: true },
+              { bg: '#faf5ff', border: '#e9d5ff', color: '#6d28d9', label: '🟣 Solana', mvp: true },
+              { bg: '#eff6ff', border: '#bfdbfe', color: '#1d4ed8', label: '🔷 Ethereum / ERC-20', mvp: false },
+              { bg: '#eff6ff', border: '#bfdbfe', color: '#1d4ed8', label: '💙 Arbitrum', mvp: false },
+              { bg: '#fef2f2', border: '#fca5a5', color: '#991b1b', label: '🔴 Optimism', mvp: false },
+              { bg: '#f0fdf4', border: '#bbf7d0', color: '#166534', label: '🟢 Polygon', mvp: false },
+              { bg: '#eff6ff', border: '#bfdbfe', color: '#1d4ed8', label: '🔵 Base', mvp: false },
+              { bg: '#fff7ed', border: '#fed7aa', color: '#9a3412', label: '🔺 Avalanche C-Chain', mvp: false },
+              { bg: '#f8fafc', border: '#e2e8f0', color: '#475569', label: '⚔️ Ronin', mvp: false },
+              { bg: '#f0f9ff', border: '#bae6fd', color: '#0369a1', label: '💧 Sui', mvp: false },
+              { bg: '#eff6ff', border: '#bfdbfe', color: '#1d4ed8', label: '⚡ Aptos', mvp: false },
+              { bg: '#f8fafc', border: '#e2e8f0', color: '#475569', label: '🌐 NEAR Protocol', mvp: false },
+            ].map(n => (
+              <div key={n.label} style={{ background: n.bg, border: `1px solid ${n.border}`, borderRadius: '8px', padding: '7px 12px', fontSize: '13px', fontWeight: 600, color: n.color, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {n.label}
+                {n.mvp && <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#059669' }} />}
+              </div>
             ))}
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: '#059669' }} /> MVP networks — live now. Others rolling out in Phase 2.
           </div>
         </div>
 
         {/* Provider Banner */}
-        <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1.5px solid #86efac', borderRadius: 16, padding: '22px 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1.5px solid #86efac', borderRadius: '16px', padding: '22px 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#166534' }}>💼 Become a Liquidity Provider</div>
-            <div style={{ fontSize: 14, color: '#15803d', marginTop: 4 }}>Earn by providing crypto inventory. 0.5% on every fulfilled order. 500+ orders/month for top providers.</div>
+            <div style={{ fontSize: '17px', fontWeight: 800, color: '#166534' }}>💼 Become a Liquidity Provider</div>
+            <div style={{ fontSize: '14px', color: '#15803d', marginTop: '4px' }}>Earn by providing crypto inventory. 0.5% on every fulfilled order. 500+ orders/month for top providers.</div>
           </div>
-          <Link href="/provider-apply"><button style={{ padding: '12px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Apply Now →</button></Link>
+          <button style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>Apply Now →</button>
         </div>
       </div>
     </div>

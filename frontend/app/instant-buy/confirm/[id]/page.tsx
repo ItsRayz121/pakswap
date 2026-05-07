@@ -1,137 +1,114 @@
 'use client'
-import { useParams, useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { CheckCircle, Clock, Shield, Wallet, BarChart2 } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
-import axios from 'axios'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export default function InstantBuyConfirmPage() {
-  const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const { accessToken } = useAuthStore()
+  const [reviewDone, setReviewDone] = useState(false)
 
-  const headers = { Authorization: `Bearer ${accessToken}` }
-
-  const { data } = useQuery({
-    queryKey: ['ib-order', id],
-    queryFn: () => axios.get(`/api/instant-buy/orders/${id}`, { headers }),
-  })
-  const order = data?.data?.data
-
-  const coin = order?.coin ?? 'USDT'
-  const coinAmount = order?.coinAmount ? parseFloat(order.coinAmount).toFixed(6) : '125.000000'
-  const fiatAmount = order?.fiatAmount ? parseFloat(order.fiatAmount).toLocaleString('en-PK') : '35,000'
-  const orderRef = order?.orderRef ?? `#IBO-${id}`
-  const network = order?.network ?? 'TRC-20'
-  const rate = order?.rate ? `PKR ${parseFloat(order.rate).toLocaleString('en-PK')}` : 'PKR 280.00'
-
-  const steps = [
-    { icon: '📸', title: 'Payment Received', desc: 'Your payment screenshot has been uploaded successfully.', done: true },
-    { icon: '🤖', title: 'AI Verification (Layer 1)', desc: 'Our system scans and validates your payment proof automatically.', done: false, active: true },
-    { icon: '👤', title: 'Admin Review (Layer 2)', desc: 'A human admin verifies and approves the transaction.', done: false },
-    { icon: '🚀', title: 'Crypto Released', desc: `${coinAmount} ${coin} sent to your wallet address.`, done: false },
-  ]
+  useEffect(() => {
+    const t = setTimeout(() => setReviewDone(true), 8000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Green hero */}
-      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-14 px-6 text-center">
-        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-5">
-          <CheckCircle size={40} className="text-white" />
+    <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f5f9', minHeight: '100vh' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', background: 'white', borderBottom: '1px solid #e2e8f0' }}>
+        <Link href="/" style={{ fontWeight: 800, fontSize: '20px', textDecoration: 'none', color: '#1e293b' }}>Pak<span style={{ color: '#2563eb' }}>Swap</span></Link>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <Link href="/" style={{ fontSize: '14px', fontWeight: 500, color: '#374151', textDecoration: 'none' }}>Home</Link>
+          <Link href="/marketplace" style={{ fontSize: '14px', fontWeight: 500, color: '#374151', textDecoration: 'none' }}>Marketplace</Link>
         </div>
-        <h1 className="text-3xl font-black mb-2">Order Submitted!</h1>
-        <p className="text-green-100 text-base mb-3">Your payment has been received and is under review</p>
-        <span className="inline-block bg-white/20 rounded-full px-4 py-1.5 text-sm font-mono font-bold">{orderRef}</span>
-      </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer' }}>
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#2563eb,#60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '12px' }}>M</div>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>Muhammad U.</span>
+        </div>
+      </nav>
 
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '32px 24px' }}>
 
-        {/* Order summary */}
-        <div className="card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 mb-4">Order Summary</h2>
-          <div className="space-y-3">
+        {/* Hero */}
+        <div style={{ background: 'linear-gradient(135deg,#059669,#10b981)', borderRadius: '20px', padding: '40px 32px', textAlign: 'center', marginBottom: '20px', color: 'white' }}>
+          <div style={{ fontSize: '64px', marginBottom: '12px' }}>✅</div>
+          <h1 style={{ fontSize: '26px', fontWeight: 900, marginBottom: '8px' }}>Order Confirmed!</h1>
+          <p style={{ fontSize: '15px', opacity: 0.9, marginBottom: '20px' }}>Your payment has been received. We're now verifying it and processing your crypto.</p>
+          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '12px', padding: '12px 20px', display: 'inline-block' }}>
+            <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '2px' }}>Order ID</div>
+            <div style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '1px' }}>IBO-2026-004521</div>
+          </div>
+        </div>
+
+        {/* Order Summary */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b', marginBottom: '16px' }}>📋 Order Summary</div>
+          {[
+            ['You paid', '28,300 PKR', false, '#1e293b'],
+            ['You receive', '100.00 USDT', false, '#059669'],
+            ['Rate', '283 PKR / USDT', false, '#1e293b'],
+            ['Spread fee', '1.5% (included in rate)', false, '#1e293b'],
+            ['Payment method', '📱 JazzCash', false, '#1e293b'],
+            ['Network', 'TRC-20 (TRON)', false, '#1e293b'],
+            ['Destination wallet', 'Your PakSwap Wallet', false, '#2563eb'],
+            ['Order placed', '06 May 2026 · 14:32 PKT', true, '#1e293b'],
+          ].map(([label, value, mono, color], i) => (
+            <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < 7 ? '1px solid #f1f5f9' : 'none', fontSize: '14px' }}>
+              <span style={{ color: '#64748b' }}>{label}</span>
+              <span style={{ fontWeight: mono ? 600 : 800, fontSize: label === 'You paid' || label === 'You receive' ? '16px' : '14px', color: color as string, fontFamily: mono ? 'monospace' : 'inherit' }}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* What Happens Next */}
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e293b', marginBottom: '16px' }}>⏱️ What Happens Next</div>
+          <div>
             {[
-              { label: 'Token Purchasing', value: `${coinAmount} ${coin}` },
-              { label: 'Network', value: network },
-              { label: 'Amount Paid', value: `₨${fiatAmount}` },
-              { label: 'Rate', value: `${rate} / ${coin}` },
-              { label: 'Order Reference', value: orderRef, mono: true },
-              { label: 'Submitted At', value: new Date().toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' }) },
-            ].map(({ label, value, mono }) => (
-              <div key={label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                <span className="text-sm text-gray-500">{label}</span>
-                <span className={`font-semibold text-sm ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+              { icon: '✓', iconBg: '#d1fae5', iconColor: '#065f46', title: 'Payment Received', desc: 'Your JazzCash payment has been received by our system.', status: '✓ Completed · 14:32 PKT', statusColor: '#059669', active: false },
+              { icon: '🔍', iconBg: '#dbeafe', iconColor: '#2563eb', title: 'Admin Verification', desc: 'Our team is reviewing your payment screenshot and transaction record. This typically takes 5–15 minutes.', status: reviewDone ? '✓ Verified — crypto releasing now' : '⏳ In progress...', statusColor: '#2563eb', active: true },
+              { icon: '💰', iconBg: '#f1f5f9', iconColor: '#94a3b8', title: 'Crypto Released to Wallet', desc: 'Once verified, 100.00 USDT will appear in your PakSwap wallet instantly.', status: 'Pending verification', statusColor: '#94a3b8', active: false },
+              { icon: '📲', iconBg: '#f1f5f9', iconColor: '#94a3b8', title: 'SMS & Email Notification', desc: "You'll receive a confirmation SMS to your registered number and email when the order completes.", status: '', statusColor: '#94a3b8', active: false },
+            ].map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '10px 0' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: s.iconBg, color: s.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>{s.icon}</div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: s.active ? '#1e293b' : i < 2 ? '#1e293b' : '#94a3b8' }}>{s.title}</div>
+                  <div style={{ fontSize: '13px', color: i < 2 ? '#64748b' : '#94a3b8', marginTop: '2px' }}>{s.desc}</div>
+                  {s.status && <div style={{ fontSize: '12px', color: s.statusColor, fontWeight: 600, marginTop: '4px' }}>{s.status}</div>}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* What happens next */}
-        <div className="card p-6 mb-6">
-          <h2 className="font-bold text-gray-800 mb-5">What Happens Next</h2>
-          <div className="relative">
-            {steps.map((step, i) => (
-              <div key={i} className="flex gap-4 mb-6 last:mb-0">
-                <div className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 ${step.done ? 'bg-green-100' : step.active ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-100'}`}>
-                    {step.icon}
-                  </div>
-                  {i < steps.length - 1 && <div className="w-0.5 h-8 bg-gray-200 mt-1" />}
-                </div>
-                <div className="pt-1.5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className={`font-semibold text-sm ${step.done ? 'text-green-700' : step.active ? 'text-blue-700' : 'text-gray-400'}`}>{step.title}</p>
-                    {step.done && <span className="badge badge-green text-xs">Done</span>}
-                    {step.active && <span className="badge badge-blue text-xs">In Progress</span>}
-                  </div>
-                  <p className="text-sm text-gray-500">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Important notes */}
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 mb-6">
-          <h3 className="font-bold text-amber-800 mb-3">⚠️ Important Notes</h3>
-          <ul className="space-y-2">
-            {[
-              'Review typically completes within 10–30 minutes during business hours (9AM–11PM PKT)',
-              'You will receive an SMS and email notification once your crypto is released',
-              'Do NOT submit duplicate payments — contact support if you face any issues',
-              'Keep your order reference number safe for any support queries',
-            ].map((note, i) => (
-              <li key={i} className="text-sm text-amber-800 flex gap-2">
-                <span className="text-amber-500 mt-0.5">•</span> {note}
-              </li>
-            ))}
+        {/* Important Notes */}
+        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '13px', color: '#92400e', marginBottom: '8px' }}>⚠️ Important</div>
+          <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#92400e', lineHeight: 1.8 }}>
+            <li>Do <strong>not</strong> request a chargeback from your bank — this will flag your account for fraud review.</li>
+            <li>If you don't receive your crypto within <strong>60 minutes</strong>, use the button below to contact support.</li>
+            <li>Your order ID is <strong>IBO-2026-004521</strong> — save it for reference.</li>
           </ul>
         </div>
 
-        {/* Action buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={() => router.push(`/instant-buy/status/${id}`)}
-            className="btn btn-primary btn-full btn-lg rounded-xl">
-            📊 Track Order Status
-          </button>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => router.push('/wallet')}
-              className="btn btn-secondary rounded-xl py-3 flex items-center justify-center gap-2">
-              <Wallet size={16} /> View Wallet
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="btn btn-ghost rounded-xl py-3 flex items-center justify-center gap-2">
-              <BarChart2 size={16} /> Dashboard
-            </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+          <Link href="/instant-buy/status/demo" style={{ padding: '14px', borderRadius: '12px', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '15px', textDecoration: 'none', textAlign: 'center' }}>
+            📡 Track Order Status →
+          </Link>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Link href="/wallet" style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '13px', color: '#374151', textDecoration: 'none', textAlign: 'center' }}>👛 View Wallet</Link>
+            <Link href="/" style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '13px', color: '#374151', textDecoration: 'none', textAlign: 'center' }}>🏠 Dashboard</Link>
+            <button style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '13px', cursor: 'pointer', color: '#374151' }}>📤 Share Receipt</button>
           </div>
         </div>
 
         {/* Support */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">Need help? <a href="#" className="text-brand font-medium hover:underline">Chat with Support</a></p>
+        <div style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ fontSize: '28px' }}>🎧</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '2px' }}>Need help with this order?</div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>Support is available 9am – 9pm PKT · Response in under 15 min</div>
+          </div>
+          <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: '13px', cursor: 'pointer', color: '#374151' }}>Chat</button>
         </div>
       </div>
     </div>
