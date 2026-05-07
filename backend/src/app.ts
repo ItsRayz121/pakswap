@@ -40,11 +40,39 @@ export async function buildApp() {
     },
   })
 
-  // CORS
+  // ─── CORS ────────────────────────────────────────────────────────────────
+  // Allow-list parsed from CORS_ORIGINS (comma-separated). Whitespace and
+  // trailing slashes are tolerated. The Vercel production URL and localhost
+  // are always allowed even if the env var is missing or wrong, so a typo in
+  // Railway settings can't lock the frontend out.
+  const ALWAYS_ALLOWED = ['https://pakswap.vercel.app', 'http://localhost:3000']
+  const envOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((s) => s.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+  const allowedOrigins = Array.from(new Set([...ALWAYS_ALLOWED, ...envOrigins]))
+  // Vercel preview deployments (e.g. https://pakswap-git-feature-xyz.vercel.app)
+  const vercelPreviewRe = /^https:\/\/pakswap[a-z0-9-]*\.vercel\.app$/
+
+  logger.info({ allowedOrigins }, '[CORS] resolved allow-list')
+
   await app.register(cors, {
-    origin: (process.env.CORS_ORIGINS ?? 'https://pakswap.vercel.app,http://localhost:3000').split(','),
+    origin: (origin, cb) => {
+      // No origin header (curl, server-to-server, same-origin) — allow.
+      if (!origin) return cb(null, true)
+      const normalised = origin.replace(/\/+$/, '')
+      if (allowedOrigins.includes(normalised)) return cb(null, true)
+      if (vercelPreviewRe.test(normalised)) return cb(null, true)
+      logger.warn({ origin }, '[CORS] blocked')
+      cb(new Error('Not allowed by CORS'), false)
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
+    maxAge: 86400, // cache preflight for 24h
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 
   // Rate limiting — use Redis if REDIS_URL is set, otherwise in-memory
