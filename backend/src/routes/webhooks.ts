@@ -8,7 +8,7 @@ export default async function webhookRoutes(app: FastifyInstance) {
     const body = req.body as any
     if (!body?.hash) return reply.status(400).send({ ok: false })
 
-    await depositQueue.add('btc-deposit', {
+    await depositQueue?.add('btc-deposit', {
       txHash: body.hash,
       chain: 'BTC',
       confirmations: body.confirmations ?? 0,
@@ -27,7 +27,7 @@ export default async function webhookRoutes(app: FastifyInstance) {
     }
 
     const { txHash, chain, network, amount, toAddress, confirmations } = req.body as any
-    await depositQueue.add('deposit', { txHash, chain, network, amount, toAddress, confirmations })
+    await depositQueue?.add('deposit', { txHash, chain, network, amount, toAddress, confirmations })
     return { ok: true }
   })
 }

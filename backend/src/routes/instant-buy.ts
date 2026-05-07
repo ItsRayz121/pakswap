@@ -117,7 +117,7 @@ export default async function instantBuyRoutes(app: FastifyInstance) {
       },
     })
 
-    await ocrQueue.add('verify-ib-payment', {
+    await ocrQueue?.add('verify-ib-payment', {
       orderId: id,
       proofUrl,
       expectedAmount: order.fiatAmount,
@@ -146,7 +146,7 @@ export default async function instantBuyRoutes(app: FastifyInstance) {
       },
     })
 
-    await ocrQueue.add('verify-ib-crypto-deposit', {
+    await ocrQueue?.add('verify-ib-crypto-deposit', {
       orderId: id,
       txHash,
       coin: order.coin,
