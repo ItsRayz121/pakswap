@@ -5,7 +5,11 @@ import { prisma } from '../lib/prisma'
 import { ocrQueue } from '../lib/queues'
 import { notificationService } from '../services/notification.service'
 import { uploadFile, SCREENSHOTS_BUCKET } from '../lib/s3'
-import { nanoid } from 'nanoid'
+import { randomBytes } from 'crypto'
+
+function nanoid(size: number) {
+  return randomBytes(size).toString('base64url').slice(0, size).toUpperCase()
+}
 
 const createOrderSchema = z.object({
   coin: z.enum(['USDT', 'BTC', 'ETH', 'USDC']),
