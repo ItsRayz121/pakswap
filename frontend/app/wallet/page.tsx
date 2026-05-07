@@ -115,10 +115,17 @@ export default function WalletPage() {
     if (depositAddress) { navigator.clipboard.writeText(depositAddress); setCopied(true); setTimeout(() => setCopied(false), 2000) }
   }
 
+  const [feeSchedule, setFeeSchedule] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    walletApi.getFeeSchedule().then(res => {
+      setFeeSchedule(res.data.data ?? {})
+    }).catch(() => {})
+  }, [])
+
   const selectedWallet = wallets.find(w => w.coin === selectedCoin)
   const availBal = selectedWallet ? parseFloat(selectedWallet.availableBalance) : 0
-  const FEE: Record<string, number> = { 'TRC-20': 1, 'ERC-20': 5, 'BEP-20': 0.5 }
-  const fee = FEE[wdNetwork] ?? 1
+  const fee = feeSchedule[wdNetwork] ?? { 'TRC-20': 1, 'ERC-20': 5, 'BEP-20': 0.5 }[wdNetwork] ?? 1
   const wdReceive = Math.max(0, (parseFloat(wdAmount) || 0) - fee).toFixed(4)
 
   const totalPkrEst = wallets.reduce((s, w) => s + parseFloat(w.balance || '0'), 0)
@@ -243,9 +250,9 @@ export default function WalletPage() {
                     <div style={{ marginBottom: '16px' }}>
                       <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>Network</label>
                       <select value={wdNetwork} onChange={e => setWdNetwork(e.target.value)} style={{ display: 'block', width: '100%', marginTop: '6px', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13px', background: 'white' }}>
-                        <option value="TRC-20">TRC-20 (Tron) — Fee: 1 USDT</option>
-                        <option value="ERC-20">ERC-20 (Ethereum) — Fee: 5 USDT</option>
-                        <option value="BEP-20">BEP-20 (BSC) — Fee: 0.5 USDT</option>
+                        {[['TRC-20', 'Tron'], ['ERC-20', 'Ethereum'], ['BEP-20', 'BSC'], ['SOL', 'Solana'], ['BTC', 'Bitcoin']].map(([net, label]) => (
+                          <option key={net} value={net}>{net} ({label}) — Fee: {feeSchedule[net] ?? '...'} {selectedCoin}</option>
+                        ))}
                       </select>
                     </div>
                     <div style={{ marginBottom: '16px' }}>

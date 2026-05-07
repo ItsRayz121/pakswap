@@ -10,6 +10,7 @@ interface PaymentConfig {
   accountName: string
   bankIban: string | null
   bankName: string | null
+  supportWhatsapp: string | null
 }
 
 interface Order {
@@ -291,7 +292,9 @@ export default function InstantBuyPaymentPage() {
 
           <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '14px', fontSize: '12px', color: '#64748b', lineHeight: 1.7 }}>
             <strong style={{ color: '#374151' }}>Need help?</strong><br />
-            WhatsApp: +92-300-PAKSWAP<br />
+            {payConfig?.supportWhatsapp
+              ? <>WhatsApp: {payConfig.supportWhatsapp}<br /></>
+              : null}
             Available 9AM–11PM PKT
           </div>
         </div>

@@ -33,6 +33,23 @@ export default async function walletRoutes(app: FastifyInstance) {
     return { success: true, data: { address: wallet.depositAddress, coin: coin.toUpperCase() } }
   })
 
+  // GET /api/wallet/fee-schedule — public; returns withdrawal fees per network from platformConfig
+  app.get('/fee-schedule', async () => {
+    const keys = ['fee_withdraw_TRC20', 'fee_withdraw_ERC20', 'fee_withdraw_BEP20', 'fee_withdraw_SOL', 'fee_withdraw_BTC']
+    const configs = await prisma.platformConfig.findMany({ where: { key: { in: keys } } })
+    const map = Object.fromEntries(configs.map(c => [c.key, parseFloat(c.value)]))
+    return {
+      success: true,
+      data: {
+        'TRC-20': map['fee_withdraw_TRC20'] ?? 1,
+        'ERC-20': map['fee_withdraw_ERC20'] ?? 5,
+        'BEP-20': map['fee_withdraw_BEP20'] ?? 0.5,
+        'SOL':    map['fee_withdraw_SOL']   ?? 0.01,
+        'BTC':    map['fee_withdraw_BTC']   ?? 0.0001,
+      },
+    }
+  })
+
   // GET /api/wallet/payment-methods
   app.get('/payment-methods', { preHandler: [authenticate] }, async (req) => {
     const methods = await prisma.paymentMethod.findMany({

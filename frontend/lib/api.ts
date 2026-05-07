@@ -88,6 +88,7 @@ export const walletApi = {
   getPaymentMethods: () => api.get('/wallet/payment-methods'),
   addPaymentMethod: (data: any) => api.post('/wallet/payment-methods', data),
   deletePaymentMethod: (id: string) => api.delete(`/wallet/payment-methods/${id}`),
+  getFeeSchedule: () => api.get('/wallet/fee-schedule'),
 }
 
 export const kycApi = {

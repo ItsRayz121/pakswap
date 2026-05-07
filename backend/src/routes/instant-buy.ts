@@ -32,17 +32,18 @@ const createOrderSchema = z.object({
 export default async function instantBuyRoutes(app: FastifyInstance) {
   // GET /api/instant-buy/payment-config — public; returns platform payment details from DB
   app.get('/payment-config', async () => {
-    const keys = ['ib_jazzcash_number', 'ib_easypaisa_number', 'ib_account_name', 'ib_bank_iban', 'ib_bank_name']
+    const keys = ['ib_jazzcash_number', 'ib_easypaisa_number', 'ib_account_name', 'ib_bank_iban', 'ib_bank_name', 'support_whatsapp']
     const configs = await prisma.platformConfig.findMany({ where: { key: { in: keys } } })
     const map = Object.fromEntries(configs.map(c => [c.key, c.value]))
     return {
       success: true,
       data: {
-        jazzcash:    map['ib_jazzcash_number']  ?? null,
-        easypaisa:   map['ib_easypaisa_number'] ?? null,
-        accountName: map['ib_account_name']     ?? 'PakSwap (Pvt) Ltd',
-        bankIban:    map['ib_bank_iban']        ?? null,
-        bankName:    map['ib_bank_name']        ?? null,
+        jazzcash:         map['ib_jazzcash_number']  ?? null,
+        easypaisa:        map['ib_easypaisa_number'] ?? null,
+        accountName:      map['ib_account_name']     ?? 'PakSwap (Pvt) Ltd',
+        bankIban:         map['ib_bank_iban']        ?? null,
+        bankName:         map['ib_bank_name']        ?? null,
+        supportWhatsapp:  map['support_whatsapp']    ?? null,
       },
     }
   })
