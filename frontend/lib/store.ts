@@ -31,6 +31,8 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       setAuth: (user, accessToken) => {
         localStorage.setItem('access_token', accessToken)
+        // Set cookie so middleware can protect routes server-side
+        document.cookie = `access_token=${accessToken}; path=/; max-age=86400; SameSite=Lax`
         set({ user, accessToken, isAuthenticated: true })
       },
       updateUser: (userData) =>
@@ -39,6 +41,7 @@ export const useAuthStore = create<AuthStore>()(
         })),
       logout: () => {
         localStorage.removeItem('access_token')
+        document.cookie = 'access_token=; path=/; max-age=0'
         set({ user: null, accessToken: null, isAuthenticated: false })
       },
     }),

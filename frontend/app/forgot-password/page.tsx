@@ -1,8 +1,11 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { authApi } from '@/lib/api'
 
 export default function ForgotPasswordPage() {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [contact, setContact] = useState('')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -10,6 +13,8 @@ export default function ForgotPasswordPage() {
   const [confirmPwd, setConfirmPwd] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [otpTimer, setOtpTimer] = useState(598)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
@@ -24,6 +29,42 @@ export default function ForgotPasswordPage() {
   function handleOtp(i: number, v: string) {
     const n = [...otp]; n[i] = v.slice(-1); setOtp(n)
     if (v && i < 5) otpRefs.current[i + 1]?.focus()
+  }
+
+  async function handleSendCode() {
+    if (!contact.trim()) return setError('Please enter your email or phone number.')
+    setError('')
+    setLoading(true)
+    try {
+      await authApi.forgotPassword(contact)
+      setStep(2)
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Failed to send reset code. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    if (pwd.length < 8) return setError('Password must be at least 8 characters.')
+    if (pwd !== confirmPwd) return setError('Passwords do not match.')
+    const code = otp.join('')
+    if (code.length < 6) return setError('Enter the 6-digit code.')
+    setError('')
+    setLoading(true)
+    try {
+      const isEmail = contact.includes('@')
+      await authApi.resetPassword({
+        ...(isEmail ? { email: contact } : { emailOrPhone: contact }),
+        otp: code,
+        newPassword: pwd,
+      })
+      setStep(4)
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Invalid or expired code. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function pwdScore(v: string) {
@@ -47,6 +88,12 @@ export default function ForgotPasswordPage() {
           Pak<span style={{ color: '#1e293b' }}>Swap</span>
         </div>
 
+        {error && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#dc2626' }}>
+            {error}
+          </div>
+        )}
+
         {step === 1 && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: '28px' }}>
@@ -56,14 +103,17 @@ export default function ForgotPasswordPage() {
             </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Email or Phone Number</label>
-              <input type="text" value={contact} onChange={e => setContact(e.target.value)} placeholder="e.g. m.usman@gmail.com or 0312-4567890"
+              <input type="text" value={contact} onChange={e => setContact(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSendCode()}
+                placeholder="e.g. m.usman@gmail.com or 0312-4567890"
                 style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#92400e', marginBottom: '20px' }}>
-              🔒 PakSwap will NEVER call you to ask for your reset code. If someone calls asking for it, hang up immediately.
+              🔒 PakSwap will NEVER call you to ask for your reset code.
             </div>
-            <button onClick={() => { if (contact) setStep(2) }} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '16px', cursor: 'pointer' }}>
-              Send Reset Code →
+            <button onClick={handleSendCode} disabled={loading}
+              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: loading ? '#93c5fd' : '#2563eb', color: 'white', fontWeight: 700, fontSize: '16px', cursor: 'pointer' }}>
+              {loading ? 'Sending...' : 'Send Reset Code →'}
             </button>
             <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', color: '#64748b' }}>
               Remember your password? <Link href="/login" style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
@@ -75,8 +125,8 @@ export default function ForgotPasswordPage() {
           <div>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>📱</div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>Check Your Phone</div>
-              <div style={{ fontSize: '14px', color: '#64748b', marginTop: '6px' }}>We sent a 6-digit code to <strong>0312-***-7890</strong></div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>Check Your Inbox</div>
+              <div style={{ fontSize: '14px', color: '#64748b', marginTop: '6px' }}>We sent a 6-digit reset code to <strong>{contact}</strong></div>
             </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '16px 0' }}>
               {otp.map((v, i) => (
@@ -86,7 +136,8 @@ export default function ForgotPasswordPage() {
               ))}
             </div>
             <div style={{ textAlign: 'center', fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>
-              Expires in <span style={{ color: '#ef4444', fontWeight: 700 }}>{mm}:{ss}</span> · <a href="#" onClick={e => e.preventDefault()} style={{ color: '#2563eb', fontWeight: 600 }}>Resend code</a>
+              Expires in <span style={{ color: '#ef4444', fontWeight: 700 }}>{mm}:{ss}</span> ·{' '}
+              <button onClick={handleSendCode} style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>Resend code</button>
             </div>
             <button onClick={() => setStep(3)} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '16px', cursor: 'pointer', marginBottom: '8px' }}>
               Verify Code →
@@ -120,10 +171,8 @@ export default function ForgotPasswordPage() {
             </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Confirm New Password</label>
-              <div style={{ position: 'relative' }}>
-                <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="Re-enter your new password"
-                  style={{ width: '100%', padding: '11px 44px 11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
+              <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="Re-enter your new password"
+                style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#065f46', marginBottom: '20px' }}>
               <div style={{ fontWeight: 700, marginBottom: '4px' }}>Password Requirements:</div>
@@ -131,8 +180,9 @@ export default function ForgotPasswordPage() {
                 <div key={r.label} style={{ color: r.met ? '#059669' : '#94a3b8' }}>{r.met ? '✓' : '○'} {r.label}</div>
               ))}
             </div>
-            <button onClick={() => setStep(4)} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: '16px', cursor: 'pointer' }}>
-              Reset Password →
+            <button onClick={handleResetPassword} disabled={loading}
+              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: loading ? '#6ee7b7' : '#16a34a', color: 'white', fontWeight: 700, fontSize: '16px', cursor: 'pointer' }}>
+              {loading ? 'Resetting...' : 'Reset Password →'}
             </button>
           </div>
         )}
@@ -143,7 +193,7 @@ export default function ForgotPasswordPage() {
             <div style={{ fontSize: '22px', fontWeight: 900, color: '#1e293b', marginBottom: '8px' }}>Password Reset!</div>
             <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>Your password has been successfully changed. You can now log in with your new password.</div>
             <div style={{ background: '#d1fae5', border: '1px solid #86efac', borderRadius: '10px', padding: '12px', fontSize: '13px', color: '#065f46', marginBottom: '20px' }}>
-              ✅ All active sessions have been logged out for your security. Please log in again.
+              ✅ All active sessions have been logged out for your security.
             </div>
             <Link href="/login" style={{ display: 'block', padding: '14px', borderRadius: '12px', background: '#2563eb', color: 'white', fontWeight: 700, fontSize: '16px', textDecoration: 'none' }}>
               Sign In Now →
