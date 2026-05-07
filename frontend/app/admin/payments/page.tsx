@@ -2,26 +2,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { adminApi } from '@/lib/api'
 
-interface InstantBuyOrder {
+interface PaymentItem {
   id: string
-  userId: string
-  user?: { fullName: string; email: string }
-  coin: string
-  network?: string
-  fiatAmount: string
-  cryptoAmount: string
-  paymentMode: string
-  status: string
-  createdAt: string
+  tradeId: string
+  trade?: { orderRef: string; coin: string; cryptoAmount: string; fiatAmount: string; paymentMethod: string }
+  buyer?: { fullName: string; email: string }
+  seller?: { fullName: string; email: string }
   proofUrl?: string
+  submittedAt: string
+  status: string
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'
 
-export default function AdminInstantBuyPage() {
-  const [orders, setOrders] = useState<InstantBuyOrder[]>([])
+export default function AdminPaymentsPage() {
+  const [queue, setQueue] = useState<PaymentItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<InstantBuyOrder | null>(null)
+  const [selected, setSelected] = useState<PaymentItem | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [acting, setActing] = useState(false)
   const [msg, setMsg] = useState('')
@@ -29,9 +26,9 @@ export default function AdminInstantBuyPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const r = await adminApi.instantBuyQueue()
-      setOrders(r.data.data ?? r.data ?? [])
-    } catch { setOrders([]) }
+      const r = await adminApi.paymentsQueue()
+      setQueue(r.data.data ?? r.data ?? [])
+    } catch { setQueue([]) }
     finally { setLoading(false) }
   }, [])
 
@@ -41,8 +38,8 @@ export default function AdminInstantBuyPage() {
     if (!selected) return
     setActing(true)
     try {
-      await adminApi.approveInstantBuy(selected.id)
-      setMsg('Order approved. Crypto sent to user.')
+      await adminApi.approvePayment(selected.id)
+      setMsg('Payment approved. Crypto released to buyer.')
       setSelected(null)
       load()
     } catch (e: any) {
@@ -51,11 +48,11 @@ export default function AdminInstantBuyPage() {
   }
 
   async function reject() {
-    if (!selected || !rejectReason.trim()) { setMsg('Enter rejection reason.'); return }
+    if (!selected || rejectReason.length < 5) { setMsg('Enter a rejection reason.'); return }
     setActing(true)
     try {
-      await adminApi.rejectInstantBuy(selected.id, rejectReason)
-      setMsg('Order rejected.')
+      await adminApi.rejectPayment(selected.id, { reason: rejectReason })
+      setMsg('Payment rejected.')
       setSelected(null)
       load()
     } catch (e: any) {
@@ -63,23 +60,17 @@ export default function AdminInstantBuyPage() {
     } finally { setActing(false) }
   }
 
-  const statusColors: Record<string, { bg: string; color: string }> = {
-    pending:   { bg: '#fef3c7', color: '#92400e' },
-    submitted: { bg: '#dbeafe', color: '#1d4ed8' },
-    approved:  { bg: '#d1fae5', color: '#065f46' },
-    rejected:  { bg: '#fee2e2', color: '#991b1b' },
-    completed: { bg: '#d1fae5', color: '#065f46' },
-  }
+  const initials = (name: string) => name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? 'U'
 
   return (
     <div style={{ padding: 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', margin: 0 }}>Instant Buy Queue</h1>
-          <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>OTC / Instant Buy orders pending admin approval</div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1e293b', margin: 0 }}>Payment Verification Queue</h1>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Layer 2 review — approve or reject buyer payment proofs</div>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {orders.length > 0 && <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '4px 10px', fontSize: 13, fontWeight: 700 }}>{orders.length} Pending</span>}
+          {queue.length > 0 && <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: 6, padding: '4px 10px', fontSize: 13, fontWeight: 700 }}>{queue.length} Pending</span>}
           <button onClick={load} style={{ padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>🔄 Refresh</button>
         </div>
       </div>
@@ -90,22 +81,25 @@ export default function AdminInstantBuyPage() {
         <div style={{ background: 'white', borderRadius: 14, border: '1.5px solid #2563eb', padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Order Review: {selected.id.slice(0, 8)}</div>
-              <div style={{ fontSize: 13, color: '#64748b' }}>{new Date(selected.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Payment Review: {selected.trade?.orderRef ?? selected.tradeId.slice(0, 8)}</div>
+              <div style={{ fontSize: 13, color: '#64748b' }}>Submitted {new Date(selected.submittedAt).toLocaleString()}</div>
             </div>
             <button onClick={() => { setSelected(null); setMsg('') }} style={{ padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, background: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
             <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 8, textTransform: 'uppercase' }}>Order Details</div>
-              <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>User:</span> <strong>{selected.user?.fullName ?? selected.userId.slice(0, 8)}</strong></div>
-              <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Email:</span> {selected.user?.email}</div>
-              <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Coin:</span> <strong>{selected.coin}</strong></div>
-              {selected.network && <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Network:</span> {selected.network}</div>}
-              <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>PKR Amount:</span> <strong>{parseFloat(selected.fiatAmount).toLocaleString()} PKR</strong></div>
-              <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Crypto:</span> <strong>{parseFloat(selected.cryptoAmount).toFixed(6)} {selected.coin}</strong></div>
-              <div style={{ fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Payment Mode:</span> {selected.paymentMode}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 8, textTransform: 'uppercase' }}>Trade Details</div>
+              {selected.trade && (
+                <>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Ref:</span> <strong>#{selected.trade.orderRef}</strong></div>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Amount:</span> <strong>{parseFloat(selected.trade.fiatAmount).toLocaleString()} PKR</strong></div>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}><span style={{ color: '#94a3b8' }}>Crypto:</span> <strong>{parseFloat(selected.trade.cryptoAmount).toFixed(6)} {selected.trade.coin}</strong></div>
+                  <div style={{ fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Method:</span> <strong>{selected.trade.paymentMethod}</strong></div>
+                </>
+              )}
+              {selected.buyer && <div style={{ fontSize: 13, marginTop: 8 }}><span style={{ color: '#94a3b8' }}>Buyer:</span> <strong>{selected.buyer.fullName}</strong> <span style={{ color: '#64748b' }}>({selected.buyer.email})</span></div>}
+              {selected.seller && <div style={{ fontSize: 13 }}><span style={{ color: '#94a3b8' }}>Seller:</span> <strong>{selected.seller.fullName}</strong></div>}
             </div>
 
             <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
@@ -121,17 +115,17 @@ export default function AdminInstantBuyPage() {
           </div>
 
           <div style={{ background: '#fff7ed', border: '1.5px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#92400e' }}>
-            <strong>Layer 2 — Human Review Required.</strong> Verify payment proof before releasing crypto to user.
+            <strong>Layer 2 — Human Review Required.</strong> Verify the payment proof before releasing crypto to buyer.
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <button onClick={approve} disabled={acting} style={{ padding: '14px', background: acting ? '#86efac' : '#10b981', color: 'white', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
-              {acting ? 'Processing...' : '✅ Approve — Send Crypto'}
+              {acting ? 'Processing...' : '✅ Approve — Release Crypto'}
             </button>
             <div>
               <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={2} placeholder="Rejection reason (required)..." style={{ width: '100%', padding: '8px 12px', border: '1.5px solid #fca5a5', borderRadius: 8, fontSize: 13, outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
               <button onClick={reject} disabled={acting} style={{ width: '100%', padding: '11px', background: acting ? '#fca5a5' : '#ef4444', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                ✗ Reject Order
+                ✗ Reject Payment
               </button>
             </div>
           </div>
@@ -139,32 +133,28 @@ export default function AdminInstantBuyPage() {
         </div>
       ) : (
         <div style={{ background: 'white', borderRadius: 14, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ background: '#f8fafc', padding: '10px 16px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: 10, fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            <span>User</span><span>Coin</span><span>PKR</span><span>Mode</span><span>Status</span><span>Action</span>
+          <div style={{ background: '#f8fafc', padding: '10px 16px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 10, fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span>Trade</span><span>Amount</span><span>Method</span><span>Submitted</span><span>Action</span>
           </div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading...</div>
-          ) : orders.length === 0 ? (
+          ) : queue.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8' }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-              No pending instant buy orders.
+              No pending payment verifications.
             </div>
-          ) : orders.map(o => {
-            const st = statusColors[o.status] ?? { bg: '#f1f5f9', color: '#64748b' }
-            return (
-              <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #f1f5f9', gap: 10, fontSize: 13, cursor: 'pointer' }} onClick={() => { setSelected(o); setRejectReason(''); setMsg('') }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{o.user?.fullName ?? o.userId.slice(0, 8)}</div>
-                  <div style={{ fontSize: 11, color: '#64748b' }}>{o.user?.email}</div>
-                </div>
-                <span style={{ fontWeight: 700 }}>{o.coin}</span>
-                <strong>{parseFloat(o.fiatAmount).toLocaleString()}</strong>
-                <span>{o.paymentMode}</span>
-                <span style={{ background: st.bg, color: st.color, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{o.status}</span>
-                <button onClick={e => { e.stopPropagation(); setSelected(o); setRejectReason(''); setMsg('') }} style={{ padding: '6px 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Review →</button>
+          ) : queue.map(item => (
+            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid #f1f5f9', gap: 10, fontSize: 13, cursor: 'pointer' }} onClick={() => { setSelected(item); setMsg('') }}>
+              <div>
+                <div style={{ fontWeight: 700 }}>#{item.trade?.orderRef ?? item.tradeId.slice(0, 8)}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>{item.buyer?.fullName ?? '—'}</div>
               </div>
-            )
-          })}
+              <strong>{item.trade ? parseFloat(item.trade.fiatAmount).toLocaleString() + ' PKR' : '—'}</strong>
+              <span>{item.trade?.paymentMethod ?? '—'}</span>
+              <span style={{ color: '#64748b' }}>{new Date(item.submittedAt).toLocaleString()}</span>
+              <button onClick={e => { e.stopPropagation(); setSelected(item); setMsg('') }} style={{ padding: '6px 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Review →</button>
+            </div>
+          ))}
         </div>
       )}
     </div>
